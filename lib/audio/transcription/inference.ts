@@ -113,14 +113,12 @@ export async function inferAudio(
   const warnings: string[] = [];
   const scores: number[][] = [];
   if (instrumentModel) {
-    // Analyze representative excerpts, avoiding an unbounded whole-song tensor.
-    const windows = Math.min(8, Math.max(1, Math.floor(durationSeconds / 3)));
+    // Cover the whole audio with bounded tensors. Discard context-only rows
+    // so overlapping context does not count as independent evidence.
+    const windows = Math.max(1, Math.ceil(durationSeconds / 3));
     for (let i = 0; i < windows; i++) {
-      const start = Math.floor(
-        Math.max(0, samples.length - RATE * 3) *
-          (windows === 1 ? 0 : i / (windows - 1)),
-      );
-      const input = new Float32Array(48000);
+      const start = i * RATE * 3;
+      const input = new Float32Array(61440);
       if (rms(start, Math.min(samples.length, start + RATE * 3)) < audibleFloor)
         continue;
       for (let j = 0; j < input.length; j++) {
@@ -141,7 +139,12 @@ export async function inferAudio(
         if (!output)
           throw new Error("El clasificador no entregó etiquetas válidas.");
         const rows = (await output.array()) as number[][];
-        scores.push(...rows);
+        scores.push(
+          ...rows.filter(
+            (_, frame) =>
+              frame * 0.48 < 3 && start / RATE + frame * 0.48 < durationSeconds,
+          ),
+        );
       } catch {
         warnings.push(
           "No se pudo completar la identificación de instrumentos; no se asignaron etiquetas inventadas.",
@@ -151,7 +154,7 @@ export async function inferAudio(
         tf.engine().endScope();
       }
       report({
-        stage: "Identificando instrumentos probables",
+        stage: "Comparando patrones de instrumentos con AudioSet",
         progress: 87 + ((i + 1) / windows) * 8,
       });
     }

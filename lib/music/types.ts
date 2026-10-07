@@ -143,6 +143,19 @@ export const documentSchema = z.object({
             label: z.string().max(100),
             labelEs: z.string().max(100),
             score: confidenceSchema,
+            audiosetId: z
+              .string()
+              .regex(/^\/[mt]\/[\w]+$/)
+              .optional(),
+            referenceUrl: z
+              .string()
+              .regex(
+                /^https:\/\/research\.google\.com\/audioset\/ontology\/[a-z0-9_]+\.html$/,
+              )
+              .optional(),
+            kind: z
+              .enum(["instrument", "family", "technique", "voice"])
+              .optional(),
           }),
         )
         .max(20),

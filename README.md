@@ -36,6 +36,8 @@ El worker cloud utiliza el mismo motor interno por defecto, hasta 15 minutos por
 
 El análisis omite ventanas y notas con energía muy baja respecto al tramo más fuerte para reducir detecciones en silencios y colas de ruido; algunas notas muy suaves pueden perderse. Las detecciones de instrumentos resumen las activaciones más fuertes con apoyo en varios frames, para no diluir instrumentos intermitentes entre silencios. No se asigna a una nota un instrumento por esta clasificación.
 
+AudioSet se integra mediante el modelo YAMNet entrenado en ese conjunto y un catálogo oficial de **87 categorías musicales** compatibles con el modelo: instrumentos, familias, técnicas y voces. La identificación cubre toda la pista en ventanas de tres segundos con contexto, y evita mostrar padres e hijos redundantes. Cada candidato incluye su identificador AudioSet, activación y un enlace a ejemplos oficiales para compararlos con el audio. Los ejemplos se abren externamente; el análisis local no sube tu archivo a Google. No es una búsqueda de grabaciones similares ni garantiza todos los instrumentos en una mezcla. El origen, versión y licencia CC BY-SA 4.0 de la ontología se documentan en [public/models/audioset/README.md](public/models/audioset/README.md).
+
 ## Estructura
 
 ```text

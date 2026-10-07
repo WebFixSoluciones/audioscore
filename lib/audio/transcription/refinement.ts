@@ -40,7 +40,12 @@ export function isPianoRecording(instruments: InstrumentPrediction[]) {
   const other = Math.max(
     0,
     ...instruments
-      .filter((i) => !["Piano", "Electric piano"].includes(i.label))
+      .filter(
+        (i) =>
+          !["Piano", "Electric piano"].includes(i.label) &&
+          i.kind !== "family" &&
+          i.kind !== "technique",
+      )
       .map((i) => i.score),
   );
   return piano >= 0.35 && piano > other + 0.1;

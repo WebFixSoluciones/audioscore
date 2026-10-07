@@ -31,6 +31,19 @@ test("transcribe audio con el modelo real sin cuenta y exporta sus notas", async
   await expect(
     page.getByRole("heading", { name: "Instrumentos probables" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Explorar instrumentos en AudioSet" }),
+  ).toHaveAttribute(
+    "href",
+    "https://research.google.com/audioset/ontology/musical_instrument_1.html",
+  );
+  const references = page.locator(".instrument-predictions a");
+  for (const reference of await references.all()) {
+    await expect(reference).toHaveAttribute(
+      "href",
+      /^https:\/\/research\.google\.com\/audioset\/ontology\/[a-z0-9_]+\.html$/,
+    );
+  }
   await page.getByRole("button", { name: "Exportar", exact: true }).click();
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "MIDI ↓", exact: true }).click();

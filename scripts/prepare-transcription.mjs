@@ -45,12 +45,17 @@ const classes = (
   .map((line) => {
     const match = line.match(/^(\d+),([^,]+),(.+)$/);
     if (!match) throw new Error("Invalid YAMNet label");
-    return { index: Number(match[1]), label: match[3].replace(/^"|"$/g, "") };
+    return {
+      index: Number(match[1]),
+      mid: match[2],
+      label: match[3].replace(/^"|"$/g, ""),
+    };
   });
 await writeFile(
   resolve(root, "public/models/yamnet/classes.json"),
   JSON.stringify(classes),
 );
+await import("./prepare-audioset.mjs");
 await mkdir(resolve(root, "runtime"), { recursive: true });
 await build({
   entryPoints: [resolve(root, "workers/transcribe-audio.ts")],

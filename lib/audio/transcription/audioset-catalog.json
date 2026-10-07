@@ -1,0 +1,1017 @@
+[
+  {
+    "index": 24,
+    "audiosetId": "/m/015lz1",
+    "label": "Singing",
+    "labelEs": "Voz cantada",
+    "kind": "voice",
+    "descendantIds": [
+      "/m/0l14jd",
+      "/m/01swy6",
+      "/m/02bk07",
+      "/m/01c194",
+      "/t/dd00003",
+      "/t/dd00004",
+      "/t/dd00005",
+      "/t/dd00006",
+      "/m/06bxc"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/singing_1.html"
+  },
+  {
+    "index": 25,
+    "audiosetId": "/m/0l14jd",
+    "label": "Choir",
+    "labelEs": "Coro",
+    "kind": "voice",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/choir_2.html"
+  },
+  {
+    "index": 26,
+    "audiosetId": "/m/01swy6",
+    "label": "Yodeling",
+    "labelEs": "Canto a la tirolesa",
+    "kind": "voice",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/yodeling_1.html"
+  },
+  {
+    "index": 27,
+    "audiosetId": "/m/02bk07",
+    "label": "Chant",
+    "labelEs": "Canto repetitivo",
+    "kind": "voice",
+    "descendantIds": [
+      "/m/01c194"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/chant_2.html"
+  },
+  {
+    "index": 28,
+    "audiosetId": "/m/01c194",
+    "label": "Mantra",
+    "labelEs": "Mantra",
+    "kind": "voice",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/mantra_2.html"
+  },
+  {
+    "index": 29,
+    "audiosetId": "/t/dd00005",
+    "label": "Child singing",
+    "labelEs": "Voz infantil cantada",
+    "kind": "voice",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/child_singing_1.html"
+  },
+  {
+    "index": 30,
+    "audiosetId": "/t/dd00006",
+    "label": "Synthetic singing",
+    "labelEs": "Voz sintética cantada",
+    "kind": "voice",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/synthetic_singing_1.html"
+  },
+  {
+    "index": 31,
+    "audiosetId": "/m/06bxc",
+    "label": "Rapping",
+    "labelEs": "Rap",
+    "kind": "voice",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/rapping_1.html"
+  },
+  {
+    "index": 87,
+    "audiosetId": "/m/0239kh",
+    "label": "Cowbell",
+    "labelEs": "Cowbell",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/cowbell_4.html"
+  },
+  {
+    "index": 133,
+    "audiosetId": "/m/04szw",
+    "label": "Musical instrument",
+    "labelEs": "Instrumento musical",
+    "kind": "family",
+    "descendantIds": [
+      "/m/0fx80y",
+      "/m/0342h",
+      "/m/02sgy",
+      "/m/018vs",
+      "/m/042v_gx",
+      "/m/06w87",
+      "/m/01glhc",
+      "/m/07s0s5r",
+      "/m/018j2",
+      "/m/0jtg0",
+      "/m/04rzd",
+      "/m/01bns_",
+      "/m/07xzm",
+      "/m/05148p4",
+      "/m/05r5c",
+      "/m/01s0ps",
+      "/m/025cbm",
+      "/m/0bxl5",
+      "/m/013y1f",
+      "/m/03xq_f",
+      "/m/03gvt",
+      "/m/0l14qv",
+      "/m/01v1d8",
+      "/m/0gkd1",
+      "/m/03q5t",
+      "/m/0l14md",
+      "/m/02hnl",
+      "/m/0cfdd",
+      "/m/026t6",
+      "/m/06rvn",
+      "/m/03t3fj",
+      "/m/02k_mr",
+      "/m/0bm02",
+      "/m/011k_j",
+      "/m/01p970",
+      "/m/01qbl",
+      "/m/03qtq",
+      "/m/0bm0k",
+      "/m/0239kh",
+      "/m/01sm1g",
+      "/m/07brj",
+      "/m/05r5wn",
+      "/m/0xzly",
+      "/m/0mbct",
+      "/m/016622",
+      "/m/0j45pbj",
+      "/m/0dwsp",
+      "/m/0dwtp",
+      "/m/0dwt5",
+      "/m/0l156b",
+      "/m/05pd6",
+      "/m/01kcd",
+      "/m/0319l",
+      "/m/07gql",
+      "/m/07c6l",
+      "/m/020w2",
+      "/m/0y64j",
+      "/m/0l14_3",
+      "/m/02qmj0d",
+      "/m/07y_7",
+      "/m/0d8_n",
+      "/m/01xqw",
+      "/m/02fsn",
+      "/m/085jw",
+      "/m/0l14j_",
+      "/m/06ncr",
+      "/m/02pprs",
+      "/m/03t22m",
+      "/m/01wy6",
+      "/m/05kms",
+      "/m/01c3q",
+      "/m/03m5k",
+      "/m/0l14jd",
+      "/m/0395lw",
+      "/m/03w41f",
+      "/m/027m70_",
+      "/m/0gy1t2s",
+      "/m/07n_g",
+      "/m/0f8s22",
+      "/m/026fgl",
+      "/m/0150b9",
+      "/m/03qjg",
+      "/m/0mkg",
+      "/m/0192l",
+      "/m/02bxd",
+      "/m/0l14l2",
+      "/m/07kc_",
+      "/m/0l14t7",
+      "/m/05229",
+      "/m/01vj9c",
+      "/m/01hgjl"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/musical_instrument_1.html"
+  },
+  {
+    "index": 134,
+    "audiosetId": "/m/0fx80y",
+    "label": "Plucked string instrument",
+    "labelEs": "Cuerda pulsada",
+    "kind": "family",
+    "descendantIds": [
+      "/m/0342h",
+      "/m/02sgy",
+      "/m/018vs",
+      "/m/042v_gx",
+      "/m/06w87",
+      "/m/01glhc",
+      "/m/07s0s5r",
+      "/m/018j2",
+      "/m/0jtg0",
+      "/m/04rzd",
+      "/m/01bns_",
+      "/m/07xzm"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/plucked_string_instrument_1.html"
+  },
+  {
+    "index": 135,
+    "audiosetId": "/m/0342h",
+    "label": "Guitar",
+    "labelEs": "Guitarra",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/02sgy",
+      "/m/018vs",
+      "/m/042v_gx",
+      "/m/06w87",
+      "/m/01glhc",
+      "/m/07s0s5r"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/guitar_1.html"
+  },
+  {
+    "index": 136,
+    "audiosetId": "/m/02sgy",
+    "label": "Electric guitar",
+    "labelEs": "Guitarra eléctrica",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/electric_guitar_1.html"
+  },
+  {
+    "index": 137,
+    "audiosetId": "/m/018vs",
+    "label": "Bass guitar",
+    "labelEs": "Bajo",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/bass_guitar_1.html"
+  },
+  {
+    "index": 138,
+    "audiosetId": "/m/042v_gx",
+    "label": "Acoustic guitar",
+    "labelEs": "Guitarra acústica",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/acoustic_guitar_1.html"
+  },
+  {
+    "index": 139,
+    "audiosetId": "/m/06w87",
+    "label": "Steel guitar, slide guitar",
+    "labelEs": "Guitarra de acero o slide",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/steel_guitar_slide_guitar_1.html"
+  },
+  {
+    "index": 140,
+    "audiosetId": "/m/01glhc",
+    "label": "Tapping (guitar technique)",
+    "labelEs": "Tapping de guitarra",
+    "kind": "technique",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/tapping_guitar_technique_1.html"
+  },
+  {
+    "index": 141,
+    "audiosetId": "/m/07s0s5r",
+    "label": "Strum",
+    "labelEs": "Rasgueo",
+    "kind": "technique",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/strum_1.html"
+  },
+  {
+    "index": 142,
+    "audiosetId": "/m/018j2",
+    "label": "Banjo",
+    "labelEs": "Banjo",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/banjo_1.html"
+  },
+  {
+    "index": 143,
+    "audiosetId": "/m/0jtg0",
+    "label": "Sitar",
+    "labelEs": "Sitar",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/sitar_1.html"
+  },
+  {
+    "index": 144,
+    "audiosetId": "/m/04rzd",
+    "label": "Mandolin",
+    "labelEs": "Mandolina",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/mandolin_1.html"
+  },
+  {
+    "index": 145,
+    "audiosetId": "/m/01bns_",
+    "label": "Zither",
+    "labelEs": "Cítara",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/zither_1.html"
+  },
+  {
+    "index": 146,
+    "audiosetId": "/m/07xzm",
+    "label": "Ukulele",
+    "labelEs": "Ukelele",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/ukulele_1.html"
+  },
+  {
+    "index": 147,
+    "audiosetId": "/m/05148p4",
+    "label": "Keyboard (musical)",
+    "labelEs": "Teclados",
+    "kind": "family",
+    "descendantIds": [
+      "/m/05r5c",
+      "/m/01s0ps",
+      "/m/025cbm",
+      "/m/0bxl5",
+      "/m/013y1f",
+      "/m/03xq_f",
+      "/m/03gvt",
+      "/m/0l14qv",
+      "/m/01v1d8",
+      "/m/0gkd1",
+      "/m/03q5t"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/keyboard_musical_1.html"
+  },
+  {
+    "index": 148,
+    "audiosetId": "/m/05r5c",
+    "label": "Piano",
+    "labelEs": "Piano",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/01s0ps",
+      "/m/025cbm",
+      "/m/0bxl5"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/piano_1.html"
+  },
+  {
+    "index": 149,
+    "audiosetId": "/m/01s0ps",
+    "label": "Electric piano",
+    "labelEs": "Piano eléctrico",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/025cbm",
+      "/m/0bxl5"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/electric_piano_1.html"
+  },
+  {
+    "index": 150,
+    "audiosetId": "/m/013y1f",
+    "label": "Organ",
+    "labelEs": "Órgano",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/03xq_f",
+      "/m/03gvt"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/organ_1.html"
+  },
+  {
+    "index": 151,
+    "audiosetId": "/m/03xq_f",
+    "label": "Electronic organ",
+    "labelEs": "Órgano electrónico",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/electronic_organ_1.html"
+  },
+  {
+    "index": 152,
+    "audiosetId": "/m/03gvt",
+    "label": "Hammond organ",
+    "labelEs": "Órgano Hammond",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/hammond_organ_1.html"
+  },
+  {
+    "index": 153,
+    "audiosetId": "/m/0l14qv",
+    "label": "Synthesizer",
+    "labelEs": "Sintetizador",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/01v1d8",
+      "/m/0gkd1"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/synthesizer_1.html"
+  },
+  {
+    "index": 154,
+    "audiosetId": "/m/01v1d8",
+    "label": "Sampler",
+    "labelEs": "Sampler",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/sampler_1.html"
+  },
+  {
+    "index": 155,
+    "audiosetId": "/m/03q5t",
+    "label": "Harpsichord",
+    "labelEs": "Clave",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/harpsichord_1.html"
+  },
+  {
+    "index": 156,
+    "audiosetId": "/m/0l14md",
+    "label": "Percussion",
+    "labelEs": "Percusión",
+    "kind": "family",
+    "descendantIds": [
+      "/m/02hnl",
+      "/m/0cfdd",
+      "/m/026t6",
+      "/m/06rvn",
+      "/m/03t3fj",
+      "/m/02k_mr",
+      "/m/0bm02",
+      "/m/011k_j",
+      "/m/01p970",
+      "/m/01qbl",
+      "/m/03qtq",
+      "/m/0bm0k",
+      "/m/0239kh",
+      "/m/01sm1g",
+      "/m/07brj",
+      "/m/05r5wn",
+      "/m/0xzly",
+      "/m/0mbct",
+      "/m/016622",
+      "/m/0j45pbj",
+      "/m/0dwsp",
+      "/m/0dwtp",
+      "/m/0dwt5",
+      "/m/0l156b"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/percussion_1.html"
+  },
+  {
+    "index": 157,
+    "audiosetId": "/m/02hnl",
+    "label": "Drum kit",
+    "labelEs": "Batería",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/0cfdd"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/drum_kit_1.html"
+  },
+  {
+    "index": 158,
+    "audiosetId": "/m/0cfdd",
+    "label": "Drum machine",
+    "labelEs": "Caja de ritmos",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/drum_machine_1.html"
+  },
+  {
+    "index": 159,
+    "audiosetId": "/m/026t6",
+    "label": "Drum",
+    "labelEs": "Tambor",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/06rvn",
+      "/m/03t3fj",
+      "/m/02k_mr",
+      "/m/0bm02",
+      "/m/011k_j",
+      "/m/01p970"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/drum_1.html"
+  },
+  {
+    "index": 160,
+    "audiosetId": "/m/06rvn",
+    "label": "Snare drum",
+    "labelEs": "Caja",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/03t3fj",
+      "/m/02k_mr"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/snare_drum_1.html"
+  },
+  {
+    "index": 161,
+    "audiosetId": "/m/03t3fj",
+    "label": "Rimshot",
+    "labelEs": "Golpe de aro",
+    "kind": "technique",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/rimshot_1.html"
+  },
+  {
+    "index": 162,
+    "audiosetId": "/m/02k_mr",
+    "label": "Drum roll",
+    "labelEs": "Redoble",
+    "kind": "technique",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/drum_roll_1.html"
+  },
+  {
+    "index": 163,
+    "audiosetId": "/m/0bm02",
+    "label": "Bass drum",
+    "labelEs": "Bombo",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/bass_drum_1.html"
+  },
+  {
+    "index": 164,
+    "audiosetId": "/m/011k_j",
+    "label": "Timpani",
+    "labelEs": "Timbales",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/timpani_1.html"
+  },
+  {
+    "index": 165,
+    "audiosetId": "/m/01p970",
+    "label": "Tabla",
+    "labelEs": "Tabla",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/tabla_1.html"
+  },
+  {
+    "index": 166,
+    "audiosetId": "/m/01qbl",
+    "label": "Cymbal",
+    "labelEs": "Platillos",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/03qtq",
+      "/m/0bm0k"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/cymbal_1.html"
+  },
+  {
+    "index": 167,
+    "audiosetId": "/m/03qtq",
+    "label": "Hi-hat",
+    "labelEs": "Charles",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/hihat_1.html"
+  },
+  {
+    "index": 168,
+    "audiosetId": "/m/01sm1g",
+    "label": "Wood block",
+    "labelEs": "Bloque de madera",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/wood_block_1.html"
+  },
+  {
+    "index": 169,
+    "audiosetId": "/m/07brj",
+    "label": "Tambourine",
+    "labelEs": "Pandereta",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/tambourine_1.html"
+  },
+  {
+    "index": 170,
+    "audiosetId": "/m/05r5wn",
+    "label": "Rattle (instrument)",
+    "labelEs": "Sonajero",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/0xzly"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/rattle_instrument_1.html"
+  },
+  {
+    "index": 171,
+    "audiosetId": "/m/0xzly",
+    "label": "Maraca",
+    "labelEs": "Maraca",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/maraca_1.html"
+  },
+  {
+    "index": 172,
+    "audiosetId": "/m/0mbct",
+    "label": "Gong",
+    "labelEs": "Gong",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/gong_1.html"
+  },
+  {
+    "index": 173,
+    "audiosetId": "/m/016622",
+    "label": "Tubular bells",
+    "labelEs": "Campanas tubulares",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/tubular_bells_1.html"
+  },
+  {
+    "index": 174,
+    "audiosetId": "/m/0j45pbj",
+    "label": "Mallet percussion",
+    "labelEs": "Percusión de láminas",
+    "kind": "family",
+    "descendantIds": [
+      "/m/0dwsp",
+      "/m/0dwtp",
+      "/m/0dwt5",
+      "/m/0l156b"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/mallet_percussion_1.html"
+  },
+  {
+    "index": 175,
+    "audiosetId": "/m/0dwsp",
+    "label": "Marimba, xylophone",
+    "labelEs": "Marimba o xilófono",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/marimba_xylophone_1.html"
+  },
+  {
+    "index": 176,
+    "audiosetId": "/m/0dwtp",
+    "label": "Glockenspiel",
+    "labelEs": "Glockenspiel",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/glockenspiel_1.html"
+  },
+  {
+    "index": 177,
+    "audiosetId": "/m/0dwt5",
+    "label": "Vibraphone",
+    "labelEs": "Vibráfono",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/vibraphone_1.html"
+  },
+  {
+    "index": 178,
+    "audiosetId": "/m/0l156b",
+    "label": "Steelpan",
+    "labelEs": "Tambor de acero",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/steelpan_1.html"
+  },
+  {
+    "index": 179,
+    "audiosetId": "/m/05pd6",
+    "label": "Orchestra",
+    "labelEs": "Orquesta",
+    "kind": "family",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/orchestra_1.html"
+  },
+  {
+    "index": 180,
+    "audiosetId": "/m/01kcd",
+    "label": "Brass instrument",
+    "labelEs": "Viento metal",
+    "kind": "family",
+    "descendantIds": [
+      "/m/0319l",
+      "/m/07gql",
+      "/m/07c6l",
+      "/m/020w2",
+      "/m/0y64j"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/brass_instrument_1.html"
+  },
+  {
+    "index": 181,
+    "audiosetId": "/m/0319l",
+    "label": "French horn",
+    "labelEs": "Trompa",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/french_horn_1.html"
+  },
+  {
+    "index": 182,
+    "audiosetId": "/m/07gql",
+    "label": "Trumpet",
+    "labelEs": "Trompeta",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/trumpet_1.html"
+  },
+  {
+    "index": 183,
+    "audiosetId": "/m/07c6l",
+    "label": "Trombone",
+    "labelEs": "Trombón",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/trombone_1.html"
+  },
+  {
+    "index": 184,
+    "audiosetId": "/m/0l14_3",
+    "label": "Bowed string instrument",
+    "labelEs": "Cuerda frotada",
+    "kind": "family",
+    "descendantIds": [
+      "/m/02qmj0d",
+      "/m/07y_7",
+      "/m/0d8_n",
+      "/m/01xqw",
+      "/m/02fsn"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/bowed_string_instrument_1.html"
+  },
+  {
+    "index": 185,
+    "audiosetId": "/m/02qmj0d",
+    "label": "String section",
+    "labelEs": "Sección de cuerdas",
+    "kind": "family",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/string_section_1.html"
+  },
+  {
+    "index": 186,
+    "audiosetId": "/m/07y_7",
+    "label": "Violin, fiddle",
+    "labelEs": "Violín",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/0d8_n"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/violin_fiddle_1.html"
+  },
+  {
+    "index": 187,
+    "audiosetId": "/m/0d8_n",
+    "label": "Pizzicato",
+    "labelEs": "Pizzicato",
+    "kind": "technique",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/pizzicato_1.html"
+  },
+  {
+    "index": 188,
+    "audiosetId": "/m/01xqw",
+    "label": "Cello",
+    "labelEs": "Violonchelo",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/cello_1.html"
+  },
+  {
+    "index": 189,
+    "audiosetId": "/m/02fsn",
+    "label": "Double bass",
+    "labelEs": "Contrabajo",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/double_bass_1.html"
+  },
+  {
+    "index": 190,
+    "audiosetId": "/m/085jw",
+    "label": "Wind instrument, woodwind instrument",
+    "labelEs": "Viento madera",
+    "kind": "family",
+    "descendantIds": [
+      "/m/0l14j_",
+      "/m/06ncr",
+      "/m/02pprs",
+      "/m/03t22m",
+      "/m/01wy6",
+      "/m/05kms",
+      "/m/01c3q"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/wind_instrument_woodwind_instrument_1.html"
+  },
+  {
+    "index": 191,
+    "audiosetId": "/m/0l14j_",
+    "label": "Flute",
+    "labelEs": "Flauta",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/flute_1.html"
+  },
+  {
+    "index": 192,
+    "audiosetId": "/m/06ncr",
+    "label": "Saxophone",
+    "labelEs": "Saxofón",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/02pprs",
+      "/m/03t22m"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/saxophone_1.html"
+  },
+  {
+    "index": 193,
+    "audiosetId": "/m/01wy6",
+    "label": "Clarinet",
+    "labelEs": "Clarinete",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/clarinet_1.html"
+  },
+  {
+    "index": 194,
+    "audiosetId": "/m/03m5k",
+    "label": "Harp",
+    "labelEs": "Arpa",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/harp_1.html"
+  },
+  {
+    "index": 195,
+    "audiosetId": "/m/0395lw",
+    "label": "Bell",
+    "labelEs": "Campana",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/03w41f",
+      "/m/0239kh",
+      "/m/027m70_",
+      "/m/0gy1t2s",
+      "/m/07n_g",
+      "/m/0f8s22",
+      "/m/026fgl",
+      "/m/0150b9"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/bell_2.html"
+  },
+  {
+    "index": 196,
+    "audiosetId": "/m/03w41f",
+    "label": "Church bell",
+    "labelEs": "Campana de iglesia",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/church_bell_2.html"
+  },
+  {
+    "index": 197,
+    "audiosetId": "/m/027m70_",
+    "label": "Jingle bell",
+    "labelEs": "Cascabel",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/jingle_bell_2.html"
+  },
+  {
+    "index": 198,
+    "audiosetId": "/m/0gy1t2s",
+    "label": "Bicycle bell",
+    "labelEs": "Timbre de bicicleta",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/bicycle_bell_4.html"
+  },
+  {
+    "index": 199,
+    "audiosetId": "/m/07n_g",
+    "label": "Tuning fork",
+    "labelEs": "Diapasón",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/tuning_fork_2.html"
+  },
+  {
+    "index": 200,
+    "audiosetId": "/m/0f8s22",
+    "label": "Chime",
+    "labelEs": "Carillón",
+    "kind": "instrument",
+    "descendantIds": [
+      "/m/026fgl"
+    ],
+    "referenceUrl": "https://research.google.com/audioset/ontology/chime_2.html"
+  },
+  {
+    "index": 201,
+    "audiosetId": "/m/026fgl",
+    "label": "Wind chime",
+    "labelEs": "Campanillas de viento",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/wind_chime_2.html"
+  },
+  {
+    "index": 202,
+    "audiosetId": "/m/0150b9",
+    "label": "Change ringing (campanology)",
+    "labelEs": "Repique de campanas",
+    "kind": "technique",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/change_ringing_campanology_2.html"
+  },
+  {
+    "index": 203,
+    "audiosetId": "/m/03qjg",
+    "label": "Harmonica",
+    "labelEs": "Armónica",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/harmonica_1.html"
+  },
+  {
+    "index": 204,
+    "audiosetId": "/m/0mkg",
+    "label": "Accordion",
+    "labelEs": "Acordeón",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/accordion_1.html"
+  },
+  {
+    "index": 205,
+    "audiosetId": "/m/0192l",
+    "label": "Bagpipes",
+    "labelEs": "Gaita",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/bagpipes_1.html"
+  },
+  {
+    "index": 206,
+    "audiosetId": "/m/02bxd",
+    "label": "Didgeridoo",
+    "labelEs": "Didgeridoo",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/didgeridoo_1.html"
+  },
+  {
+    "index": 207,
+    "audiosetId": "/m/0l14l2",
+    "label": "Shofar",
+    "labelEs": "Shofar",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/shofar_1.html"
+  },
+  {
+    "index": 208,
+    "audiosetId": "/m/07kc_",
+    "label": "Theremin",
+    "labelEs": "Theremín",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/theremin_1.html"
+  },
+  {
+    "index": 209,
+    "audiosetId": "/m/0l14t7",
+    "label": "Singing bowl",
+    "labelEs": "Cuenco tibetano",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/singing_bowl_1.html"
+  },
+  {
+    "index": 210,
+    "audiosetId": "/m/01hgjl",
+    "label": "Scratching (performance technique)",
+    "labelEs": "Scratching (performance technique)",
+    "kind": "instrument",
+    "descendantIds": [],
+    "referenceUrl": "https://research.google.com/audioset/ontology/scratching_performance_technique_1.html"
+  }
+]

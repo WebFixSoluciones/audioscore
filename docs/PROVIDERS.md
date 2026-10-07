@@ -56,3 +56,9 @@ El backend valida las relaciones, los límites de fuentes, el timing y la duraci
 ## Capacidades que requieren ampliar el contrato
 
 Jobs de proveedor de más de dos minutos, callbacks autenticados, detección avanzada de compás, score engraving con tresillos explícitos, pitch bend continuo, transposición instrumental y notación de batería especializada. No deben representarse como implementadas por instalar una dependencia.
+
+## Referencias AudioSet
+
+El clasificador integrado YAMNet usa patrones aprendidos de AudioSet. Se unen los identificadores oficiales de sus clases a la ontología versionada en `public/models/audioset/`: 87 categorías musicales disponibles, incluyendo instrumentos, familias, técnicas y canto. La pista completa se evalúa en ventanas acotadas de tres segundos con contexto; el apoyo en varios frames evita mostrar una etiqueta por un único pico. Las activaciones no son probabilidades calibradas.
+
+Los resultados y el JSON exportado conservan `audiosetId`, `referenceUrl` y `kind`. Las referencias abren ejemplos oficiales para comparación humana; no se envía audio a AudioSet ni se comparan directamente los vectores VGGish de su descarga con YAMNet. No se han reentrenado modelos, separado instrumentos ni atribuido notas individuales mediante esta integración. La ontología, catálogo derivado y traducciones se atribuyen a Google bajo CC BY-SA 4.0; los pesos YAMNet conservan su licencia propia.

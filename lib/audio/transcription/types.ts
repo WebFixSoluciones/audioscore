@@ -9,6 +9,9 @@ export type InstrumentPrediction = {
   label: string;
   labelEs: string;
   score: number;
+  audiosetId?: string;
+  referenceUrl?: string;
+  kind?: "instrument" | "family" | "technique" | "voice";
 };
 export type TranscriptionResult = {
   notes: DetectedNote[];

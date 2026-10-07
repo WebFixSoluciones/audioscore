@@ -1153,9 +1153,11 @@ export function MusicEditor({
                 Instrumentos probables <span>Detección automática</span>
               </h3>
               <p>
-                Sonidos identificados en fragmentos de la mezcla. Las
-                puntuaciones indican activación del modelo; no son pistas
-                separadas ni identificaciones confirmadas.
+                YAMNet compara los patrones de toda la pista con categorías
+                aprendidas de AudioSet. Abre las referencias para escuchar
+                ejemplos y comparar con tu audio. Las puntuaciones indican
+                activación del modelo; no son pistas separadas ni
+                identificaciones confirmadas.
               </p>
               {doc.analysis.instrumentPredictions.length ? (
                 <div className="instrument-predictions">
@@ -1163,6 +1165,19 @@ export function MusicEditor({
                     <span className="micro-tag" key={prediction.label}>
                       {prediction.labelEs} ·{" "}
                       {Math.round(prediction.score * 100)}%
+                      {prediction.kind === "family" && " · Familia"}
+                      {prediction.kind === "technique" && " · Técnica"}
+                      {prediction.kind === "voice" && " · Voz"}
+                      {prediction.referenceUrl && (
+                        <a
+                          href={prediction.referenceUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Referencia AudioSet de ${prediction.labelEs}`}
+                        >
+                          {" · Referencia AudioSet ↗"}
+                        </a>
+                      )}
                     </span>
                   ))}
                 </div>
@@ -1172,6 +1187,17 @@ export function MusicEditor({
                   clara.
                 </p>
               )}
+              <p>
+                <a
+                  href="https://research.google.com/audioset/ontology/musical_instrument_1.html"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Explorar instrumentos en AudioSet ↗
+                </a>
+                {" · "}Las referencias se abren en otra página. Tu audio se
+                analiza localmente.
+              </p>
               {!!doc.analysis.excludedNotes?.length && (
                 <>
                   <p>

@@ -1,69 +1,51 @@
+import catalog from "./audioset-catalog.json";
 import type { InstrumentPrediction } from "./types";
-const labels: Record<number, [string, string]> = {
-  24: ["Singing", "Voz cantada"],
-  135: ["Guitar", "Guitarra"],
-  136: ["Electric guitar", "Guitarra eléctrica"],
-  137: ["Bass guitar", "Bajo"],
-  138: ["Acoustic guitar", "Guitarra acústica"],
-  142: ["Banjo", "Banjo"],
-  143: ["Sitar", "Sitar"],
-  144: ["Mandolin", "Mandolina"],
-  146: ["Ukulele", "Ukelele"],
-  148: ["Piano", "Piano"],
-  149: ["Electric piano", "Piano eléctrico"],
-  150: ["Organ", "Órgano"],
-  153: ["Synthesizer", "Sintetizador"],
-  154: ["Sampler", "Sampler"],
-  155: ["Harpsichord", "Clave"],
-  157: ["Drum kit", "Batería"],
-  158: ["Drum machine", "Caja de ritmos"],
-  159: ["Drum", "Tambor"],
-  164: ["Timpani", "Timbales"],
-  165: ["Tabla", "Tabla"],
-  166: ["Cymbal", "Platillos"],
-  175: ["Marimba, xylophone", "Marimba o xilófono"],
-  177: ["Vibraphone", "Vibráfono"],
-  182: ["Trumpet", "Trompeta"],
-  183: ["Trombone", "Trombón"],
-  186: ["Violin, fiddle", "Violín"],
-  188: ["Cello", "Violonchelo"],
-  189: ["Double bass", "Contrabajo"],
-  191: ["Flute", "Flauta"],
-  192: ["Saxophone", "Saxofón"],
-  193: ["Clarinet", "Clarinete"],
-  194: ["Harp", "Arpa"],
-  195: ["Bell", "Campana"],
-  204: ["Accordion", "Acordeón"],
-};
+
+export const AUDIOSET_MUSICAL_CATEGORY_COUNT = catalog.length;
+
+/** AudioSet taxonomy / translations are CC BY-SA 4.0; see public/models/audioset/LICENSE. */
 export function instrumentPredictions(
   scores: number[][],
 ): InstrumentPrediction[] {
   if (!scores.length) return [];
-  return Object.entries(labels)
-    .map(([index, [label, labelEs]]) => {
+  const candidates = catalog
+    .map((entry) => {
       const values = scores
-        .map((frame) => frame[Number(index)] ?? 0)
+        .map((frame) => {
+          const value = frame[entry.index] ?? 0;
+          return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
+        })
         .sort((a, b) => b - a);
-      const strongest = values.slice(0, Math.min(3, values.length));
+      const strongest = values.slice(0, 3);
       return {
-        label,
-        labelEs,
-        support: values.filter((score) => score >= 0.075).length,
-        score: Math.max(
-          0,
-          Math.min(
-            1,
-            strongest.reduce((sum, score) => sum + score / strongest.length, 0),
-          ),
-        ),
+        ...entry,
+        support: values.filter((value) => value >= 0.075).length,
+        score:
+          strongest.reduce((sum, value) => sum + value, 0) / strongest.length,
       };
     })
     .filter(
-      (prediction) =>
-        prediction.score >= 0.1 &&
-        prediction.support >= Math.min(2, scores.length),
+      (entry) =>
+        entry.score >= 0.1 && entry.support >= Math.min(2, scores.length),
+    );
+  // A parent and its child describe the same evidence; prefer the specific label.
+  return candidates
+    .filter(
+      (entry) =>
+        !candidates.some(
+          (child) =>
+            entry.descendantIds.includes(child.audiosetId) &&
+            child.kind !== "technique",
+        ),
     )
-    .map(({ label, labelEs, score }) => ({ label, labelEs, score }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, 8);
+    .slice(0, 20)
+    .map((entry) => ({
+      label: entry.label,
+      labelEs: entry.labelEs,
+      score: entry.score,
+      audiosetId: entry.audiosetId,
+      referenceUrl: entry.referenceUrl,
+      kind: entry.kind as InstrumentPrediction["kind"],
+    }));
 }

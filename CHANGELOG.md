@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## 0.2.0 — 2026-10-06
+
+- AudioSet: catálogo oficial con 87 categorías musicales compatibles con YAMNet, identificadores y referencias para comparar ejemplos.
+- Identificación de instrumentos en toda la pista con ventanas acotadas, en lugar de ocho fragmentos.
+- Distinción entre instrumentos, familias, técnicas y voces; se evitan etiquetas redundantes de padres e hijos.
+- Metadatos de origen y licencia CC BY-SA 4.0; el audio del usuario se procesa localmente.
+
 ## 0.1.0 — 2026-10-06
 
 Primera versión del proyecto AudioScore AI.
