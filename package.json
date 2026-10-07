@@ -1,6 +1,6 @@
 {
   "name": "audio-score-ai",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "private": true,
   "scripts": {
     "prepare:transcription": "node scripts/prepare-transcription.mjs",

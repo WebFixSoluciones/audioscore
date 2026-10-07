@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## 0.4.4 — 2026-10-07
+
+- Recuperación del ingreso tras un bloqueo de App Check en una pestaña antigua: recarga completa y reanudación única de la sesión autenticada.
+- Mensajes de acceso en español y opción «Recargar y continuar»; se conserva la validación de App Check en el servidor.
+
 ## 0.4.3 — 2026-10-07
 
 - Compatibilidad de Firebase Admin y App Check con el cargador de Vercel: jose 5.10.0 limitado a jwks-rsa.

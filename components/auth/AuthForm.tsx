@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -17,9 +17,11 @@ import {
   GoogleAuthProvider,
   setPersistence,
   browserLocalPersistence,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { clientFirebase, api, firebaseConfigured } from "@/lib/firebase/client";
-import { messageOf } from "@/lib/utils/errors";
+import { authErrorMessage, isAppCheckError } from "@/lib/firebase/auth-errors";
+const recoveryKey = "audioscore:resume-sign-in";
 type Mode = "login" | "register" | "forgot-password" | "verify-email";
 const titles: Record<Mode, string> = {
   login: "Vuelve a tu música.",
@@ -31,10 +33,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [error, setError] = useState(""),
+    [recoverAccess, setRecoverAccess] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
   const router = useRouter();
-  async function establish() {
+  const establish = useCallback(async () => {
     const user = clientFirebase().auth.currentUser;
     if (!user) throw new Error("Inicia sesión para continuar.");
     const session = await api<{
@@ -52,30 +55,36 @@ export function AuthForm({ mode }: { mode: Mode }) {
         : "/auth/verify-email",
     );
     router.refresh();
-  }
-  async function execute(work: () => Promise<void>) {
+  }, [router]);
+  const execute = useCallback(async (work: () => Promise<void>) => {
     setBusy(true);
     setError("");
+    setRecoverAccess(false);
     setMessage("");
     try {
       await work();
     } catch (e) {
-      const code = (e as { code?: string }).code;
-      setError(
-        code === "auth/invalid-credential"
-          ? "El correo o la contraseña no coinciden."
-          : code === "auth/email-already-in-use"
-            ? "Este correo ya tiene una cuenta. Inicia sesión."
-            : code === "auth/weak-password"
-              ? "Usa una contraseña de al menos 10 caracteres."
-              : code === "auth/popup-closed-by-user"
-                ? "La ventana de Google se cerró. Puedes volver a intentarlo."
-                : messageOf(e),
-      );
+      setError(authErrorMessage(e));
+      setRecoverAccess(isAppCheckError(e));
     } finally {
       setBusy(false);
     }
-  }
+  }, []);
+  useEffect(() => {
+    if (
+      !firebaseConfigured ||
+      mode !== "login" ||
+      sessionStorage.getItem(recoveryKey) !== "1"
+    )
+      return;
+    // Consume only after Auth restores its user, including during Strict Mode.
+    return onAuthStateChanged(clientFirebase().auth, (user) => {
+      if (sessionStorage.getItem(recoveryKey) !== "1") return;
+      sessionStorage.removeItem(recoveryKey);
+      if (user) void execute(establish);
+      else setMessage("La pestaña se ha recargado. Vuelve a iniciar sesión.");
+    });
+  }, [mode, execute, establish]);
   return (
     <main className="auth-page">
       <div className="auth-story">
@@ -260,6 +269,21 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <p className="form-error" role="alert">
             {error}
           </p>
+        )}
+        {recoverAccess && (
+          <button
+            className="button secondary"
+            style={{ width: "100%" }}
+            disabled={busy}
+            onClick={() => {
+              sessionStorage.setItem(recoveryKey, "1");
+              // A full navigation resets the provider; client routing preserves its throttle.
+              // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+              window.location.assign("/auth/login");
+            }}
+          >
+            Recargar y continuar
+          </button>
         )}
         {message && (
           <p className="notice" role="status">
