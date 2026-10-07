@@ -40,6 +40,7 @@ export function ScoreViewer({
     sourceId = useEditor((s) => s.sourceId),
     currentTime = useEditor((s) => s.currentTime);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     if (!root.current || !doc.events.length) return;
     let cancelled = false;
@@ -47,6 +48,7 @@ export function ScoreViewer({
     void (async () => {
       const { OpenSheetMusicDisplay } = await import("opensheetmusicdisplay");
       if (cancelled) return;
+      setLoading(true);
       const osmd = new OpenSheetMusicDisplay(container, {
         autoResize: true,
         drawTitle: true,
@@ -64,11 +66,14 @@ export function ScoreViewer({
       osmd.cursor.show();
       synchronizeCursor(osmd, doc, useEditor.getState().currentTime);
       setError("");
+      setLoading(false);
     })().catch((e) => {
-      if (!cancelled)
+      if (!cancelled) {
+        setLoading(false);
         setError(
           e instanceof Error ? e.message : "Error al mostrar la partitura",
         );
+      }
     });
     return () => {
       cancelled = true;
@@ -100,6 +105,11 @@ export function ScoreViewer({
       {error && (
         <p role="alert" className="error-text">
           {error}
+        </p>
+      )}
+      {!!doc.events.length && loading && !error && (
+        <p role="status">
+          Preparando la partitura… La primera carga puede tardar unos segundos.
         </p>
       )}
       <div ref={root} />

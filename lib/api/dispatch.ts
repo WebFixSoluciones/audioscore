@@ -64,6 +64,11 @@ export async function dispatch(
   if (resource === "plans" && segments.length === 1 && method === "GET")
     return { plans: PLANS };
   if (resource === "internal") {
+    if (process.env.VERCEL === "1")
+      throw new ApiError(
+        503,
+        "Los trabajos internos deben ejecutarse en el worker de Cloud Run.",
+      );
     await requireInternal(request);
     if (method !== "POST") throw new ApiError(405, "Método no permitido");
     if (segments.join("/") === "internal/jobs/process") {

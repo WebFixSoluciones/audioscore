@@ -6,9 +6,11 @@ Estudio musical y base SaaS en Next.js + React + TypeScript. Interfaz oscura en 
 
 Repositorio: [WebFixSoluciones/audioscore](https://github.com/WebFixSoluciones/audioscore). La rama principal es `main`; las versiones estables se identifican con etiquetas `vX.Y.Z` y se documentan en [CHANGELOG.md](CHANGELOG.md). `artifacts/` y los archivos temporales de análisis permanecen fuera del control de versiones.
 
+**Vercel:** importa ese repositorio desde [Vercel](https://vercel.com/new), selecciona la raíz y deja `main` como rama de producción. El repositorio incluye la configuración de compilación y Node 22; una vez vinculado, los siguientes pushes se publican automáticamente. El estudio funciona sin variables cloud. Para habilitar cuentas y proyectos, consulta [docs/VERCEL.md](docs/VERCEL.md). La vinculación y el despliegue remoto todavía deben realizarse en la cuenta del propietario.
+
 ## Inicio local
 
-Node 22 o posterior, npm y un navegador moderno.
+Node 22, npm y un navegador moderno.
 
 ```powershell
 npm ci

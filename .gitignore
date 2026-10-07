@@ -10,3 +10,4 @@ playwright-report/
 .tmp/
 runtime/
 artifacts/
+.vercel/

@@ -1,0 +1,12 @@
+.git/
+.next/
+node_modules/
+.tmp/
+runtime/
+artifacts/
+test-results/
+playwright-report/
+coverage/
+.env*
+!.env.example
+*.log

@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
+const onVercel = process.env.VERCEL === "1";
 const config: NextConfig = {
-  output: "standalone",
+  output: onVercel ? undefined : "standalone",
   devIndicators: false,
   outputFileTracingExcludes: {
     "/api/*": [
@@ -8,16 +9,28 @@ const config: NextConfig = {
       "**/AppData/Local/Temp/**",
       "/tmp",
       "/tmp/**",
+      ...(onVercel
+        ? [
+            "./runtime/**",
+            "./public/models/**",
+            "./node_modules/@tensorflow/**",
+            "./node_modules/@spotify/basic-pitch/**",
+          ]
+        : []),
     ],
   },
   outputFileTracingIncludes: {
     "/api/*": [
       "./node_modules/pdfkit/js/data/**/*",
-      "./runtime/transcription-worker.cjs",
-      "./public/models/**/*",
-      "./node_modules/@tensorflow/tfjs-backend-wasm/dist/*.wasm",
-      "./node_modules/@spotify/basic-pitch/cjs/**/*",
-      "./node_modules/@tensorflow/**/*",
+      ...(!onVercel
+        ? [
+            "./runtime/transcription-worker.cjs",
+            "./public/models/**/*",
+            "./node_modules/@tensorflow/tfjs-backend-wasm/dist/*.wasm",
+            "./node_modules/@spotify/basic-pitch/cjs/**/*",
+            "./node_modules/@tensorflow/**/*",
+          ]
+        : []),
     ],
   },
   serverExternalPackages: [

@@ -29,7 +29,17 @@ export function assertQueueConfigured() {
 }
 export async function enqueue(job: Job) {
   assertQueueConfigured();
-  const client = new CloudTasksClient();
+  const client = new CloudTasksClient({
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+    ...(process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY
+      ? {
+          credentials: {
+            client_email: process.env.FIREBASE_CLIENT_EMAIL,
+            private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+          },
+        }
+      : {}),
+  });
   const parent = client.queuePath(
     process.env.GOOGLE_CLOUD_PROJECT_ID!,
     process.env.CLOUD_TASKS_LOCATION!,

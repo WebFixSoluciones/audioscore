@@ -1,7 +1,8 @@
 import { dispatch } from "@/lib/api/dispatch";
 import { handleApi } from "@/lib/security/response";
 export const runtime = "nodejs";
-export const maxDuration = 1800;
+// Long analysis jobs execute on the Cloud Run worker, not this web API.
+export const maxDuration = 300;
 type Context = { params: Promise<{ segments: string[] }> };
 async function route(request: Request, context: Context) {
   return handleApi(async () =>

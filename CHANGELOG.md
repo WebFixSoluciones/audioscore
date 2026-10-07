@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## 0.3.0 — 2026-10-06
+
+- Configuración de importación GitHub → Vercel con Node 22 y compilación Next.js específica de la plataforma.
+- Se conservan los modelos públicos para análisis en navegador; las funciones web excluyen archivos exclusivos del worker.
+- Trabajos cloud largos destinados a Cloud Run; las rutas internas se rechazan en Vercel.
+- Cloud Tasks utiliza credenciales explícitas fuera de Google Cloud; guía de variables y conexión inicial.
+- Preparación local verificada; no se afirma haber vinculado ni desplegado en una cuenta Vercel.
+
 ## 0.2.0 — 2026-10-06
 
 - AudioSet: catálogo oficial con 87 categorías musicales compatibles con YAMNet, identificadores y referencias para comparar ejemplos.

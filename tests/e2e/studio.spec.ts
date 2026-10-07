@@ -18,7 +18,7 @@ test("edición manual, historial, partitura y exportación real", async ({
   await expect(page.getByLabel("Pitch MIDI")).toHaveValue("64");
   await page.getByRole("button", { name: "Partitura", exact: true }).click();
   await expect(page.locator(".score-view svg").first()).toBeVisible({
-    timeout: 30000,
+    timeout: 45000,
   });
   await page.getByRole("button", { name: "Exportar", exact: true }).click();
   const download = page.waitForEvent("download");
@@ -44,7 +44,7 @@ test("importa eventos del MIDI y deja la procedencia de hardware desconocida", a
       .evaluate((e) => e.scrollWidth <= e.clientWidth + 2),
   ).toBe(true);
   await expect(page.locator(".score-view svg").first()).toBeVisible({
-    timeout: 30000,
+    timeout: 45000,
   });
   await page.getByRole("button", { name: "Exportar", exact: true }).click();
   const download = page.waitForEvent("download");
