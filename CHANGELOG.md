@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## 0.4.2 — 2026-10-06
+
+- Conexión de Vercel a Firebase Authentication y Firestore mediante identidad federada OIDC, sin claves privadas persistentes.
+- Configuración de producción y App Check para el dominio audioscore.vercel.app.
+- Node.js 22 verificado en Vercel; el aviso previo de versiones no impidió compilar.
+
 ## 0.4.1 — 2026-10-06
 
 - Firestore Standard `(default)` creado en `nam5`, con cuota gratuita; reglas e índices desplegados y cinco planes inicializados.

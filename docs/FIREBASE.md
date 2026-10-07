@@ -36,7 +36,7 @@ La primera cuenta administradora se aprovisionó con la identidad de Google ya v
 
 ## Vercel
 
-Configura en Vercel los valores públicos `NEXT_PUBLIC_FIREBASE_*` obtenidos para esta aplicación y `FIREBASE_PROJECT_ID=audioscore-ca277`. El servidor necesita credenciales de una cuenta de servicio mediante `FIREBASE_CLIENT_EMAIL` y `FIREBASE_PRIVATE_KEY`, o una identidad federada válida. Nunca publiques credenciales privadas en GitHub ni en variables `NEXT_PUBLIC_*`.
+Configura en Vercel los valores públicos `NEXT_PUBLIC_FIREBASE_*` obtenidos para esta aplicación y `FIREBASE_PROJECT_ID=audioscore-ca277`. Producción utiliza identidad federada OIDC con `GCP_WORKLOAD_IDENTITY_AUDIENCE` y `GCP_SERVICE_ACCOUNT_EMAIL`. Como alternativa, el servidor admite credenciales de una cuenta de servicio mediante `FIREBASE_CLIENT_EMAIL` y `FIREBASE_PRIVATE_KEY`, o una identidad federada válida. Nunca publiques credenciales privadas en GitHub ni en variables `NEXT_PUBLIC_*`.
 
 Configura `NEXT_PUBLIC_APP_URL` con la URL pública real. Registra el proveedor App Check y su clave `NEXT_PUBLIC_RECAPTCHA_ENTERPRISE_SITE_KEY` antes de exigir App Check en ese dominio. El inicio por Google queda oculto hasta que se configure explícitamente `NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=true` y se habilite ese proveedor.
 

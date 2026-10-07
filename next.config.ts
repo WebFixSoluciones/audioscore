@@ -35,6 +35,7 @@ const config: NextConfig = {
   },
   serverExternalPackages: [
     "firebase-admin",
+    "@google-cloud/firestore",
     "@google-cloud/storage",
     "@google-cloud/tasks",
     "fluent-ffmpeg",

@@ -1,6 +1,6 @@
 {
   "name": "audio-score-ai",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "scripts": {
     "prepare:transcription": "node scripts/prepare-transcription.mjs",
@@ -29,6 +29,7 @@
     "node": "22.x"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^9.3.1",
     "@google-cloud/storage": "^8.2.0",
     "@google-cloud/tasks": "^7.2.1",
     "@google/genai": "^2.27.0",
@@ -36,6 +37,7 @@
     "@tensorflow/tfjs": "4.22.0",
     "@tensorflow/tfjs-backend-wasm": "4.22.0",
     "@tonejs/midi": "^2.0.28",
+    "@vercel/oidc": "^4.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "fast-xml-parser": "^5.11.2",
