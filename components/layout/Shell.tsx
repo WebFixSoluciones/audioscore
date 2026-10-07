@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   AudioLines,
@@ -14,13 +14,33 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-export function Shell({ children }: { children: React.ReactNode }) {
+import { signOut } from "firebase/auth";
+import { api, clientFirebase } from "@/lib/firebase/client";
+export function Shell({
+  children,
+  account,
+}: {
+  children: React.ReactNode;
+  account?: { email: string; isAdmin: boolean };
+}) {
   const path = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const links = [
-    { href: "/studio", label: "Estudio local", icon: SlidersHorizontal },
+    ...(account
+      ? [{ href: "/dashboard", label: "Dashboard", icon: Activity }]
+      : []),
+    {
+      href: account ? "/dashboard/studio" : "/studio",
+      label: "Estudio musical",
+      icon: SlidersHorizontal,
+    },
     { href: "/dashboard/projects", label: "Mis proyectos", icon: FolderOpen },
-    { href: "/pricing", label: "Planes y consumo", icon: CreditCard },
+    {
+      href: account ? "/dashboard/usage" : "/pricing",
+      label: "Planes y consumo",
+      icon: CreditCard,
+    },
     { href: "/features", label: "Cómo funciona", icon: CircleHelp },
   ];
   return (
@@ -55,11 +75,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
               onClick={() => setOpen(false)}
               key={l.href}
               href={l.href}
-              className={`nav-item ${path.startsWith(l.href) ? "active" : ""}`}
+              className={`nav-item ${(l.href === "/dashboard" ? path === l.href : path.startsWith(l.href)) ? "active" : ""}`}
             >
               <l.icon size={18} />
               {l.label}
-              {path.startsWith(l.href) && <span className="active-dot" />}
+              {(l.href === "/dashboard"
+                ? path === l.href
+                : path.startsWith(l.href)) && <span className="active-dot" />}
             </Link>
           ))}
         </nav>
@@ -76,14 +98,26 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
         <div className="sidebar-bottom">
-          <Link href="/admin" className="nav-item">
-            <Shield size={17} />
-            Administración
-          </Link>
-          <Link href="/auth/login" className="profile">
+          {account?.isAdmin && (
+            <Link href="/admin" className="nav-item">
+              <Shield size={17} />
+              Administración
+            </Link>
+          )}
+          <Link
+            href={account ? "/dashboard" : "/auth/login"}
+            className="profile"
+          >
             <span className="workspace-avatar">♪</span>
             <div>
-              Tu cuenta<small>Iniciar sesión</small>
+              {account ? account.email : "Tu cuenta"}
+              <small>
+                {account
+                  ? account.isAdmin
+                    ? "Administrador"
+                    : "Usuario registrado"
+                  : "Iniciar sesión"}
+              </small>
             </div>
             <ArrowUpRight size={16} />
           </Link>
@@ -97,11 +131,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
               /{" "}
               {path.includes("pricing")
                 ? "Planes"
-                : path.includes("dashboard")
-                  ? "Proyectos"
-                  : path.includes("features")
-                    ? "Herramientas"
-                    : "Estudio"}
+                : path.includes("admin")
+                  ? "Administración"
+                  : path === "/dashboard"
+                    ? "Dashboard"
+                    : path.includes("projects")
+                      ? "Proyectos"
+                      : path.includes("usage")
+                        ? "Consumo"
+                        : path.includes("features")
+                          ? "Herramientas"
+                          : "Estudio"}
             </span>
           </span>
           <div>
@@ -109,9 +149,29 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <span />
               Archivos temporales
             </span>
-            <Link className="top-link" href="/auth/login">
-              Conectar cuenta <ArrowUpRight size={14} />
-            </Link>
+            {account ? (
+              <button
+                className="text-button"
+                onClick={() =>
+                  void api("/api/auth/session", { method: "DELETE" })
+                    .then(async () => {
+                      await signOut(clientFirebase().auth);
+                      router.replace("/");
+                      router.refresh();
+                    })
+                    .catch(() => {
+                      router.replace("/auth/login");
+                      router.refresh();
+                    })
+                }
+              >
+                Cerrar sesión
+              </button>
+            ) : (
+              <Link className="top-link" href="/auth/login">
+                Conectar cuenta <ArrowUpRight size={14} />
+              </Link>
+            )}
           </div>
         </header>
         {children}

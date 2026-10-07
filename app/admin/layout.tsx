@@ -9,35 +9,44 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  let account;
   try {
-    const account = await requireAccount();
+    account = await requireAccount();
     requireAdmin(account);
   } catch (e) {
-    if (e instanceof ApiError) redirect("/auth/login");
+    if (e instanceof ApiError)
+      redirect(e.status === 403 ? "/dashboard" : "/auth/login");
     throw e;
   }
   return (
-    <Shell>
+    <Shell account={{ email: account.email, isAdmin: true }}>
       <div className="content-page">
         <div className="eyebrow">CONTROL DEL ESPACIO MUSICAL</div>
         <h1>Administración</h1>
         <div className="admin-nav">
-          {["users", "plans", "jobs", "usage", "logs", "settings"].map(
-            (s, i) => (
-              <Link key={s} href={`/admin/${s}`}>
-                {
-                  [
-                    "Usuarios",
-                    "Planes",
-                    "Jobs",
-                    "Consumo",
-                    "Logs",
-                    "Configuración",
-                  ][i]
-                }
-              </Link>
-            ),
-          )}
+          {[
+            "overview",
+            "users",
+            "plans",
+            "jobs",
+            "usage",
+            "logs",
+            "settings",
+          ].map((s, i) => (
+            <Link key={s} href={`/admin/${s}`}>
+              {
+                [
+                  "Resumen",
+                  "Usuarios",
+                  "Planes",
+                  "Jobs",
+                  "Consumo",
+                  "Logs",
+                  "Configuración",
+                ][i]
+              }
+            </Link>
+          ))}
         </div>
         {children}
       </div>

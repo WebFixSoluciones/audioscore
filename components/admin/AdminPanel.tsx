@@ -5,7 +5,10 @@ import { messageOf } from "@/lib/utils/errors";
 import { PLANS } from "@/lib/billing/plans";
 export function AdminPanel({ section }: { section: string }) {
   const [rows, setRows] = useState<Record<string, unknown>[]>([]),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [loading, setLoading] = useState(true),
+    [saving, setSaving] = useState<string>(),
+    [plans, setPlans] = useState(PLANS);
   useEffect(() => {
     void api<Record<string, unknown>>(`/api/admin/${section}`)
       .then((r) => {
@@ -14,10 +17,15 @@ export function AdminPanel({ section }: { section: string }) {
           Array.isArray(result) ? result : [result as Record<string, unknown>],
         );
       })
-      .catch((e) => setError(messageOf(e)));
+      .catch((e) => setError(messageOf(e)))
+      .finally(() => setLoading(false));
+    if (section === "users")
+      void api<{ plans: typeof PLANS }>("/api/admin/plans")
+        .then((r) => setPlans(r.plans))
+        .catch((e) => setError(messageOf(e)));
   }, [section]);
   const fields: Record<string, string[]> = {
-    users: ["email", "status", "planId", "activeJobs"],
+    users: ["email", "status", "planId", "subscriptionStatus", "activeJobs"],
     plans: ["name", "monthlyAudioMinutes", "maxProjects", "maxSources"],
     jobs: ["projectId", "kind", "status", "stage", "attempts"],
     usage: ["projectId", "minutesReserved", "minutesConsumed", "status"],
@@ -29,6 +37,25 @@ export function AdminPanel({ section }: { section: string }) {
     ],
   };
   const columns = fields[section] ?? [];
+  const names: Record<string, string> = {
+    email: "Correo",
+    status: "Estado",
+    planId: "Plan",
+    subscriptionStatus: "Suscripción",
+    activeJobs: "Trabajos activos",
+    projectId: "Proyecto",
+    kind: "Tipo",
+    stage: "Etapa",
+    attempts: "Intentos",
+    minutesReserved: "Minutos reservados",
+    minutesConsumed: "Minutos usados",
+    createdAt: "Fecha",
+    actor: "Administrador",
+    action: "Acción",
+    originalRetentionHours: "Retención del audio (horas)",
+    stemRetentionHours: "Retención de fuentes (horas)",
+    maxExportRetentionDays: "Retención de exportaciones (días)",
+  };
   return (
     <>
       {error && (
@@ -41,7 +68,7 @@ export function AdminPanel({ section }: { section: string }) {
           <thead>
             <tr>
               {columns.map((c) => (
-                <th key={c}>{c}</th>
+                <th key={c}>{names[c] ?? c}</th>
               ))}
               {section === "users" && <th>Asignar plan / estado</th>}
               {section === "jobs" && <th>Reintentar</th>}
@@ -58,8 +85,11 @@ export function AdminPanel({ section }: { section: string }) {
                     <select
                       aria-label={`Asignar plan a ${r.email}`}
                       value={String(r.planId)}
+                      disabled={Boolean(saving)}
                       onChange={(e) => {
                         const planId = e.target.value;
+                        setSaving(String(r.uid));
+                        setError("");
                         void api(`/api/admin/users/${r.uid}`, {
                           method: "PATCH",
                           body: JSON.stringify({ planId }),
@@ -71,10 +101,11 @@ export function AdminPanel({ section }: { section: string }) {
                               ),
                             ),
                           )
-                          .catch((e) => setError(messageOf(e)));
+                          .catch((e) => setError(messageOf(e)))
+                          .finally(() => setSaving(undefined));
                       }}
                     >
-                      {PLANS.map((p) => (
+                      {plans.map((p) => (
                         <option value={p.id} key={p.id}>
                           {p.name}
                         </option>
@@ -83,8 +114,11 @@ export function AdminPanel({ section }: { section: string }) {
                     <select
                       aria-label={`Estado de ${r.email}`}
                       value={String(r.status)}
+                      disabled={Boolean(saving)}
                       onChange={(e) => {
                         const status = e.target.value;
+                        setSaving(String(r.uid));
+                        setError("");
                         void api(`/api/admin/users/${r.uid}`, {
                           method: "PATCH",
                           body: JSON.stringify({ status }),
@@ -96,12 +130,44 @@ export function AdminPanel({ section }: { section: string }) {
                               ),
                             ),
                           )
-                          .catch((e) => setError(messageOf(e)));
+                          .catch((e) => setError(messageOf(e)))
+                          .finally(() => setSaving(undefined));
                       }}
                     >
-                      {["active", "suspended", "deleted"].map((s) => (
-                        <option key={s}>{s}</option>
+                      {["active", "suspended"].map((s) => (
+                        <option key={s} value={s}>
+                          {s === "active" ? "Activo" : "Suspendido"}
+                        </option>
                       ))}
+                    </select>
+                    <select
+                      aria-label={`Suscripción de ${r.email}`}
+                      value={String(r.subscriptionStatus ?? "active")}
+                      disabled={Boolean(saving)}
+                      onChange={(e) => {
+                        const subscriptionStatus = e.target.value;
+                        setSaving(String(r.uid));
+                        setError("");
+                        void api(`/api/admin/users/${r.uid}`, {
+                          method: "PATCH",
+                          body: JSON.stringify({ subscriptionStatus }),
+                        })
+                          .then(() =>
+                            setRows((current) =>
+                              current.map((user) =>
+                                user.uid === r.uid
+                                  ? { ...user, subscriptionStatus }
+                                  : user,
+                              ),
+                            ),
+                          )
+                          .catch((error) => setError(messageOf(error)))
+                          .finally(() => setSaving(undefined));
+                      }}
+                    >
+                      <option value="active">Suscripción activa</option>
+                      <option value="past_due">Pago pendiente</option>
+                      <option value="cancelled">Cancelada</option>
                     </select>
                   </td>
                 )}
@@ -138,8 +204,10 @@ export function AdminPanel({ section }: { section: string }) {
           </tbody>
         </table>
       </div>
-      {!rows.length && (
-        <p className="page-subtitle">Todavía no hay registros.</p>
+      {!rows.length && !error && (
+        <p className="page-subtitle" role="status">
+          {loading ? "Cargando registros…" : "Todavía no hay registros."}
+        </p>
       )}
     </>
   );

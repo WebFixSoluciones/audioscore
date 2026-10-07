@@ -60,6 +60,7 @@ export const POST = (request: Request) =>
     return {
       authenticated: true,
       emailVerified: claims.email_verified === true,
+      role: claims.admin === true ? "admin" : "user",
     };
   });
 export const DELETE = (request: Request) =>

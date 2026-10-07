@@ -8,12 +8,19 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  let account;
   try {
-    await requireAccount();
+    account = await requireAccount();
   } catch (e) {
     if (e instanceof ApiError && [401, 403, 503].includes(e.status))
       redirect("/auth/login");
     throw e;
   }
-  return <Shell>{children}</Shell>;
+  return (
+    <Shell
+      account={{ email: account.email, isAdmin: account.role === "admin" }}
+    >
+      {children}
+    </Shell>
+  );
 }

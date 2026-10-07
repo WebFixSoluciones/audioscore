@@ -22,6 +22,10 @@ const separationSchema = z.object({
 export function assertTranscriptionConfigured() {
   if (
     !process.env.TRANSCRIPTION_PROVIDER_URL &&
+    !(
+      process.env.VERCEL === "1" &&
+      process.env.WORKER_URL?.startsWith("https://")
+    ) &&
     !existsSync(join(process.cwd(), "runtime/transcription-worker.cjs"))
   )
     throw new ApiError(

@@ -21,17 +21,28 @@ export const featureNames = [
 export type Feature = (typeof featureNames)[number];
 export const planSchema = z.object({
   id: z.enum(["free", "starter", "pro", "studio", "enterprise"]),
-  name: z.string(),
-  priceMonthly: z.number().nonnegative(),
+  name: z.string().trim().min(1).max(80),
+  priceMonthly: z.number().nonnegative().max(1000000),
   currency: z.literal("USD"),
   monthlyAudioMinutes: z.number().positive(),
   maxFileDurationSeconds: z.number().positive(),
-  maxFileBytes: z.number().positive(),
+  maxFileBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(250 * 1024 * 1024),
   maxProjects: z.number().int().positive(),
   maxSources: z.number().int().min(1).max(64),
   maxConcurrentJobs: z.number().int().positive(),
-  retentionDays: z.number().positive(),
-  allowedExports: z.array(z.enum(exportFormats)),
+  retentionDays: z.number().int().min(1).max(7),
+  allowedExports: z
+    .array(z.enum(exportFormats))
+    .min(1)
+    .max(exportFormats.length)
+    .refine(
+      (values) => new Set(values).size === values.length,
+      "Las exportaciones no pueden repetirse",
+    ),
   features: z.object({
     advancedAnalysis: z.boolean(),
     manualCorrection: z.boolean(),

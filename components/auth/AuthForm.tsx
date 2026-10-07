@@ -37,11 +37,20 @@ export function AuthForm({ mode }: { mode: Mode }) {
   async function establish() {
     const user = clientFirebase().auth.currentUser;
     if (!user) throw new Error("Inicia sesión para continuar.");
-    await api("/api/auth/session", {
+    const session = await api<{
+      emailVerified: boolean;
+      role: "user" | "admin";
+    }>("/api/auth/session", {
       method: "POST",
       body: JSON.stringify({ idToken: await user.getIdToken(true) }),
     });
-    router.push(user.emailVerified ? "/dashboard" : "/auth/verify-email");
+    router.push(
+      session.emailVerified
+        ? session.role === "admin"
+          ? "/admin"
+          : "/dashboard"
+        : "/auth/verify-email",
+    );
     router.refresh();
   }
   async function execute(work: () => Promise<void>) {
@@ -226,26 +235,27 @@ export function AuthForm({ mode }: { mode: Mode }) {
             </button>
           </form>
         )}
-        {["login", "register"].includes(mode) && (
-          <>
-            <div className="divider">O CONTINÚA CON</div>
-            <button
-              className="button secondary"
-              style={{ width: "100%" }}
-              disabled={busy || !firebaseConfigured}
-              onClick={() =>
-                void execute(async () => {
-                  const { auth } = clientFirebase();
-                  await setPersistence(auth, browserLocalPersistence);
-                  await signInWithPopup(auth, new GoogleAuthProvider());
-                  await establish();
-                })
-              }
-            >
-              Google <ArrowUpRight size={14} />
-            </button>
-          </>
-        )}
+        {process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true" &&
+          ["login", "register"].includes(mode) && (
+            <>
+              <div className="divider">O CONTINÚA CON</div>
+              <button
+                className="button secondary"
+                style={{ width: "100%" }}
+                disabled={busy || !firebaseConfigured}
+                onClick={() =>
+                  void execute(async () => {
+                    const { auth } = clientFirebase();
+                    await setPersistence(auth, browserLocalPersistence);
+                    await signInWithPopup(auth, new GoogleAuthProvider());
+                    await establish();
+                  })
+                }
+              >
+                Google <ArrowUpRight size={14} />
+              </button>
+            </>
+          )}
         {error && (
           <p className="form-error" role="alert">
             {error}

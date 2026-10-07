@@ -53,6 +53,7 @@ import {
   requireAccount,
   requireAdmin,
   assertOrigin,
+  verifyAppCheck,
 } from "@/lib/security/auth-guard";
 import { ownedProject, safeId } from "@/lib/security/ownership";
 import { featureAllowed, exportAllowed } from "@/lib/security/plan-guard";
@@ -69,6 +70,28 @@ beforeEach(() =>
   }),
 );
 describe("sesiones y acceso privado", () => {
+  it("permite el arranque local sin App Check solo con configuración explícita y conserva la autenticación", async () => {
+    vi.stubEnv("APP_CHECK_ENFORCED", "false");
+    try {
+      await expect(
+        verifyAppCheck(new Request("http://localhost:3000")),
+      ).resolves.toBeUndefined();
+      state.session = undefined;
+      await expect(
+        requireAccount(new Request("http://localhost:3000")),
+      ).rejects.toThrow("Inicia sesión");
+      state.appCheck = false;
+      await expect(
+        verifyAppCheck(
+          new Request("http://localhost:3000", {
+            headers: { "X-Firebase-AppCheck": "invalid" },
+          }),
+        ),
+      ).rejects.toThrow("App Check inválido");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it("usa el UID de la cookie verificada y descarta userId del payload", async () => {
     const account = await requireAccount(
       new Request("http://localhost:3000/api/projects", {

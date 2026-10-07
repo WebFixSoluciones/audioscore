@@ -1,10 +1,9 @@
-import { Shell } from "@/components/layout/Shell";
 import { PLANS } from "@/lib/billing/plans";
 import Link from "next/link";
 import { Check, ArrowUpRight } from "lucide-react";
 export default function Pricing() {
   return (
-    <Shell>
+    <>
       <div className="content-page">
         <div className="eyebrow">MÁS ESPACIO PARA TU MÚSICA</div>
         <h1>Un plan para cada ritmo.</h1>
@@ -68,6 +67,6 @@ export default function Pricing() {
           exportaciones caducan según el plan, hasta 7 días.
         </p>
       </div>
-    </Shell>
+    </>
   );
 }

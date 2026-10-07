@@ -23,6 +23,7 @@ export function assertOrigin(request: Request) {
 }
 export async function verifyAppCheck(request: Request) {
   const token = request.headers.get("X-Firebase-AppCheck");
+  if (!token && process.env.APP_CHECK_ENFORCED === "false") return;
   if (!token) throw new ApiError(403, "Falta la verificación App Check");
   try {
     await adminFirebase().appCheck.verifyToken(token);

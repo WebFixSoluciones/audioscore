@@ -1,4 +1,3 @@
-import { Shell } from "@/components/layout/Shell";
 import {
   AudioLines,
   Music2,
@@ -47,7 +46,7 @@ export default function Features() {
     },
   ];
   return (
-    <Shell>
+    <>
       <div className="content-page">
         <div className="eyebrow">HERRAMIENTAS CON PROPÓSITO</div>
         <h1>Entiende lo que escuchas.</h1>
@@ -67,6 +66,6 @@ export default function Features() {
           ))}
         </div>
       </div>
-    </Shell>
+    </>
   );
 }

@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## 0.4.0 — 2026-10-06
+
+- Landing pública con Ingresar, dashboard protegido, estudio dentro de la cuenta y cierre de sesión.
+- Administración visible por rol; edición de precios, límites, exportaciones y funciones de los planes, asignación de planes y estado de suscripción, suspensión y reactivación de usuarios.
+- Habilidades oficiales de Firebase instaladas y proyecto existente `audioscore-ca277` seleccionado; aplicación web registrada y Email/password activado en Firebase.
+- Configuración local y credenciales excluidas de Git; herramienta explícita para asignar la primera cuenta administradora verificada.
+- Firestore aún pendiente de ubicación/edición y cuenta administradora pendiente de correo del propietario. No se han habilitado cobros ni conexiones de IA.
+
 ## 0.3.0 — 2026-10-06
 
 - Configuración de importación GitHub → Vercel con Node 22 y compilación Next.js específica de la plataforma.

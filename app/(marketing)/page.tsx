@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Shell } from "@/components/layout/Shell";
 import { FileMusic, ArrowRight, ArrowUpRight, ShieldCheck } from "lucide-react";
 export default function Home() {
   return (
-    <Shell>
+    <>
       <div className="landing">
         <div className="eyebrow">
           <span className="tiny-dot violet" /> ESCUCHA. COMPRENDE. CREA.
@@ -20,8 +19,11 @@ export default function Home() {
           nota y construir partituras que puedas seguir trabajando.
         </p>
         <div className="landing-actions">
-          <Link className="button primary" href="/studio">
-            Abrir estudio local <ArrowUpRight size={16} />
+          <Link className="button primary" href="/auth/login">
+            Ingresar <ArrowUpRight size={16} />
+          </Link>
+          <Link className="text-button" href="/studio">
+            Probar el estudio sin cuenta
           </Link>
           <Link className="button secondary" href="/auth/register">
             Crear mi cuenta <ArrowRight size={15} />
@@ -90,10 +92,10 @@ export default function Home() {
         </div>
         <p className="auth-promise">
           <ShieldCheck size={17} />
-          La transcripción depende del motor de audio configurado. La revisión
-          musical siempre importa.
+          Analiza audio, revisa instrumentos probables y crea tu partitura. Tu
+          dashboard reúne las herramientas y tus proyectos.
         </p>
       </div>
-    </Shell>
+    </>
   );
 }
