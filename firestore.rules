@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function active() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+    }
+    function admin() { return active() && request.auth.token.admin == true; }
+    function owner(uid) { return active() && request.auth.uid == uid; }
+    match /users/{uid} {
+      allow read: if owner(uid) || admin();
+      allow write: if false;
+      match /{document=**} {
+        allow read: if owner(uid) || admin();
+        allow write: if false;
+      }
+    }
+    match /plans/{id} { allow read: if active(); allow write: if false; }
+    match /subscriptions/{id} { allow read: if active() && (resource.data.userId == request.auth.uid || admin()); allow write: if false; }
+    match /adminLogs/{id} { allow read: if admin(); allow write: if false; }
+    match /system/{id} { allow read: if admin(); allow write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

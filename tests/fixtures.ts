@@ -1,0 +1,56 @@
+import { emptyDocument, type MusicDocument } from "@/lib/music/types";
+export function fixture(): MusicDocument {
+  return {
+    ...emptyDocument(),
+    title: "Fixture humana",
+    durationSeconds: 4,
+    confidence: 1,
+    sources: [
+      {
+        id: "piano",
+        name: "Piano",
+        nameEs: "Piano",
+        category: "tonal",
+        family: "piano",
+        acousticOrElectronic: "unknown",
+        analogOrDigital: "unknown",
+        polyphony: "polyphonic",
+        confidence: 1,
+        evidence: "human",
+        program: 0,
+        channel: 1,
+        warnings: [],
+      },
+    ],
+    events: [
+      {
+        id: "n1",
+        sourceId: "piano",
+        type: "note",
+        startSeconds: 0,
+        durationSeconds: 0.5,
+        startTick: 0,
+        durationTicks: 128,
+        midiNote: 60,
+        velocity: 100,
+        articulation: "normal",
+        confidence: 1,
+        isHumanReviewed: true,
+      },
+      {
+        id: "n2",
+        sourceId: "piano",
+        type: "note",
+        startSeconds: 1.5,
+        durationSeconds: 1,
+        startTick: 384,
+        durationTicks: 256,
+        midiNote: 64,
+        velocity: 80,
+        articulation: "normal",
+        confidence: 0.5,
+        isHumanReviewed: false,
+      },
+    ],
+  };
+}

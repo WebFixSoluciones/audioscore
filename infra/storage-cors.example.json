@@ -1,0 +1,1 @@
+[{ "origin": ["https://YOUR-APP-DOMAIN"], "method": ["GET", "PUT", "HEAD"], "responseHeader": ["Content-Type", "Content-Length"], "maxAgeSeconds": 600 }]
