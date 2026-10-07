@@ -1,7 +1,9 @@
-import { PLANS } from "@/lib/billing/plans";
+import { publishedPlans } from "@/lib/billing/catalog";
 import Link from "next/link";
 import { Check, ArrowUpRight } from "lucide-react";
-export default function Pricing() {
+export const dynamic = "force-dynamic";
+export default async function Pricing() {
+  const plans = await publishedPlans();
   return (
     <>
       <div className="content-page">
@@ -12,7 +14,7 @@ export default function Pricing() {
           se verifican en el servidor antes de iniciar cada trabajo.
         </p>
         <div className="pricing-grid">
-          {PLANS.map((p) => (
+          {plans.map((p) => (
             <div
               key={p.id}
               className={`price-card ${p.id === "pro" ? "featured" : ""}`}
@@ -61,10 +63,9 @@ export default function Pricing() {
           ))}
         </div>
         <p className="pricing-note">
-          Precios de configuración inicial. Los planes de pago se asignan
-          mediante administración; no hay cobro automático integrado.
-          Originales, stems y ZIP caducan como máximo en 24 horas. Las demás
-          exportaciones caducan según el plan, hasta 7 días.
+          Los planes de pago se asignan mediante administración; no hay cobro
+          automático integrado. Originales, stems y ZIP caducan como máximo en
+          24 horas. Las demás exportaciones caducan según el plan, hasta 7 días.
         </p>
       </div>
     </>

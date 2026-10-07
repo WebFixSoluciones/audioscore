@@ -6,7 +6,7 @@ import "server-only";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, FieldPath } from "firebase-admin/firestore";
 import { adminFirebase } from "@/lib/firebase/admin";
 import {
   temporaryBucket,
@@ -41,7 +41,8 @@ import { renderNotation } from "@/lib/music/score-converter";
 import { requireInternal } from "@/lib/security/internal-guard";
 import { processProject } from "@/lib/jobs/process-project";
 import { cleanupAssets, recoverUndispatchedJobs } from "@/lib/jobs/cleanup";
-import { planSchema, PLANS } from "@/lib/billing/plans";
+import { planSchema } from "@/lib/billing/plans";
+import { publishedPlans } from "@/lib/billing/catalog";
 const body = async (request: Request) => {
   if (Number(request.headers.get("content-length") ?? 0) > 900000)
     throw new ApiError(413, "Solicitud demasiado grande");
@@ -62,7 +63,7 @@ export async function dispatch(
     method = request.method;
   if (segments.length > 5) throw new ApiError(404, "Ruta no encontrada");
   if (resource === "plans" && segments.length === 1 && method === "GET")
-    return { plans: PLANS };
+    return { plans: await publishedPlans() };
   if (resource === "internal") {
     if (process.env.VERCEL === "1")
       throw new ApiError(
@@ -88,6 +89,8 @@ export async function dispatch(
       };
     throw new ApiError(404, "Ruta interna inexistente");
   }
+  if (!["admin", "projects", "usage"].includes(resource))
+    throw new ApiError(404, "Ruta no encontrada");
   const account = await requireAccount(request),
     { db } = adminFirebase();
   await rateLimit(
@@ -97,12 +100,23 @@ export async function dispatch(
   );
   if (resource === "admin") {
     requireAdmin(account);
-    if (id === "users" && method === "GET")
+    if (id === "users" && method === "GET") {
+      const params = new URL(request.url).searchParams;
+      const cursor = params.get("cursor");
+      const email = params.get("email")?.trim().toLowerCase();
+      if (email) z.email().max(254).parse(email);
+      let query = db
+        .collection("users")
+        .orderBy(FieldPath.documentId())
+        .limit(51);
+      if (email) query = query.where("email", "==", email);
+      if (cursor) query = query.startAfter(safeId(cursor));
+      const rows = (await query.get()).docs;
       return {
-        users: (await db.collection("users").limit(100).get()).docs.map(
-          (d) => ({ ...d.data(), uid: d.id }),
-        ),
+        users: rows.slice(0, 50).map((doc) => ({ ...doc.data(), uid: doc.id })),
+        nextCursor: rows.length > 50 ? rows[49].id : null,
       };
+    }
     if (id === "users" && action && method === "PATCH") {
       const patch = z
         .object({
@@ -124,6 +138,11 @@ export async function dispatch(
         const ref = db.doc(`users/${safeId(action)}`);
         if (!(await tx.get(ref)).exists)
           throw new ApiError(404, "Usuario inexistente");
+        if (
+          patch.planId &&
+          !(await tx.get(db.doc(`plans/${patch.planId}`))).exists
+        )
+          throw new ApiError(404, "Plan inexistente");
         tx.update(ref, { ...patch, updatedAt: now });
         tx.set(db.collection("adminLogs").doc(), {
           actor: account.uid,

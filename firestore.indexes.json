@@ -53,7 +53,6 @@
     {
       "collectionGroup": "rateLimits",
       "fieldPath": "expiresAt",
-      "ttl": true,
       "indexes": []
     },
     { "collectionGroup": "projects", "fieldPath": "document", "indexes": [] },

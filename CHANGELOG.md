@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## 0.4.1 — 2026-10-06
+
+- Firestore Standard `(default)` creado en `nam5`, con cuota gratuita; reglas e índices desplegados y cinco planes inicializados.
+- Primera cuenta administradora aprovisionada con identidad verificada del propietario y enlace privado de configuración de contraseña.
+- Comprobaciones contra Firebase real: ingreso por rol, edición de cuotas, rechazo de suspensión propia, protección de datos entre usuarios y bloqueo de escrituras directas en perfiles y planes.
+- Contadores de solicitudes acotados, sin TTL de pago; rutas desconocidas rechazadas antes de escribir contadores.
+- Catálogo público sincronizado con Firestore, lista de usuarios paginada y búsqueda por correo exacto.
+- Inicialización de planes sin sobrescribir ajustes existentes.
+
 ## 0.4.0 — 2026-10-06
 
 - Landing pública con Ingresar, dashboard protegido, estudio dentro de la cuenta y cierre de sesión.

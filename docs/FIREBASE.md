@@ -12,7 +12,11 @@ Los valores del SDK web están en `.env.local`, excluido de Git. Las credenciale
 
 Para el arranque local, `APP_CHECK_ENFORCED=false` permite crear sesiones sin un proveedor App Check registrado. La sesión Firebase, la verificación del correo, los permisos administrativos, la comprobación de origen y los límites de peticiones siguen aplicándose. Si llega un token App Check, siempre se verifica. El valor por defecto en el código y `.env.example` exige App Check.
 
-El proyecto no tenía bases Firestore cuando se inspeccionó. La creación espera la ubicación y edición que el propietario elija. Después hay que desplegar las reglas e índices e inicializar los planes antes de registrar cuentas en la aplicación.
+Se creó la base `(default)` de Firestore Standard en `nam5` (Estados Unidos, varias regiones), con cuota gratuita. Las reglas e índices están desplegados y los cinco planes están inicializados. Se comprobó el ingreso real de administrador y usuario, la edición de cuotas y la protección de datos entre cuentas. Las cuentas de prueba se eliminaron al terminar.
+
+Los contadores de solicitudes reutilizan un documento por usuario y operación. Así no se necesita TTL, que requiere facturación. Las rutas desconocidas se rechazan antes de escribir contadores.
+
+`npm run seed` crea únicamente los planes y ajustes que falten; conserva los cambios hechos desde administración. El catálogo público de precios lee los planes vigentes de Firestore. La lista de usuarios admite paginación y búsqueda por correo exacto.
 
 ## Usuarios y administración
 
@@ -27,6 +31,8 @@ npm run admin:grant -- correo@ejemplo.com
 ```
 
 Cierra sesión y vuelve a ingresar. El rol se comprueba desde un claim de Firebase Auth firmado; editar un campo de Firestore no concede permisos.
+
+La primera cuenta administradora se aprovisionó con la identidad de Google ya verificada del propietario autenticado en Firebase CLI. El enlace inicial para configurar la contraseña y cualquier credencial de comprobación permanecen fuera de Git. No se debe reutilizar esa confianza para verificar automáticamente otras cuentas registradas.
 
 ## Vercel
 

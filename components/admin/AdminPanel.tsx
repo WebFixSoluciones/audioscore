@@ -8,10 +8,21 @@ export function AdminPanel({ section }: { section: string }) {
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
     [saving, setSaving] = useState<string>(),
-    [plans, setPlans] = useState(PLANS);
+    [plans, setPlans] = useState(PLANS),
+    [cursor, setCursor] = useState<string>(),
+    [nextCursor, setNextCursor] = useState<string | null>(null),
+    [history, setHistory] = useState<(string | undefined)[]>([]),
+    [search, setSearch] = useState(""),
+    [emailFilter, setEmailFilter] = useState("");
   useEffect(() => {
-    void api<Record<string, unknown>>(`/api/admin/${section}`)
+    const params = new URLSearchParams();
+    if (section === "users" && cursor) params.set("cursor", cursor);
+    if (section === "users" && emailFilter) params.set("email", emailFilter);
+    void api<Record<string, unknown>>(
+      `/api/admin/${section}${params.size ? "?" + params : ""}`,
+    )
       .then((r) => {
+        setNextCursor(typeof r.nextCursor === "string" ? r.nextCursor : null);
         const result = Object.values(r)[0];
         setRows(
           Array.isArray(result) ? result : [result as Record<string, unknown>],
@@ -23,7 +34,7 @@ export function AdminPanel({ section }: { section: string }) {
       void api<{ plans: typeof PLANS }>("/api/admin/plans")
         .then((r) => setPlans(r.plans))
         .catch((e) => setError(messageOf(e)));
-  }, [section]);
+  }, [section, cursor, emailFilter]);
   const fields: Record<string, string[]> = {
     users: ["email", "status", "planId", "subscriptionStatus", "activeJobs"],
     plans: ["name", "monthlyAudioMinutes", "maxProjects", "maxSources"],
@@ -58,6 +69,56 @@ export function AdminPanel({ section }: { section: string }) {
   };
   return (
     <>
+      {section === "users" && (
+        <form
+          className="admin-actions"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setLoading(true);
+            setError("");
+            setHistory([]);
+            setCursor(undefined);
+            setEmailFilter(search.trim().toLowerCase());
+          }}
+        >
+          <label>
+            Buscar por correo exacto
+            <input
+              type="email"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="correo@estudio.com"
+            />
+          </label>
+          <button
+            className="button secondary"
+            disabled={
+              loading ||
+              Boolean(saving) ||
+              search.trim().toLowerCase() === emailFilter
+            }
+          >
+            Buscar
+          </button>
+          {emailFilter && (
+            <button
+              type="button"
+              className="text-button"
+              disabled={loading || Boolean(saving)}
+              onClick={() => {
+                setSearch("");
+                setEmailFilter("");
+                setCursor(undefined);
+                setHistory([]);
+                setLoading(true);
+                setError("");
+              }}
+            >
+              Ver todos
+            </button>
+          )}
+        </form>
+      )}
       {error && (
         <p className="notice" role="alert">
           {error}
@@ -204,6 +265,39 @@ export function AdminPanel({ section }: { section: string }) {
           </tbody>
         </table>
       </div>
+      {section === "users" && (
+        <div className="admin-actions">
+          <button
+            className="button secondary"
+            disabled={!history.length || loading || Boolean(saving)}
+            onClick={() => {
+              setCursor(history.at(-1));
+              setHistory((current) => current.slice(0, -1));
+              setLoading(true);
+              setError("");
+            }}
+          >
+            Anterior
+          </button>
+          <span className="page-subtitle">
+            Página {history.length + 1} · {rows.length} cuentas
+          </span>
+          <button
+            className="button secondary"
+            disabled={!nextCursor || loading || Boolean(saving)}
+            onClick={() => {
+              if (nextCursor) {
+                setHistory((current) => [...current, cursor]);
+                setCursor(nextCursor);
+                setLoading(true);
+                setError("");
+              }
+            }}
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
       {!rows.length && !error && (
         <p className="page-subtitle" role="status">
           {loading ? "Cargando registros…" : "Todavía no hay registros."}

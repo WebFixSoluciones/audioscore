@@ -6,10 +6,11 @@ export async function rateLimit(uid: string, action: string, max = 30) {
   const now = Date.now(),
     window = Math.floor(now / 60000);
   const ref = adminFirebase().db.doc(
-    `rateLimits/${createHash("sha256").update(`${uid}:${action}:${window}`).digest("hex")}`,
+    `rateLimits/${createHash("sha256").update(`${uid}:${action}`).digest("hex")}`,
   );
   await adminFirebase().db.runTransaction(async (tx) => {
-    const count = (await tx.get(ref)).data()?.count ?? 0;
+    const record = (await tx.get(ref)).data();
+    const count = record?.window === window ? record.count : 0;
     if (count >= max)
       throw new ApiError(
         429,
@@ -17,6 +18,7 @@ export async function rateLimit(uid: string, action: string, max = 30) {
       );
     tx.set(ref, {
       count: count + 1,
+      window,
       expiresAt: new Date(now + 120000),
       updatedAt: new Date().toISOString(),
     });

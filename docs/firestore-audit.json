@@ -1,0 +1,14 @@
+{
+  "score": 5,
+  "summary": "Reglas existentes revisadas y desplegadas. Las escrituras del SDK cliente están denegadas; el servidor valida datos, sesiones verificadas, propiedad y el claim administrativo firmado. Se verificaron contra Firebase real las lecturas propias, el rechazo de lecturas ajenas, la escalación de rol y la modificación directa de planes. Esta evaluación corresponde a los flujos comprobados y no garantiza ausencia de todas las vulnerabilidades.",
+  "findings": [],
+  "verifiedChecks": [
+    "La autoridad administrativa procede del claim firmado admin, no del campo role del perfil.",
+    "Usuarios no administrativos reciben 403 en las API administrativas.",
+    "Usuarios verificados pueden leer su perfil; no pueden leer el perfil de otra cuenta.",
+    "Usuarios no pueden modificar su rol, límites, datos de otro usuario ni crear documentos directamente desde Firestore SDK.",
+    "Cambiar role mediante PATCH de usuarios se rechaza por validación estricta.",
+    "La suspensión de la propia cuenta administradora se rechaza con 409.",
+    "Los límites de plan se leen desde Firestore en el servidor y se validan antes de guardarse."
+  ]
+}

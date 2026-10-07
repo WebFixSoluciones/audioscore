@@ -37,6 +37,7 @@ export const POST = (request: Request) =>
       if (!doc.exists)
         tx.set(ref, {
           email: claims.email ?? "",
+          emailVerified: claims.email_verified === true,
           role: "user",
           status: "active",
           planId: "free",
@@ -46,7 +47,12 @@ export const POST = (request: Request) =>
           createdAt: now,
           updatedAt: now,
         });
-      else tx.update(ref, { email: claims.email ?? "", updatedAt: now });
+      else
+        tx.update(ref, {
+          email: claims.email ?? "",
+          emailVerified: claims.email_verified === true,
+          updatedAt: now,
+        });
     });
     const expiresIn = 5 * 24 * 60 * 60 * 1000;
     const cookie = await auth.createSessionCookie(idToken, { expiresIn });
