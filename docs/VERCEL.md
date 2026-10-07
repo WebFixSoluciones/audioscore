@@ -74,3 +74,7 @@ Referencias: [Next.js en Vercel](https://vercel.com/docs/frameworks/full-stack/n
 La cuenta `audioscore-vercel` recibe únicamente los roles `firebaseauth.admin` y `datastore.user`. El proveedor OIDC limita la confianza al equipo y proyecto de AudioScore y a los entornos Production y Development; Preview no recibe estos permisos. Vercel proporciona un token temporal, que el servidor intercambia mediante Google Auth Library. Firebase Auth y Firestore usan la misma identidad. No se necesita `FIREBASE_PRIVATE_KEY` ni se deben copiar credenciales locales a Vercel.
 
 App Check usa una clave reCAPTCHA Enterprise para `audioscore.vercel.app` y `APP_CHECK_ENFORCED=true`. No se habilitó facturación. Los servicios de archivos y trabajos cloud aún requieren su configuración independiente.
+
+## Compatibilidad del SDK de Firebase
+
+Se fija `jose@5.10.0` exclusivamente dentro de `jwks-rsa` para evitar `ERR_REQUIRE_ESM` con Firebase Admin 14 en el cargador de Vercel. `npm run check:firebase-runtime` verifica que Auth y App Check puedan cargarse con `require(ESM)` desactivado. Esta comprobación corre antes de cada compilación de Vercel. Referencia: https://github.com/firebase/firebase-admin-node/issues/3181.

@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## 0.4.3 — 2026-10-07
+
+- Compatibilidad de Firebase Admin y App Check con el cargador de Vercel: jose 5.10.0 limitado a jwks-rsa.
+- Comprobación de carga sin require(ESM) antes de compilar para detectar esta incompatibilidad.
+
 ## 0.4.2 — 2026-10-06
 
 - Conexión de Vercel a Firebase Authentication y Firestore mediante identidad federada OIDC, sin claves privadas persistentes.
