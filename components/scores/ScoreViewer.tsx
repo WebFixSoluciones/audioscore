@@ -41,14 +41,20 @@ export function ScoreViewer({
     currentTime = useEditor((s) => s.currentTime);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const hasNotes = doc.events.some(
+    (event) =>
+      (full || event.sourceId === sourceId) &&
+      ["note", "chord", "drum"].includes(event.type),
+  );
   useEffect(() => {
-    if (!root.current || !doc.events.length) return;
+    if (!root.current || !hasNotes) return;
     let cancelled = false;
     const container = root.current;
     void (async () => {
+      setLoading(true);
+      setError("");
       const { OpenSheetMusicDisplay } = await import("opensheetmusicdisplay");
       if (cancelled) return;
-      setLoading(true);
       const osmd = new OpenSheetMusicDisplay(container, {
         autoResize: true,
         drawTitle: true,
@@ -80,20 +86,24 @@ export function ScoreViewer({
       viewer.current = null;
       container.replaceChildren();
     };
-  }, [doc, sourceId, full, readable]);
+  }, [doc, sourceId, full, readable, hasNotes]);
   useEffect(() => {
     if (viewer.current) synchronizeCursor(viewer.current, doc, currentTime);
   }, [currentTime, doc]);
   return (
-    <div className={`score-view ${doc.events.length ? "has-score" : ""}`}>
-      {!doc.events.length && (
+    <div className={`score-view ${hasNotes ? "has-score" : ""}`}>
+      {!hasNotes && (
         <div className="score-empty">
           <Music2 size={40} />
-          <strong>La música también se puede ver.</strong>
+          <strong>
+            {doc.events.length
+              ? "Esta pista no tiene notas."
+              : "La música también se puede ver."}
+          </strong>
           <p>
-            Importa un MIDI o escribe tus primeras notas.
-            <br />
-            La partitura se genera a partir de esos eventos.
+            {doc.events.length
+              ? "Selecciona una pista con notas o cambia a la partitura global."
+              : "Analiza un audio, importa un MIDI o escribe tus primeras notas para generar la partitura."}
           </p>
           <div className="empty-staff">
             {Array.from({ length: 5 }, (_, i) => (
@@ -102,12 +112,12 @@ export function ScoreViewer({
           </div>
         </div>
       )}
-      {error && (
+      {hasNotes && error && (
         <p role="alert" className="error-text">
           {error}
         </p>
       )}
-      {!!doc.events.length && loading && !error && (
+      {hasNotes && loading && !error && (
         <p role="status">
           Preparando la partitura… La primera carga puede tardar unos segundos.
         </p>

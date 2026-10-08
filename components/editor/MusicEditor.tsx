@@ -166,6 +166,10 @@ export function MusicEditor({
           if (result.job?.status === "completed") {
             if (result.project.document)
               useEditor.getState().load(result.project.document);
+            if (result.project.document?.events.length) {
+              setTab("score");
+              setFull(false);
+            }
             revision.current = result.project.revision;
             const sources = await api<{ urls: Record<string, string> }>(
               `/api/projects/${projectId}/sources`,
@@ -333,6 +337,10 @@ export function MusicEditor({
           state.selectSource(transcribed.sources[0]?.id);
           state.select(undefined);
           state.seek(0);
+          if (result.notes.length) {
+            setTab("score");
+            setFull(false);
+          }
           setLocalAnalysis({
             stage: "Transcripción disponible para revisión",
             progress: 100,

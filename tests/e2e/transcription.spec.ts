@@ -19,6 +19,22 @@ test("transcribe audio con el modelo real sin cuenta y exporta sus notas", async
   await expect(page.getByText(/\d+ notas detectadas\./)).toBeVisible({
     timeout: 150000,
   });
+  await expect(page.locator(".score-view svg").first()).toBeVisible({
+    timeout: 45000,
+  });
+  const channels = page.getByRole("region", {
+    name: "Instrumentos detectados",
+  });
+  if (await page.locator(".instrument-predictions .micro-tag").count()) {
+    await expect(channels).toBeVisible();
+    await expect(
+      channels
+        .getByText("Separación pendiente · sin notas individuales")
+        .first(),
+    ).toBeVisible();
+    await expect(channels.getByRole("button")).toHaveCount(0);
+  }
+  await page.getByRole("button", { name: "Piano roll", exact: true }).click();
   const labels = await page
     .locator(".midi-note")
     .evaluateAll((notes) =>

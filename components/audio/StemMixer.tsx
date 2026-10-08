@@ -239,6 +239,9 @@ export function StemMixer({
 }) {
   const { document: doc, edit, selectSource } = useEditor();
   const [solo, setSolo] = useState<string>();
+  const detected = (doc.analysis?.instrumentPredictions ?? []).filter(
+    (prediction) => prediction.kind !== "technique",
+  );
   function add() {
     if (!editable || doc.sources.length >= 64) return;
     const id = crypto.randomUUID();
@@ -311,12 +314,58 @@ export function StemMixer({
           </div>
         )}
       </div>
+      {!!detected.length && (
+        <section
+          className="detected-channels"
+          aria-label="Instrumentos detectados"
+        >
+          <div className="panel-heading">
+            <strong>Instrumentos detectados</strong>
+            <span className="count-badge">{detected.length}</span>
+          </div>
+          <p className="channel-explanation">
+            Sonidos probables de la mezcla. Cada stem requiere audio separado.
+          </p>
+          <div className="detected-channel-list">
+            {detected.map((prediction, i) => (
+              <div
+                className="stem-row detected-channel"
+                key={prediction.label}
+                style={
+                  {
+                    "--stem-color": colors[i % colors.length],
+                  } as React.CSSProperties
+                }
+              >
+                <div className="stem-name">
+                  <span className="stem-icon">
+                    <AudioLines size={17} />
+                  </span>
+                  <span>
+                    <strong>{prediction.labelEs}</strong>
+                    <small>
+                      {Math.round(prediction.score * 100)}% · señal del modelo
+                    </small>
+                  </span>
+                </div>
+                <p>Separación pendiente · sin notas individuales</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       <div className="stem-bottom">
         <span className="tiny-dot cyan" />{" "}
         {Object.keys(urls).length
           ? "Stems temporales disponibles"
           : "Sin stems de audio"}
-        <p>La separación requiere un motor de audio configurado.</p>
+        <p>
+          {Object.keys(urls).length
+            ? "Solo y volumen controlan el audio separado disponible."
+            : doc.provenance === "transcription"
+              ? "Las notas de la mezcla se editan en Audio transcrito. Detectar un sonido no lo aísla."
+              : "Las pistas MIDI no incluyen audio aislado."}
+        </p>
       </div>
     </aside>
   );

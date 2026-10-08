@@ -59,6 +59,15 @@ test("importa eventos del MIDI y deja la procedencia de hardware desconocida", a
   );
   await page.getByRole("button", { name: "Deshacer", exact: true }).click();
   await expect(page.getByLabel("Pentagramas de la pista")).toHaveValue("piano");
+  await page
+    .getByRole("button", { name: "Agregar pista", exact: true })
+    .click();
+  await expect(page.getByText("Esta pista no tiene notas.")).toBeVisible();
+  await expect(page.locator(".score-view > div:last-child svg")).toHaveCount(0);
+  await page.getByRole("button", { name: "Individual", exact: true }).click();
+  await expect(page.locator(".score-view svg").first()).toBeVisible({
+    timeout: 45000,
+  });
 });
 test("abre un WAV real y crea waveform sin inventar notas", async ({
   page,

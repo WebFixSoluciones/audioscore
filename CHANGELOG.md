@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## 0.4.5 — 2026-10-08
+
+- Instrumentos candidatos visibles en el panel lateral, con separación pendiente explícita y sin crear stems o notas ficticias.
+- La transcripción con notas abre la partitura automáticamente; una pista vacía ofrece seleccionar otra pista o mostrar la partitura global.
+- Auditoría del recorrido audio→notas→MusicXML: documentados el motor polifónico existente y la separación/atribución por instrumento pendiente.
+
 ## 0.4.4 — 2026-10-07
 
 - Recuperación del ingreso tras un bloqueo de App Check en una pestaña antigua: recarga completa y reanudación única de la sesión autenticada.

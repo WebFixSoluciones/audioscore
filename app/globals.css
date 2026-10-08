@@ -668,6 +668,19 @@ select:focus-visible {
 .stem-list {
   flex: 1;
 }
+.detected-channels {
+  border-top: 1px solid #42304e;
+}
+.channel-explanation,
+.detected-channel p {
+  margin: 8px 12px;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #a393b9;
+}
+.detected-channel p {
+  margin: 8px 0 0;
+}
 .stem-row {
   padding: 14px 12px;
   border-bottom: 1px solid #302736;
@@ -2013,6 +2026,10 @@ select:focus-visible {
     display: flex;
     overflow: auto;
     max-height: 140px;
+  }
+  .detected-channel-list {
+    display: flex;
+    overflow: auto;
   }
   .stem-row {
     min-width: 170px;
