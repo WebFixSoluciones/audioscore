@@ -1,5 +1,7 @@
 # Verificación de transcripción y canales — 8 de octubre de 2026
 
+Este informe registra el estado de v0.4.6. La implementación posterior del separador y la atribución por stem se documenta en [SEPARATION.md](SEPARATION.md); su publicación cloud requiere activar y configurar el worker externo.
+
 El sistema ya implementa transcripción musical automática, MusicXML y visualización de partituras. El problema pendiente es obtener audio aislado y atribuir notas a instrumentos concretos en una mezcla. No equivale a la ausencia de un traductor audio→MIDI.
 
 ## Lo que existe actualmente

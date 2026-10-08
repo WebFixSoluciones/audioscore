@@ -2,6 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   options: {} as Record<string, unknown>,
   tasks: [] as unknown[],
+  federated: undefined as unknown,
+}));
+vi.mock("@/lib/firebase/federation", () => ({
+  federatedFirebase: () =>
+    state.federated ? { authClient: state.federated } : undefined,
 }));
 vi.mock("@google-cloud/tasks", () => ({
   CloudTasksClient: class {
@@ -28,6 +33,26 @@ beforeEach(() => {
   vi.resetModules();
   state.options = {};
   state.tasks = [];
+  state.federated = undefined;
+});
+it("reuses Vercel workload identity for Cloud Tasks without requiring a private key", async () => {
+  for (const [name, value] of Object.entries({
+    CLOUD_TASKS_QUEUE: "audio",
+    CLOUD_TASKS_LOCATION: "test-location",
+    GOOGLE_CLOUD_PROJECT_ID: "test-project",
+    CLOUD_TASKS_SERVICE_ACCOUNT: "worker@example.test",
+    WORKER_URL: "https://worker.example.test",
+    INTERNAL_JOB_SECRET: "test-secret-not-a-real-secret-123456",
+  }))
+    vi.stubEnv(name, value);
+  state.federated = { kind: "verified-federated-client" };
+  await enqueue({
+    id: "job-identity",
+    userId: "owner",
+    projectId: "project-1",
+  } as Job);
+  expect(state.options.authClient).toBe(state.federated);
+  expect(state.options.credentials).toBeUndefined();
 });
 describe("Vercel deployment configuration", () => {
   it("keeps public browser models but excludes worker runtime from web function tracing", async () => {

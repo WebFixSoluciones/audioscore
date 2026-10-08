@@ -1,6 +1,6 @@
 # Contratos de los adaptadores
 
-La transcripción base ya está integrada: Basic Pitch y YAMNet se ejecutan dentro del sistema, sin estos endpoints. El navegador procesa el audio local y el worker Node utiliza los mismos modelos para proyectos cloud. Límite del motor integrado: 15 minutos por análisis. La clasificación de instrumentos describe sonidos probables de la mezcla y no crea stems ni asigna cada nota a un instrumento.
+La transcripción base ya está integrada: Basic Pitch y YAMNet se ejecutan dentro del sistema, sin estos endpoints. El navegador procesa el audio local y el worker Node utiliza los mismos modelos para proyectos cloud. Límite del motor integrado: 15 minutos por análisis. YAMNet no crea stems ni atribuye notas. Con `SEPARATION_ENGINE=demucs` en el worker externo, Python genera WAV separados y el worker transcribe cada stem tonal con tempo común. Ver [separación y despliegue](SEPARATION.md). La activación cloud requiere configuración y facturación independientes del código web.
 
 Los contratos siguientes permiten motores adicionales opcionales y separación de fuentes. Los endpoints se llaman desde Node, vía HTTPS, sin redirects, con `Authorization: Bearer AUDIO_PROVIDER_API_KEY` si se configura. Timeout por llamada: 120 segundos. Para un proveedor que funciona por polling, implementa el polling dentro de un adaptador compatible con este contrato o adapta `lib/audio/adapters.ts` con idempotencia y tiempos acotados. No se simulan respuestas.
 
@@ -11,8 +11,9 @@ Entrada JSON:
 ```json
 {
   "audioUrl": "URL firmada temporal",
-  "outputPrefix": "temporary/UID/PROJECT/stems/",
-  "maxSources": 12
+  "outputPrefix": "temporary/UID/PROJECT/stems/JOB/",
+  "maxSources": 12,
+  "expiresAt": "2026-10-09T00:00:00.000Z"
 }
 ```
 
@@ -23,8 +24,9 @@ Salida:
   "sources": [
     {
       "id": "source-id",
-      "storagePath": "temporary/UID/PROJECT/stems/source-id.wav",
+      "storagePath": "temporary/UID/PROJECT/stems/JOB/source-id.wav",
       "confidence": 0.82,
+      "kind": "piano",
       "label": "Fuente tonal"
     }
   ],
@@ -32,7 +34,7 @@ Salida:
 }
 ```
 
-El servicio debe escribir archivos WAV reales en el bucket temporal del mismo proyecto con una cuenta de servicio restringida al prefijo. No envíes credenciales de GCS en el payload. El worker comprueba propiedad, tamaño, metadatos, silencio y decodificación de cada stem. No se aceptan URLs arbitrarias ni paths de otro usuario.
+El servicio debe escribir archivos WAV reales en el bucket temporal del mismo proyecto con una cuenta de servicio restringida al prefijo. No envíes credenciales de GCS en el payload. El worker comprueba propiedad, prefijo del job, tamaño, metadatos, silencio, decodificación y duración alineada de cada stem. No se aceptan URLs arbitrarias ni paths de otro usuario. `kind`: `piano`, `guitar`, `bass`, `drums`, `vocals`, `other` o `unknown` (por defecto). `unknown` produce una fuente mixta; no se convierte una etiqueta libre en una identidad confirmada. Cada archivo debe tener metadata `expiresAt` y el worker registra su limpieza. El proveedor no puede repetir IDs ni reutilizar un stem de otro job.
 
 Si no se configura separación o el plan no la permite, se transcribe el original y se señala expresamente que no se generaron stems aislados.
 

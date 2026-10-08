@@ -25,6 +25,7 @@ const config: NextConfig = {
       ...(!onVercel
         ? [
             "./runtime/transcription-worker.cjs",
+            "./services/separator/separate.py",
             "./public/models/**/*",
             "./node_modules/@tensorflow/tfjs-backend-wasm/dist/*.wasm",
             "./node_modules/@spotify/basic-pitch/cjs/**/*",

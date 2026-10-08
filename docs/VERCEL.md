@@ -60,9 +60,9 @@ paquete de sus funciones excluye los modelos y runtime exclusivos del worker.
 Las funciones web tienen un máximo configurado de 300 segundos; los análisis
 largos siguen en el worker. El estudio funciona sin configurar esta parte.
 
-Cloud Tasks usa en Vercel las credenciales privadas configuradas; en Cloud Run
-puede usar la identidad del servicio. FFmpeg y el motor de transcripción se
-incluyen en el Dockerfile del worker. No configures rutas locales de Windows
+Cloud Tasks y Storage reutilizan en Vercel la identidad federada configurada; las credenciales privadas siguen siendo una alternativa. En Cloud Run
+se usa la identidad del servicio. FFmpeg y el motor de transcripción se
+incluyen en el Dockerfile del worker; su target `audio-worker` añade Python/Demucs para separación real. Ver [despliegue del separador](SEPARATION.md). No configures rutas locales de Windows
 en `FFMPEG_PATH` o `FFPROBE_PATH` de Vercel.
 
 Referencias: [Next.js en Vercel](https://vercel.com/docs/frameworks/full-stack/nextjs),

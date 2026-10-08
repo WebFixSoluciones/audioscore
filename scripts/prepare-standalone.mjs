@@ -21,6 +21,11 @@ const { fileList } = await nodeFileTrace(
   { base: workspace, processCwd: workspace },
 );
 const standalone = resolve(workspace, ".next/standalone");
+await mkdir(resolve(standalone, "services/separator"), { recursive: true });
+await cp(
+  resolve(workspace, "services/separator/separate.py"),
+  resolve(standalone, "services/separator/separate.py"),
+);
 for (const file of fileList) {
   const input = resolve(workspace, file);
   const output = resolve(standalone, file);

@@ -133,6 +133,15 @@ export function MusicEditor({
         ...emptyDocument(),
         ...(initial ? { title: initial.title } : {}),
       });
+    if (
+      projectId &&
+      initial?.document?.sources.some((source) => source.storagePath)
+    )
+      void api<{ urls: Record<string, string> }>(
+        `/api/projects/${projectId}/sources`,
+      )
+        .then((result) => setStemUrls(result.urls))
+        .catch((error) => setNotice(messageOf(error)));
     if (initial?.storagePath && projectId)
       void api<{ url: string }>(`/api/projects/${projectId}/download/original`)
         .then((r) => setUrl(r.url))

@@ -68,7 +68,19 @@ export const useEditor = create<EditorStore>((set, get) => ({
       past: [],
       future: [],
       selectedId: undefined,
-      sourceId: doc.sources[0]?.id,
+      sourceId: [...doc.sources].sort(
+        (a, b) =>
+          doc.events.filter(
+            (event) =>
+              event.sourceId === b.id &&
+              ["note", "chord", "drum"].includes(event.type),
+          ).length -
+          doc.events.filter(
+            (event) =>
+              event.sourceId === a.id &&
+              ["note", "chord", "drum"].includes(event.type),
+          ).length,
+      )[0]?.id,
       currentTime: 0,
       playing: false,
     }),

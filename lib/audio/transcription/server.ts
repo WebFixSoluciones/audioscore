@@ -18,8 +18,11 @@ export async function transcribeLocalAudio(
     sourceId?: string;
     tempoMap?: MusicDocument["tempoMap"];
     onProgress?: (value: TranscriptionProgress) => Promise<void>;
+    timeoutMs?: number;
   } = {},
 ) {
+  const deadline =
+    Date.now() + Math.min(options.timeoutMs ?? 12 * 60000, 12 * 60000);
   const pcmPath = join(dirname(input), "transcription.pcm");
   const executable = process.env.FFMPEG_PATH || ffmpegStatic;
   if (!executable) throw new Error("FFmpeg no está disponible.");
@@ -45,10 +48,13 @@ export async function transcribeLocalAudio(
       ],
       { windowsHide: true, stdio: "ignore" },
     );
-    const timer = setTimeout(() => {
-      child.kill();
-      reject(new Error("Timeout preparando audio para transcripción"));
-    }, 120000);
+    const timer = setTimeout(
+      () => {
+        child.kill();
+        reject(new Error("Timeout preparando audio para transcripción"));
+      },
+      Math.min(120000, Math.max(1, deadline - Date.now())),
+    );
     child.once("error", (error) => {
       clearTimeout(timer);
       reject(error);
@@ -83,7 +89,7 @@ export async function transcribeLocalAudio(
             "El análisis superó 12 minutos. Procesa una región más corta.",
           ),
         ),
-      12 * 60000,
+      Math.max(1, deadline - Date.now()),
     );
     function finish(error?: Error, value?: TranscriptionResult) {
       if (settled) return;

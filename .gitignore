@@ -11,3 +11,5 @@ playwright-report/
 runtime/
 artifacts/
 .vercel/
+__pycache__/
+*.pyc

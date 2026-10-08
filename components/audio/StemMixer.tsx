@@ -30,7 +30,14 @@ function StemRow({
   master: boolean;
   editable: boolean;
 }) {
-  const { sourceId, selectSource, playing, currentTime, mode } = useEditor();
+  const {
+    sourceId,
+    selectSource,
+    playing,
+    currentTime,
+    mode,
+    document: doc,
+  } = useEditor();
   const [muted, setMuted] = useState(false),
     [volume, setVolume] = useState(0.8),
     [pan, setPan] = useState(0);
@@ -131,7 +138,9 @@ function StemRow({
           <small>
             {source.evidence === "human"
               ? "Pista manual"
-              : `${Math.round(source.confidence * 100)}% de confianza`}
+              : source.storagePath && source.evidence === "estimated"
+                ? "Stem estimado · revisar escuchando"
+                : `${Math.round(source.confidence * 100)}% de confianza`}
           </small>
         </span>
       </button>
@@ -205,6 +214,25 @@ function StemRow({
           M
         </button>
       </div>
+      {source.storagePath && (
+        <small className="channel-explanation">
+          {
+            doc.events.filter(
+              (event) =>
+                event.sourceId === source.id &&
+                ["note", "chord", "drum"].includes(event.type),
+            ).length
+          }{" "}
+          eventos
+          {source.category === "percussive"
+            ? " · transcripción de batería pendiente"
+            : source.warnings.some((warning) =>
+                  warning.startsWith("Señal débil:"),
+                )
+              ? " · señal débil; revisa el audio"
+              : " · notas del canal"}
+        </small>
+      )}
       <div className="stem-sliders">
         <input
           aria-label={`Volumen ${source.name}`}
@@ -324,7 +352,9 @@ export function StemMixer({
             <span className="count-badge">{detected.length}</span>
           </div>
           <p className="channel-explanation">
-            Sonidos probables de la mezcla. Cada stem requiere audio separado.
+            {doc.sources.some((source) => source.storagePath)
+              ? "Hipótesis sobre la mezcla. Las pistas de arriba contienen los stems disponibles."
+              : "Sonidos probables de la mezcla. Cada stem requiere audio separado."}
           </p>
           <div className="detected-channel-list">
             {detected.map((prediction, i) => (
@@ -348,7 +378,11 @@ export function StemMixer({
                     </small>
                   </span>
                 </div>
-                <p>Separación pendiente · sin notas individuales</p>
+                <p>
+                  {doc.sources.some((source) => source.storagePath)
+                    ? "Hipótesis del clasificador · revisar en los stems"
+                    : "Separación pendiente · sin notas individuales"}
+                </p>
               </div>
             ))}
           </div>

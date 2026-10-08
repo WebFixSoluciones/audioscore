@@ -1,0 +1,6 @@
+# CPU reference image. CUDA deployments must replace these two wheels together.
+torch==2.6.0
+torchaudio==2.6.0
+numpy==1.26.4
+demucs==4.0.1
+soundfile==0.13.1

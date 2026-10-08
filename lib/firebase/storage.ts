@@ -3,6 +3,7 @@ import { Storage } from "@google-cloud/storage";
 import { adminFirebase } from "./admin";
 import { ApiError } from "@/lib/utils/errors";
 import { createHash } from "node:crypto";
+import { federationOptions } from "./federation";
 let storage: Storage | undefined;
 export function temporaryBucket() {
   if (!process.env.GOOGLE_CLOUD_STORAGE_BUCKET)
@@ -16,7 +17,7 @@ export function temporaryBucket() {
             private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
           },
         }
-      : {}),
+      : { credentials: federationOptions() }),
   });
   return storage.bucket(process.env.GOOGLE_CLOUD_STORAGE_BUCKET);
 }

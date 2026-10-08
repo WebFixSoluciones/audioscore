@@ -4,18 +4,24 @@ import { getVercelOidcToken } from "@vercel/oidc";
 import type { Credential } from "firebase-admin/app";
 
 let client: IdentityPoolClient | undefined;
-export function federatedFirebase() {
+export function federationOptions() {
   const audience = process.env.GCP_WORKLOAD_IDENTITY_AUDIENCE;
   const serviceAccount = process.env.GCP_SERVICE_ACCOUNT_EMAIL;
   if (!audience || !serviceAccount) return undefined;
-  client ??= new IdentityPoolClient({
+  return {
+    type: "external_account" as const,
     audience,
     subject_token_type: "urn:ietf:params:oauth:token-type:jwt",
     token_url: "https://sts.googleapis.com/v1/token",
     service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccount}:generateAccessToken`,
     subject_token_supplier: { getSubjectToken: () => getVercelOidcToken() },
     scopes: ["https://www.googleapis.com/auth/cloud-platform"],
-  });
+  };
+}
+export function federatedFirebase() {
+  const options = federationOptions();
+  if (!options) return undefined;
+  client ??= new IdentityPoolClient(options);
   const authClient = client;
   const credential: Credential = {
     async getAccessToken() {

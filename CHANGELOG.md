@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## 0.5.0 — 2026-10-08
+
+- Motor de separación real Demucs/Python en el target Docker `audio-worker`, fuera de Vercel; modos de cuatro o seis fuentes según límites del plan.
+- Transcripción independiente de stems tonales con Basic Pitch, fuentes propias y tempo común; batería reproducible con transcripción de percusión pendiente.
+- Validación de WAV alineados, rutas aisladas por job, caducidad y filtro de señal débil para evitar transcribir filtraciones.
+- Cloud Tasks y Storage reutilizan la identidad federada de Vercel; no se requieren claves privadas persistentes para esa integración.
+- Guía de publicación en Cloud Run, comparación con Vercel Pro y requisito de autorización para cambiar Spark a Blaze. Motor probado localmente; worker cloud pendiente de activación.
+
 ## 0.4.6 — 2026-10-08
 
 - Los canales candidatos permanecen arriba, junto a la forma de onda, sin desplazarse al final de una partitura larga.

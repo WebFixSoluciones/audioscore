@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/utils/errors";
 import { assertStorageOwner, signedRead } from "@/lib/firebase/storage";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { stemKindSchema } from "./separation";
 const separationSchema = z.object({
   sources: z
     .array(
@@ -13,6 +14,7 @@ const separationSchema = z.object({
         storagePath: z.string(),
         confidence: z.number().min(0).max(1),
         label: z.string().max(120),
+        kind: stemKindSchema.default("unknown"),
       }),
     )
     .min(1)
@@ -65,14 +67,16 @@ export async function separateSources(
   audioPath: string,
   expiresAt: string,
   maxSources: number,
+  jobId: string,
 ) {
   const audioUrl = await signedRead(uid, projectId, audioPath, expiresAt);
   const result = await provider(
     process.env.SEPARATION_PROVIDER_URL,
     {
       audioUrl,
-      outputPrefix: `temporary/${uid}/${projectId}/stems/`,
+      outputPrefix: `temporary/${uid}/${projectId}/stems/${jobId}/`,
       maxSources,
+      expiresAt,
     },
     separationSchema,
   );
@@ -81,6 +85,18 @@ export async function separateSources(
   result.sources.forEach((s) =>
     assertStorageOwner(s.storagePath, uid, projectId),
   );
+  if (
+    new Set(result.sources.map((s) => s.id)).size !== result.sources.length ||
+    result.sources.some(
+      (s) =>
+        !s.storagePath.startsWith(
+          `temporary/${uid}/${projectId}/stems/${jobId}/`,
+        ),
+    )
+  )
+    throw new Error(
+      "El proveedor devolvió fuentes duplicadas o de otro análisis",
+    );
   return result;
 }
 export async function transcribeAudio(

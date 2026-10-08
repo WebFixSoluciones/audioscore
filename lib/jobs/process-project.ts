@@ -34,6 +34,12 @@ import { ApiError, log, messageOf } from "@/lib/utils/errors";
 import { fingerprint } from "./idempotency";
 import type { Account } from "@/lib/security/auth-guard";
 import { transcribeLocalAudio } from "@/lib/audio/transcription/server";
+import {
+  separationEnabled,
+  separateLocalAudio,
+  type SeparatedStem,
+} from "@/lib/audio/separation";
+import { transcribeStems } from "@/lib/audio/transcription/stems";
 export async function processProject(
   uid: string,
   projectId: string,
@@ -55,13 +61,23 @@ export async function processProject(
       status: "running",
       attempts: current.attempts + 1,
       leaseToken: randomUUID(),
-      leaseUntil: new Date(Date.now() + 15 * 60000).toISOString(),
+      leaseUntil: new Date(Date.now() + 30 * 60000).toISOString(),
       updatedAt: new Date().toISOString(),
     };
     tx.update(jRef, leased);
     return leased;
   });
   if (!job) return { duplicate: true };
+  const deadline = Date.now() + 27 * 60000;
+  const remaining = () => {
+    const milliseconds = deadline - Date.now();
+    if (milliseconds <= 0)
+      throw new ApiError(
+        422,
+        "El análisis superó 27 minutos. Usa un audio más corto.",
+      );
+    return milliseconds;
+  };
   const stage = async (name: string, progress: number) =>
     db.runTransaction(async (tx) => {
       const [js, ps] = await tx.getAll(jRef, pRef);
@@ -100,6 +116,15 @@ export async function processProject(
     }
     await stage("validating", 5);
     const project = await ownedProject(uid, projectId);
+    if (
+      job.region &&
+      !process.env.TRANSCRIPTION_PROVIDER_URL &&
+      project.document?.sources.some((source) => source.storagePath)
+    )
+      throw new ApiError(
+        422,
+        "El reprocesamiento regional de stems requiere un motor compatible. Reanaliza el audio completo para conservar la atribución por instrumento.",
+      );
     if (job.region) featureAllowed(plan, "advancedAnalysis");
     if (
       !project.storagePath ||
@@ -153,30 +178,58 @@ export async function processProject(
     await trackAsset(uid, projectId, normalizedPath, "working", expiresAt);
     await stage("global_analysis", 30);
     const warnings = [...acoustic.warnings];
-    let stems: Awaited<ReturnType<typeof separateSources>> | undefined;
-    if (
-      plan.features.sourceSeparation &&
-      process.env.SEPARATION_PROVIDER_URL &&
-      !job.region
-    ) {
+    const stemFiles: SeparatedStem[] = [];
+    if (plan.features.sourceSeparation && separationEnabled() && !job.region) {
       await stage("source_separation", 40);
-      stems = await separateSources(
-        uid,
-        projectId,
-        normalizedPath,
-        expiresAt,
-        plan.maxSources,
-      );
+      const stems =
+        process.env.SEPARATION_ENGINE === "demucs"
+          ? await separateLocalAudio(
+              normalized,
+              plan.maxSources,
+              Math.min(remaining(), 15 * 60000),
+            )
+          : await separateSources(
+              uid,
+              projectId,
+              normalizedPath,
+              expiresAt,
+              plan.maxSources,
+              job.id,
+            );
       for (const source of stems.sources) {
-        const asset = temporaryBucket().file(source.storagePath);
+        remaining();
+        const path =
+          "localPath" in source
+            ? source.localPath
+            : join(folder, `${source.id}.wav`);
+        const storagePath =
+          "storagePath" in source
+            ? source.storagePath
+            : `temporary/${uid}/${projectId}/stems/${job.id}/${source.id}.wav`;
+        assertStorageOwner(storagePath, uid, projectId);
+        if ("localPath" in source) {
+          await temporaryBucket().upload(path, {
+            destination: storagePath,
+            metadata: { contentType: "audio/wav", metadata: { expiresAt } },
+          });
+        }
+        const asset = temporaryBucket().file(storagePath);
+        // Track every generated file before validation so failures also get cleaned up.
+        await trackAsset(uid, projectId, storagePath, "stem", expiresAt);
         const [meta] = await asset.getMetadata();
         if (!Number(meta.size) || Number(meta.size) > plan.maxFileBytes)
           throw new Error("Stem vacío o demasiado grande");
-        const path = join(folder, `${source.id}.wav`);
-        await asset.download({ destination: path });
-        await probeAudio(path);
+        if (!("localPath" in source))
+          await asset.download({ destination: path });
+        const stemMetadata = await probeAudio(path);
+        if (
+          Math.abs(
+            stemMetadata.durationSeconds - audioMetadata.durationSeconds,
+          ) > 0.05
+        )
+          throw new Error("El stem no conserva la duración del original");
         await audioPeaks(path);
-        await trackAsset(uid, projectId, source.storagePath, "stem", expiresAt);
+        stemFiles.push({ ...source, storagePath, localPath: path });
       }
       warnings.push(...stems.warnings);
     } else
@@ -188,7 +241,13 @@ export async function processProject(
       process.env.TRANSCRIPTION_PROVIDER_URL
         ? await transcribeAudio(uid, projectId, normalizedPath, expiresAt, {
             title: project.title,
-            sources: stems?.sources ?? [],
+            sources: stemFiles.map((source) => ({
+              id: source.id,
+              kind: source.kind,
+              label: source.label,
+              confidence: source.confidence,
+              storagePath: source.storagePath,
+            })),
             ...(job.region
               ? {
                   originalSources: project.document?.sources,
@@ -212,11 +271,33 @@ export async function processProject(
             onProgress: async (progress) => {
               await stage(
                 "note_transcription",
-                Math.round(55 + progress.progress * 0.12),
+                Math.round(
+                  55 + progress.progress * (stemFiles.length ? 0.02 : 0.12),
+                ),
               );
             },
+            timeoutMs: remaining(),
           }),
     );
+    if (stemFiles.length && !process.env.TRANSCRIPTION_PROVIDER_URL) {
+      const global = doc;
+      doc = await transcribeStems(global, stemFiles, async (stem, index) =>
+        transcribeLocalAudio(stem.localPath, project.title, {
+          sourceId: stem.id,
+          tempoMap: global.tempoMap,
+          timeoutMs: remaining(),
+          onProgress: async (progress) => {
+            await stage(
+              "note_transcription",
+              Math.round(
+                57 +
+                  ((index + progress.progress / 100) / stemFiles.length) * 10,
+              ),
+            );
+          },
+        }),
+      );
+    }
     const analyzedDuration = job.region
       ? job.region[1] - job.region[0]
       : audioMetadata.durationSeconds;
@@ -228,9 +309,7 @@ export async function processProject(
       throw new Error(
         "La transcripción no coincide con el audio y los límites",
       );
-    const validStemPaths = new Set(
-      stems?.sources.map((s) => s.storagePath) ?? [],
-    );
+    const validStemPaths = new Set(stemFiles.map((s) => s.storagePath));
     doc.sources.forEach((s) => {
       if (s.storagePath && !validStemPaths.has(s.storagePath))
         throw new Error("La transcripción referencia un stem no validado");
@@ -301,6 +380,7 @@ export async function processProject(
       });
     }
     await stage("instrument_detection", 68);
+    remaining();
     const review = await reviewWithGemini(doc);
     doc = {
       ...doc,

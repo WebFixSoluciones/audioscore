@@ -3,6 +3,7 @@ import { CloudTasksClient } from "@google-cloud/tasks";
 import { ApiError } from "@/lib/utils/errors";
 import { projectRef } from "@/lib/security/ownership";
 import type { Job } from "@/lib/billing/reservations";
+import { federatedFirebase } from "@/lib/firebase/federation";
 export function assertQueueConfigured() {
   if (
     ![
@@ -38,7 +39,7 @@ export async function enqueue(job: Job) {
             private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
           },
         }
-      : {}),
+      : { authClient: federatedFirebase()?.authClient }),
   });
   const parent = client.queuePath(
     process.env.GOOGLE_CLOUD_PROJECT_ID!,
