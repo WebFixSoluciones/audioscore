@@ -666,7 +666,7 @@ select:focus-visible {
   font-size: 8px;
 }
 .stem-list {
-  flex: 1;
+  flex: 0;
 }
 .detected-channels {
   border-top: 1px solid #42304e;
@@ -767,6 +767,7 @@ select:focus-visible {
   margin: 10px 0 20px;
 }
 .stem-bottom {
+  margin-top: auto;
   padding: 17px 14px;
   font-size: 8px;
   color: #a598b1;

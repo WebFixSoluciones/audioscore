@@ -1,5 +1,9 @@
 # Historial de versiones
 
+## 0.4.6 — 2026-10-08
+
+- Los canales candidatos permanecen arriba, junto a la forma de onda, sin desplazarse al final de una partitura larga.
+
 ## 0.4.5 — 2026-10-08
 
 - Instrumentos candidatos visibles en el panel lateral, con separación pendiente explícita y sin crear stems o notas ficticias.
