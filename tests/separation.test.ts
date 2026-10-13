@@ -77,4 +77,38 @@ describe("offline separator contract", () => {
       "duplicadas",
     );
   });
+  it("validates BS-RoFormer and IATPE Ensemble manifest with custom models and warnings", async () => {
+    const bsManifest = {
+      model: "bs_roformer",
+      durationSeconds: 15,
+      gain: 0.98,
+      warnings: [
+        "BS-RoFormer: Aislamiento acústico SOTA con Band-Split Transformers y RoPE.",
+      ],
+      sources: [
+        {
+          id: "demucs-vocals",
+          kind: "vocals",
+          label: "Voz Líder",
+          file: "vocals.wav",
+          confidence: 0,
+          rms: 0.15,
+          transcriptionEligible: true,
+        },
+        {
+          id: "demucs-drums",
+          kind: "drums",
+          label: "Batería / Percusión",
+          file: "drums.wav",
+          confidence: 0,
+          rms: 0.2,
+          transcriptionEligible: true,
+        },
+      ],
+    };
+    state.result = JSON.stringify(bsManifest);
+    const result = await separateLocalAudio("normalized.wav", 4);
+    expect(result.sources).toHaveLength(2);
+    expect(result.sources[0].label).toBe("Voz Líder");
+  });
 });

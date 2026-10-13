@@ -1,5 +1,19 @@
 # Historial de versiones
 
+## En desarrollo — motor local completo
+
+- Inicio con dominio `audioscore.localhost`, Next.js y servicio privado de audio en loopback, sin almacenamiento ni trabajos cloud.
+- Inicio mediante usuarios de Firebase; estudio limpio por defecto y proyectos locales por usuario, visibles solo después de Guardar como proyecto. Se recuperan notas y ajustes de mezcla al abrir un proyecto.
+- Cola serial, progreso recuperable y cancelación; audio y resultados temporales en disco. La API exige sesión verificada y bloquea resultados de otro usuario.
+- Python reutiliza Demucs entre trabajos y añade medición de pulsos, cromas y acordes mediante librosa; hipótesis armónicas y compás editable.
+- Tablatura SVG con VexFlow para guitarra/bajo, además del renderizado MusicXML existente con OSMD; PDF/MEI generados localmente.
+- Práctica mediante Rubber Band: velocidad y tono independientes, con reproducción separada y original conservado.
+- Mezclador con filas de stems y ondas reales, Solo/Silencio, volumen, balance, escucha individual y descarga WAV; transporte común con corrección de deriva y exportación de mezcla que conserva los ajustes.
+- Vista de pistas única a todo el ancho; selector de partitura por instrumento y eliminación de descripciones debajo de los nombres de pistas.
+- Separación cuidadosa opcional (dos pasadas HTDemucs y 50% de solapamiento), reducción suave de ruido exclusiva para transcribir y seguimiento de variaciones de tempo.
+- Beat This! final0 en CPU detecta pulsos e inicios de compás; estimación conservadora de 3/4 y 4/4, navegación y acentos de metrónomo. Otras métricas siguen manuales.
+- Exportación MusicXML comprimida MXL compatible con el contenedor MusicXML 4; revisión de estructura con music21 antes de descargar, conservando el documento de notas original.
+
 ## 0.5.0 — 2026-10-08
 
 - Motor de separación real Demucs/Python en el target Docker `audio-worker`, fuera de Vercel; modos de cuatro o seis fuentes según límites del plan.

@@ -9,6 +9,8 @@ export default async function Dashboard() {
       redirect("/auth/login");
     throw error;
   });
+  const localMode =
+    process.env.LOCAL_AUDIO_ENABLED === "1" && process.env.VERCEL !== "1";
   return (
     <div className="content-page">
       <div className="eyebrow">TU ESPACIO MUSICAL</div>
@@ -28,8 +30,9 @@ export default async function Dashboard() {
         <Link className="detail-card dashboard-card" href="/dashboard/projects">
           <h2>Mis proyectos</h2>
           <p>
-            {account.projectCount} proyectos · {account.activeJobs} trabajos
-            activos.
+            {localMode
+              ? "Los audios que decidiste guardar, con sus pistas y partituras."
+              : `${account.projectCount} proyectos · ${account.activeJobs} trabajos activos.`}
           </p>
           <span>Gestionar proyectos →</span>
         </Link>
@@ -41,7 +44,7 @@ export default async function Dashboard() {
           </Link>
         )}
       </div>
-      <UsageMeter />
+      {!localMode && <UsageMeter />}
     </div>
   );
 }

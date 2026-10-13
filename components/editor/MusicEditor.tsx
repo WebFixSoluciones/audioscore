@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   AudioLines,
   ArrowUpRight,
@@ -24,18 +25,64 @@ import {
   LoaderCircle,
   Layers,
   FileAudio,
+  Workflow,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+import { IatpeWorkflowViewer } from "@/components/audio/IatpeWorkflowViewer";
 import { useEditor } from "@/lib/editor/store";
-import { WaveformEditor } from "@/components/audio/WaveformEditor";
-import { MidiPlayback } from "@/components/audio/MidiPlayback";
-import { StemMixer } from "@/components/audio/StemMixer";
+import { StemPlayback } from "@/components/audio/StemPlayback";
+import { SeparatedTracks } from "@/components/audio/SeparatedTracks";
 import { PianoRoll } from "./PianoRoll";
 import { EventInspector } from "./EventInspector";
-import { ScoreViewer } from "@/components/scores/ScoreViewer";
-import { NotationPreview } from "@/components/scores/NotationPreview";
+import { useMixer } from "@/lib/editor/mixer-store";
+import type { ChannelMix } from "@/lib/audio/mixer";
+
+const WaveformEditor = dynamic(
+  () => import("@/components/audio/WaveformEditor").then((m) => m.WaveformEditor),
+  { ssr: false },
+);
+const MidiPlayback = dynamic(
+  () => import("@/components/audio/MidiPlayback").then((m) => m.MidiPlayback),
+  { ssr: false },
+);
+const ScoreViewer = dynamic(
+  () => import("@/components/scores/ScoreViewer").then((m) => m.ScoreViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-64 items-center justify-center text-sm text-neutral-400">
+        Cargando visualizador de partituras...
+      </div>
+    ),
+  },
+);
+const NotationPreview = dynamic(
+  () => import("@/components/scores/NotationPreview").then((m) => m.NotationPreview),
+  { ssr: false },
+);
+const TablatureViewer = dynamic(
+  () => import("@/components/scores/TablatureViewer").then((m) => m.TablatureViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-64 items-center justify-center text-sm text-neutral-400">
+        Cargando visualizador de tablatura...
+      </div>
+    ),
+  },
+);
+import { PracticePanel } from "@/components/audio/PracticePanel";
+import { MusicalAnalysis } from "@/components/audio/MusicalAnalysis";
+import { analyzeOnMachine, localRequest } from "@/lib/audio/local/client";
+import type { LocalResult } from "@/lib/audio/local/types";
+import {
+  defaultAnalysisOptions,
+  type LocalAnalysisOptions,
+} from "@/lib/audio/local/options";
 import { readMidi } from "@/lib/music/midi-reader";
 import { writeMidi } from "@/lib/music/midi-writer";
 import { writeMusicXML } from "@/lib/music/musicxml";
+import { writeMXL } from "@/lib/music/mxl";
 import { restoreExcludedNotes } from "@/lib/music/restore-candidates";
 import { withTempoMap } from "@/lib/music/tempo-map";
 import { validateAudioFile } from "@/lib/audio/audio-validation";
@@ -75,20 +122,24 @@ const stageLabels: Record<string, string> = {
 export function MusicEditor({
   projectId,
   initial,
+  localEngine = false,
+  initialLocalJobId,
 }: {
   projectId?: string;
   initial?: Project;
+  localEngine?: boolean;
+  initialLocalJobId?: string;
 }) {
   const state = useEditor(),
     doc = state.document;
   const [url, setUrl] = useState<string>(),
     [file, setFile] = useState<File>(),
     [fileName, setFileName] = useState("");
-  const [tab, setTab] = useState<"piano" | "score">("piano"),
+  const [tab, setTab] = useState<"score" | "tab">("score"),
     [full, setFull] = useState(false),
     [readable, setReadable] = useState(true);
   const [notice, setNotice] = useState(""),
-    [busy, setBusy] = useState(false),
+    [busy, setBusy] = useState(Boolean(initialLocalJobId)),
     [exportOpen, setExportOpen] = useState(false),
     [feature, setFeature] = useState<AcousticFeatures>();
   const [job, setJob] = useState<{
@@ -100,8 +151,22 @@ export function MusicEditor({
     [stemUrls, setStemUrls] = useState<Record<string, string>>({});
   const [plan, setPlan] = useState<Plan>();
   const [localAnalysis, setLocalAnalysis] = useState<TranscriptionProgress>();
+  const [localJobId, setLocalJobId] = useState<string>();
+  const [savedLocal, setSavedLocal] = useState(false);
+  const [workflowOpen, setWorkflowOpen] = useState(false);
+  const [stemMix, setStemMix] = useState<Record<string, ChannelMix>>();
+  const [analysisOptions, setAnalysisOptions] = useState<LocalAnalysisOptions>(
+    defaultAnalysisOptions,
+  );
   const analysisAbort = useRef<AbortController>(null);
-  useEffect(() => () => analysisAbort.current?.abort(), []);
+  const audioSelection = useRef(0);
+  useEffect(
+    () => () => {
+      audioSelection.current++;
+      analysisAbort.current?.abort();
+    },
+    [],
+  );
   const editable =
     (!projectId || Boolean(plan?.features.manualCorrection)) &&
     !busy &&
@@ -131,7 +196,11 @@ export function MusicEditor({
     else
       useEditor.getState().load({
         ...emptyDocument(),
-        ...(initial ? { title: initial.title } : {}),
+        ...(initial
+          ? { title: initial.title }
+          : localEngine
+            ? { title: "Nuevo audio" }
+            : {}),
       });
     if (
       projectId &&
@@ -152,7 +221,7 @@ export function MusicEditor({
           if (r.job) setJob(r.job);
         })
         .catch((e) => setNotice(messageOf(e)));
-  }, [initial, projectId]);
+  }, [initial, projectId, localEngine]);
   useEffect(
     () => () => {
       if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
@@ -218,6 +287,7 @@ export function MusicEditor({
     }
   };
   async function openAudio(selected: File) {
+    const selection = ++audioSelection.current;
     await invoke(async () => {
       validateAudioFile(
         selected.name,
@@ -226,14 +296,46 @@ export function MusicEditor({
       );
       if (selected.size > 50 * 1024 * 1024 && !projectId)
         throw new Error(
-          "El estudio local admite hasta 50 MB. Usa un proyecto en la nube para archivos más grandes.",
+          localEngine
+            ? "El motor de este equipo admite archivos de hasta 50 MB. Prueba con un fragmento más corto."
+            : "El estudio local admite hasta 50 MB. Usa un proyecto en la nube para archivos más grandes.",
         );
       state.setPlaying(false);
+      if (localEngine) {
+        setLocalJobId(undefined);
+        setSavedLocal(false);
+        setStemMix(undefined);
+        setStemUrls({});
+        setLocalAnalysis(undefined);
+        state.load({
+          ...emptyDocument(),
+          title:
+            selected.name.replace(/\.[^.]+$/, "").slice(0, 120) ||
+            "Audio local",
+        });
+      }
       setFile(selected);
       setFileName(selected.name);
       if (selected.size <= 50 * 1024 * 1024) {
-        setUrl(URL.createObjectURL(selected));
-        setFeature(await acousticFeatures(selected));
+        const objectUrl = URL.createObjectURL(selected);
+        setUrl(objectUrl);
+        // Obtener duración instantánea vía Audio (<10ms) sin decodificar 50MB en RAM
+        const tempAudio = new Audio(objectUrl);
+        tempAudio.onloadedmetadata = () => {
+          if (selection === audioSelection.current && Number.isFinite(tempAudio.duration)) {
+            setAudioDuration(tempAudio.duration);
+          }
+        };
+        // Diagnóstico acústico no bloqueante en background
+        void acousticFeatures(selected)
+          .then((measured) => {
+            if (selection === audioSelection.current && measured) {
+              setFeature(measured);
+            }
+          })
+          .catch(() => {
+            // El análisis del motor IATPE suministrará las características reales
+          });
       } else
         setNotice(
           "Audio seleccionado. Sube el archivo para generar peaks en el servidor.",
@@ -250,8 +352,132 @@ export function MusicEditor({
   function operationKey(kind: string) {
     return (keys.current[kind] ??= crypto.randomUUID());
   }
+  function loadMachineResult(result: LocalResult, id: string) {
+    state.load(result.document);
+    setStemUrls(result.urls);
+    setUrl(result.originalUrl);
+    setPeaks(result.peaks);
+    setAudioDuration(result.document.durationSeconds);
+    setFile(undefined);
+    setFileName(result.document.title);
+    setLocalJobId(id);
+    setStemMix(result.mix);
+    setAnalysisOptions({
+      ...defaultAnalysisOptions,
+      ...result.analysisOptions,
+    });
+    state.setMode("audio");
+    state.setRegion(undefined);
+    state.setLoop(false);
+    setTab("score");
+    setFull(false);
+  }
+  useEffect(() => {
+    if (!initialLocalJobId) return;
+    let stopped = false;
+    void localRequest<{ result: LocalResult }>(
+      `jobs/${initialLocalJobId}/project`,
+    )
+      .then(({ result }) => {
+        if (!stopped) {
+          loadMachineResult(result, initialLocalJobId);
+          setSavedLocal(true);
+        }
+      })
+      .catch((e) => {
+        if (!stopped) setNotice(messageOf(e));
+      })
+      .finally(() => {
+        if (!stopped) setBusy(false);
+      });
+    return () => {
+      stopped = true;
+    };
+    // A saved project loads only after explicitly opening its page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialLocalJobId]);
+  const newAudio = useCallback(() => {
+    audioSelection.current++;
+    const state = useEditor.getState();
+    analysisAbort.current?.abort();
+    state.setPlaying(false);
+    state.setMode("audio");
+    state.load({ ...emptyDocument(), title: "Nuevo audio" });
+    state.setRegion(undefined);
+    state.setLoop(false);
+    setFile(undefined);
+    setUrl(undefined);
+    setFileName("");
+    setLocalJobId(undefined);
+    setSavedLocal(false);
+    setStemMix(undefined);
+    setStemUrls({});
+    setPeaks(undefined);
+    setAudioDuration(undefined);
+    setLocalAnalysis(undefined);
+    setFeature(undefined);
+    setNotice("");
+    setTab("score");
+    setFull(false);
+    if (audioInput.current) audioInput.current.value = "";
+    if (midiInput.current) midiInput.current.value = "";
+  }, []);
+  useEffect(() => {
+    window.addEventListener("audioscore:new-audio", newAudio);
+    return () => window.removeEventListener("audioscore:new-audio", newAudio);
+  }, [newAudio]);
   async function analyze(region = false) {
     if (!projectId) {
+      if (localEngine) {
+        if (region) {
+          setNotice(
+            "El separador local procesa el audio completo. Abre una selección guardada como archivo para analizarla por separado.",
+          );
+          return;
+        }
+        if (!file) {
+          setNotice(
+            "Abre un audio para separarlo y transcribirlo en este equipo.",
+          );
+          return;
+        }
+        await invoke(async () => {
+          const abort = new AbortController();
+          analysisAbort.current = abort;
+          state.setPlaying(false);
+          setWorkflowOpen(true);
+          let id = "";
+          try {
+            const result = await analyzeOnMachine(
+              file,
+              setLocalAnalysis,
+              abort.signal,
+              (value) => {
+                id = value;
+              },
+              analysisOptions,
+            );
+            abort.signal.throwIfAborted();
+            loadMachineResult(result, id);
+            setSavedLocal(false);
+            setLocalAnalysis({
+              stage: "Pistas y partitura listas para revisar",
+              progress: 100,
+            });
+            setNotice(
+              `${result.document.sources.length} stems disponibles y ${result.document.events.length} notas para revisar. Selecciona cada pista para escucharla o ver su partitura.`,
+            );
+          } catch (error) {
+            setLocalAnalysis(undefined);
+            if (abort.signal.aborted)
+              setNotice("Análisis cancelado. Se conservó el arreglo anterior.");
+            else throw error;
+          } finally {
+            if (analysisAbort.current === abort) analysisAbort.current = null;
+          }
+        });
+        return;
+      }
       if (!file) {
         setNotice("Abre un archivo de audio para analizarlo y transcribirlo.");
         return;
@@ -272,6 +498,7 @@ export function MusicEditor({
         const abort = new AbortController();
         analysisAbort.current = abort;
         state.setPlaying(false);
+        setWorkflowOpen(true);
         try {
           const result = await transcribeInBrowser(
             file,
@@ -415,6 +642,23 @@ export function MusicEditor({
     });
   }
   async function save() {
+    if (localEngine && localJobId) {
+      await invoke(async () => {
+        await localRequest(`jobs/${localJobId}/project`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            document: doc,
+            mix: useMixer.getState().channels,
+          }),
+        });
+        setSavedLocal(true);
+        setNotice(
+          "Proyecto guardado. Puedes volver a abrirlo desde Mis proyectos.",
+        );
+      });
+      return;
+    }
     if (!projectId) {
       saveAs(
         new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" }),
@@ -441,9 +685,38 @@ export function MusicEditor({
       setNotice("Cambios guardados y registrados en el historial.");
     });
   }
-  async function exportFile(format: ExportFormat) {
+  async function reviewStructure() {
+    if (!localJobId)
+      throw new Error(
+        "Separa y transcribe un audio antes de revisar sus compases.",
+      );
+    const review = await localRequest<{
+      parts: number;
+      measures: number;
+      notes: number;
+      issues: string[];
+    }>(`jobs/${localJobId}/notation`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        document: doc,
+        sourceId: full ? undefined : state.sourceId,
+        readable,
+      }),
+    });
+    if (review.issues.length)
+      throw new Error(
+        `Revisa los compases: ${review.issues.slice(0, 3).join(" ")}`,
+      );
+    setNotice(
+      `${review.parts} partes y ${review.measures} compases con estructura válida. Escucha las notas para comprobar la transcripción.`,
+    );
+  }
+  async function exportFile(format: ExportFormat | "mxl") {
     await invoke(async () => {
       if (projectId) {
+        if (format === "mxl")
+          throw new Error("MXL está disponible en el estudio local.");
         const result = await api<{ job: NonNullable<typeof job> }>(
           `/api/projects/${projectId}/export`,
           {
@@ -476,7 +749,24 @@ export function MusicEditor({
             ),
             `${doc.title}.mid`,
           );
-        else if (format === "musicxml")
+        else if (format === "mxl") {
+          if (localEngine && localJobId) await reviewStructure();
+          saveAs(
+            new Blob(
+              [
+                new Uint8Array(
+                  writeMXL(doc, full ? undefined : state.sourceId, {
+                    readable,
+                  }),
+                ),
+              ],
+              {
+                type: "application/vnd.recordare.musicxml",
+              },
+            ),
+            `${doc.title}.mxl`,
+          );
+        } else if (format === "musicxml")
           saveAs(
             new Blob(
               [
@@ -497,7 +787,34 @@ export function MusicEditor({
             }),
             `${doc.title}.json`,
           );
-        else
+        else if (localEngine && localJobId && ["pdf", "mei"].includes(format)) {
+          const result = await localRequest<{ url: string }>(
+            `jobs/${localJobId}/export`,
+            {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                format,
+                document: doc,
+                sourceId: full ? undefined : state.sourceId,
+                readable,
+              }),
+            },
+          );
+          const response = await fetch(result.url);
+          if (!response.ok)
+            throw new Error("No se pudo descargar la partitura.");
+          saveAs(await response.blob(), `${doc.title}.${format}`);
+        } else if (localEngine && format === "wav") {
+          const audioUrl = full ? url : stemUrls[state.sourceId || ""] || url;
+          if (!audioUrl) throw new Error("No hay audio disponible.");
+          const response = await fetch(audioUrl);
+          if (!response.ok) throw new Error("No se pudo descargar el audio.");
+          saveAs(
+            await response.blob(),
+            `${doc.title}-${full ? "original" : source?.nameEs || "original"}.wav`,
+          );
+        } else
           throw new Error(
             "Este formato se genera en el servidor. Crea un proyecto en la nube.",
           );
@@ -509,41 +826,6 @@ export function MusicEditor({
   const source = doc.sources.find((s) => s.id === state.sourceId);
   return (
     <div className="studio-page">
-      <div className="page-heading">
-        <div className="eyebrow">
-          <span className="tiny-dot violet" /> TU ESPACIO DE CREACIÓN
-        </div>
-        <div className="heading-line">
-          <div>
-            <h1>
-              De audio a ideas. <span>De ideas a música.</span>
-            </h1>
-            <p>
-              {projectId
-                ? "Escucha, transcribe y afina cada detalle en un solo espacio."
-                : "Analiza tu audio, transcribe notas y corrige la partitura en el estudio."}
-            </p>
-          </div>
-          <div className="heading-actions">
-            <button
-              className="button secondary"
-              disabled={busy}
-              onClick={() => midiInput.current?.click()}
-            >
-              <FileMusic size={16} />
-              Importar MIDI
-            </button>
-            <button
-              className="button primary"
-              disabled={busy}
-              onClick={() => audioInput.current?.click()}
-            >
-              <Upload size={16} />
-              Abrir audio
-            </button>
-          </div>
-        </div>
-      </div>
       <input
         ref={audioInput}
         type="file"
@@ -574,6 +856,10 @@ export function MusicEditor({
                   ).validateDocument(JSON.parse(await f.text()))
                 : readMidi(await f.arrayBuffer());
               state.load(document);
+              if (localEngine) {
+                setLocalJobId(undefined);
+                setStemUrls({});
+              }
               setNotice(
                 `${document.events.length} eventos importados del archivo. No se ha transcrito el audio.`,
               );
@@ -581,70 +867,146 @@ export function MusicEditor({
           e.target.value = "";
         }}
       />
-      <div className="overview-grid">
-        <div className="overview-card">
-          <span className="overview-icon violet">
-            <FileAudio size={19} />
-          </span>
-          <div>
-            <small>ARCHIVO DE AUDIO</small>
-            <strong>
-              {fileName ||
-                (initial?.storagePath
-                  ? "Audio del proyecto"
-                  : "Listo para tu audio")}
-            </strong>
-            <p>
-              {feature
-                ? `${clock(feature.duration)} · ${(feature.sampleRate / 1000).toFixed(1)} kHz`
-                : "Abre un archivo para empezar"}
-            </p>
-          </div>
+
+      {/* Una sola línea superior con todas las opciones y botones de acción */}
+      <div className="top-studio-bar">
+        <div className="studio-brand">
+          <span className="tiny-dot violet" />
+          <strong>AudioScore</strong>
+          <span>/ Estudio</span>
         </div>
-        <div className="overview-card">
-          <span className="overview-icon cyan">
-            <Layers size={19} />
-          </span>
-          <div>
-            <small>PISTAS MUSICALES</small>
-            <strong>
-              {doc.sources.length} <span>pistas en tu arreglo</span>
-            </strong>
-            <p>{doc.events.length} eventos musicales</p>
-          </div>
-        </div>
-        <div className="overview-card">
-          <span className="overview-icon amber">
-            <ShieldCheck size={19} />
-          </span>
-          <div>
-            <small>REVISIÓN MUSICAL</small>
-            <strong>
-              {
-                doc.events.filter(
-                  (e) =>
-                    !e.isHumanReviewed &&
-                    (doc.provenance === "transcription" || e.confidence < 0.7),
-                ).length
-              }{" "}
-              <span>eventos por revisar</span>
-            </strong>
-            <p>La confianza acompaña cada nota</p>
+        <div className="top-actions">
+          <button
+            className="button secondary small"
+            disabled={busy}
+            onClick={() => audioInput.current?.click()}
+          >
+            <Upload size={14} />
+            Abrir audio
+          </button>
+          <button
+            className="button secondary small"
+            disabled={busy}
+            onClick={() => midiInput.current?.click()}
+          >
+            <FileMusic size={14} />
+            Importar MIDI
+          </button>
+          {localEngine &&
+            (initialLocalJobId ? (
+              <Link
+                className="button secondary small"
+                href="/dashboard/studio"
+                aria-disabled={busy}
+                onClick={(event) => {
+                  if (busy) event.preventDefault();
+                  else newAudio();
+                }}
+              >
+                <RotateCcw size={14} />
+                Nuevo audio
+              </Link>
+            ) : (
+              <button
+                className="button secondary small"
+                disabled={busy}
+                onClick={newAudio}
+              >
+                <RotateCcw size={14} />
+                Nuevo audio
+              </button>
+            ))}
+          <button
+            className="button analyze small"
+            disabled={
+              busy ||
+              (!projectId && (localEngine ? !file : !feature)) ||
+              (job && ["running", "queued"].includes(job.status))
+            }
+            onClick={() => void analyze()}
+          >
+            <Sparkles size={14} />
+            {localEngine ? "Separar y transcribir" : "Analizar y transcribir"}
+            <ArrowUpRight size={13} />
+          </button>
+          <button
+            className="button secondary small"
+            onClick={() => setWorkflowOpen(true)}
+            title="Visualizador de Flujo IATPE en tiempo real (Estilo Make / n8n)"
+          >
+            <Workflow size={14} className="text-amber-400" />
+            Flujo IATPE
+          </button>
+          <button
+            className="button secondary small"
+            onClick={() => void save()}
+            disabled={!editable || (localEngine && !localJobId)}
+          >
+            <Save size={14} />
+            {localEngine
+              ? savedLocal
+                ? "Guardar cambios"
+                : "Guardar como proyecto"
+              : "Guardar"}
+          </button>
+          <div className="export-wrap">
+            <button
+              className="button primary small"
+              disabled={busy || !doc.events.length}
+              onClick={() => setExportOpen(!exportOpen)}
+            >
+              <Download size={14} />
+              Exportar
+              <ChevronDown size={13} />
+            </button>
+            {exportOpen && (
+              <div className="export-menu">
+                {(
+                  [
+                    "midi",
+                    "musicxml",
+                    ...(localEngine ? ["mxl" as const] : []),
+                    "mei",
+                    "pdf",
+                    "wav",
+                    "mp3",
+                    "json",
+                    "zip",
+                  ] as (ExportFormat | "mxl")[]
+                )
+                  .filter(
+                    (f) =>
+                      !localEngine ||
+                      [
+                        "midi",
+                        "musicxml",
+                        "mxl",
+                        "mei",
+                        "pdf",
+                        "wav",
+                        "json",
+                      ].includes(f),
+                  )
+                  .map((f) => (
+                    <button key={f} onClick={() => void exportFile(f)}>
+                      {f === "mxl"
+                        ? "MusicXML comprimido (.mxl)"
+                        : f.toUpperCase()}
+                      <span>
+                        {!projectId &&
+                        !localEngine &&
+                        !["midi", "musicxml", "json"].includes(f)
+                          ? "En la nube"
+                          : "↓"}
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
-      {!projectId && (
-        <div className="notice">
-          <AudioLines size={16} />
-          <span>
-            <strong>Transcripción integrada.</strong> Abre un audio y pulsa
-            «Analizar y transcribir» para detectar notas e instrumentos
-            probables. El audio se procesa en tu navegador. Revisa los
-            resultados antes de exportarlos; las mezclas pueden contener errores
-            de transcripción.
-          </span>
-        </div>
-      )}
+
       {notice && (
         <div className="notice" role="status">
           <Sparkles size={16} />
@@ -658,52 +1020,7 @@ export function MusicEditor({
           </button>
         </div>
       )}
-      {job && (
-        <div className="job-progress">
-          <LoaderCircle
-            className={
-              job.status === "running" || job.status === "queued" ? "spin" : ""
-            }
-            size={17}
-          />
-          <span>{stageLabels[job.stage] ?? job.stage}</span>
-          <progress max={100} value={job.progress} />
-          <strong>{job.progress}%</strong>
-          {projectId &&
-            !["completed", "failed", "cancelled"].includes(job.status) && (
-              <button
-                className="text-button"
-                onClick={() =>
-                  void invoke(async () => {
-                    await api(`/api/projects/${projectId}/cancel`, {
-                      method: "POST",
-                      body: "{}",
-                    });
-                    setJob({ ...job, status: "cancelled", stage: "cancelled" });
-                  })
-                }
-              >
-                Cancelar
-              </button>
-            )}
-        </div>
-      )}
-      {localAnalysis && (
-        <div className="job-progress" role="status">
-          <LoaderCircle className={busy ? "spin" : ""} size={17} />
-          <span>{localAnalysis.stage}</span>
-          <progress max={100} value={localAnalysis.progress} />
-          <strong>{Math.round(localAnalysis.progress)}%</strong>
-          {busy && (
-            <button
-              className="text-button"
-              onClick={() => analysisAbort.current?.abort()}
-            >
-              Cancelar análisis
-            </button>
-          )}
-        </div>
-      )}
+
       <section
         className="workstation"
         onDragOver={(e) => e.preventDefault()}
@@ -721,14 +1038,22 @@ export function MusicEditor({
             </span>
             <div>
               <input
-                aria-label="Título del proyecto"
+                aria-label={
+                  localEngine && !savedLocal
+                    ? "Nombre del audio"
+                    : "Título del proyecto"
+                }
                 value={doc.title}
                 maxLength={120}
                 disabled={!editable}
                 onChange={(e) =>
                   state.edit((d) => ({
                     ...d,
-                    title: e.target.value || "Proyecto sin título",
+                    title:
+                      e.target.value ||
+                      (localEngine && !savedLocal
+                        ? "Audio sin nombre"
+                        : "Proyecto sin título"),
                   }))
                 }
               />
@@ -736,55 +1061,81 @@ export function MusicEditor({
                 <span className="tiny-dot green" />
                 {projectId
                   ? "Proyecto en la nube"
-                  : "Estudio local · sesión del navegador"}
+                  : localEngine
+                    ? savedLocal
+                      ? "Proyecto guardado · este equipo"
+                      : "Audio en trabajo · sin guardar como proyecto"
+                    : "Estudio local · sesión del navegador"}
               </span>
             </div>
           </div>
-          <div className="project-actions">
-            <button
-              className="button secondary small"
-              onClick={() => void save()}
-              disabled={!editable}
-            >
-              <Save size={14} />
-              Guardar
-            </button>
-            <div className="export-wrap">
-              <button
-                className="button primary small"
-                disabled={busy || !doc.events.length}
-                onClick={() => setExportOpen(!exportOpen)}
-              >
-                <Download size={14} />
-                Exportar
-                <ChevronDown size={13} />
-              </button>
-              {exportOpen && (
-                <div className="export-menu">
-                  {(
-                    [
-                      "midi",
-                      "musicxml",
-                      "mei",
-                      "pdf",
-                      "wav",
-                      "mp3",
-                      "json",
-                      "zip",
-                    ] as ExportFormat[]
-                  ).map((f) => (
-                    <button key={f} onClick={() => void exportFile(f)}>
-                      {f.toUpperCase()}
-                      <span>
-                        {!projectId && !["midi", "musicxml", "json"].includes(f)
-                          ? "En la nube"
-                          : "↓"}
-                      </span>
+          <div className="project-progress-right">
+            {localAnalysis ? (
+              <div className="project-progress-chip" role="status">
+                <LoaderCircle className={busy ? "spin" : ""} size={14} />
+                <span className="progress-stage-text">{localAnalysis.stage}</span>
+                <progress max={100} value={localAnalysis.progress} />
+                <strong>{Math.round(localAnalysis.progress)}%</strong>
+                <button
+                  className="text-button"
+                  onClick={() => setWorkflowOpen(true)}
+                  style={{ marginLeft: "4px", color: "var(--accent, #a78bfa)", fontSize: "11px" }}
+                >
+                  Flujo
+                </button>
+                {busy && (
+                  <button
+                    className="text-button"
+                    onClick={() => analysisAbort.current?.abort()}
+                    style={{ color: "#ef4444", fontSize: "11px" }}
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            ) : job ? (
+              <div className="project-progress-chip">
+                <LoaderCircle
+                  className={
+                    job.status === "running" || job.status === "queued" ? "spin" : ""
+                  }
+                  size={14}
+                />
+                <span className="progress-stage-text">{stageLabels[job.stage] ?? job.stage}</span>
+                <progress max={100} value={job.progress} />
+                <strong>{job.progress}%</strong>
+                {projectId &&
+                  !["completed", "failed", "cancelled"].includes(job.status) && (
+                    <button
+                      className="text-button"
+                      onClick={() =>
+                        void invoke(async () => {
+                          await api(`/api/projects/${projectId}/cancel`, {
+                            method: "POST",
+                            body: "{}",
+                          });
+                          setJob({ ...job, status: "cancelled", stage: "cancelled" });
+                        })
+                      }
+                      style={{ color: "#ef4444", fontSize: "11px" }}
+                    >
+                      Cancelar
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                  )}
+              </div>
+            ) : doc.events.length > 0 ? (
+              <div className="project-progress-chip ready">
+                <span className="tiny-dot green" />
+                <span className="progress-stage-text">
+                  {doc.sources.length} stems · {doc.events.length} notas listas
+                </span>
+                <strong className="text-emerald-400">100%</strong>
+              </div>
+            ) : (
+              <div className="project-progress-chip idle">
+                <span style={{ fontSize: "11px", color: "#8d859b" }}>Listo para procesar</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="transport">
@@ -954,39 +1305,105 @@ export function MusicEditor({
               <option value="compare">Audio + MIDI</option>
               <option value="stems">Mezcla de stems</option>
             </select>
-            <button
-              className="button analyze small"
-              disabled={
-                busy ||
-                (!projectId && !feature) ||
-                (job && ["running", "queued"].includes(job.status))
-              }
-              onClick={() => void analyze()}
-            >
-              <Sparkles size={14} />
-              Analizar y transcribir
-              <ArrowUpRight size={13} />
-            </button>
           </div>
         </div>
-        <div className="editor-grid">
-          <StemMixer urls={stemUrls} editable={editable} />
+        {localEngine && (
+          <details className="analysis-options">
+            <summary>Opciones de análisis</summary>
+            <div className="analysis-options-fields">
+              <label>
+                Separación
+                <select
+                  aria-label="Calidad de separación"
+                  disabled={busy}
+                  value={analysisOptions.quality}
+                  onChange={(e) =>
+                    setAnalysisOptions((o) => ({
+                      ...o,
+                      quality: e.target
+                        .value as LocalAnalysisOptions["quality"],
+                    }))
+                  }
+                >
+                  <option value="balanced">Equilibrada</option>
+                  <option value="careful">Cuidadosa · tarda más</option>
+                </select>
+              </label>
+              <label>
+                Tempo
+                <select
+                  aria-label="Seguimiento de tempo"
+                  disabled={busy}
+                  value={analysisOptions.tempo}
+                  onChange={(e) =>
+                    setAnalysisOptions((o) => ({
+                      ...o,
+                      tempo: e.target.value as LocalAnalysisOptions["tempo"],
+                    }))
+                  }
+                >
+                  <option value="steady">Pulso estable</option>
+                  <option value="adaptive">Seguir cambios de tempo</option>
+                </select>
+              </label>
+              <label className="analysis-noise">
+                <input
+                  type="checkbox"
+                  disabled={busy}
+                  checked={analysisOptions.detectBars}
+                  onChange={(e) =>
+                    setAnalysisOptions((o) => ({
+                      ...o,
+                      detectBars: e.target.checked,
+                    }))
+                  }
+                />
+                Estimar inicios de compás
+              </label>
+              <label className="analysis-noise">
+                <input
+                  type="checkbox"
+                  disabled={busy}
+                  checked={analysisOptions.reduceNoise}
+                  onChange={(e) =>
+                    setAnalysisOptions((o) => ({
+                      ...o,
+                      reduceNoise: e.target.checked,
+                    }))
+                  }
+                />
+                Reducir ruido para transcribir
+              </label>
+            </div>
+            <p>
+              Se aplican al siguiente análisis. La reducción de ruido puede
+              afectar notas suaves; conserva el audio de tus pistas.
+            </p>
+          </details>
+        )}
+        <div className="editor-grid editor-grid-audio">
+          <StemPlayback
+            urls={stemUrls}
+            onError={onError}
+            initialMix={stemMix}
+          />
           <div className="editor-center">
             <WaveformEditor
+              localMode={localEngine}
               url={url}
               onError={onError}
               peaks={file ? undefined : peaks}
               duration={file ? undefined : audioDuration}
             />
+            <SeparatedTracks
+              key={localJobId || Object.values(stemUrls).join("|")}
+              urls={stemUrls}
+              jobId={localJobId}
+              busy={busy}
+              onError={onError}
+            />
             <div className="notation-toolbar">
               <div className="tabs">
-                <button
-                  className={tab === "piano" ? "active" : ""}
-                  onClick={() => setTab("piano")}
-                >
-                  <Grid2X2 size={14} />
-                  Piano roll
-                </button>
                 <button
                   className={tab === "score" ? "active" : ""}
                   onClick={() => setTab("score")}
@@ -994,8 +1411,31 @@ export function MusicEditor({
                   <Music2 size={14} />
                   Partitura
                 </button>
+                <button
+                  className={tab === "tab" ? "active" : ""}
+                  onClick={() => setTab("tab")}
+                >
+                  <Music2 size={14} />
+                  Tablatura
+                </button>
               </div>
               <div className="notation-actions">
+                {!!doc.sources.length && (
+                  <select
+                    aria-label="Pista de partitura"
+                    value={state.sourceId || doc.sources[0].id}
+                    onChange={(e) => {
+                      state.selectSource(e.target.value);
+                      setFull(false);
+                    }}
+                  >
+                    {doc.sources.map((pista) => (
+                      <option key={pista.id} value={pista.id}>
+                        {pista.nameEs || pista.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 {tab === "score" && (
                   <>
                     <button
@@ -1107,10 +1547,19 @@ export function MusicEditor({
                   <Wand2 size={14} />
                   Cuantizar
                 </button>
+                {localEngine && localJobId && (
+                  <button
+                    className="text-button"
+                    disabled={!editable || !doc.events.length}
+                    onClick={() => void invoke(reviewStructure)}
+                  >
+                    Revisar compases
+                  </button>
+                )}
               </div>
             </div>
-            {tab === "piano" ? (
-              <PianoRoll editable={editable} />
+            {tab === "tab" ? (
+              <TablatureViewer />
             ) : (
               <ScoreViewer full={full} readable={readable} />
             )}
@@ -1150,145 +1599,23 @@ export function MusicEditor({
           <EventInspector />
         )}
       </section>
+      {/* Paneles secundarios ocultados temporalmente a petición del usuario para enfoque en IATPE y Stems */}
       <MidiPlayback onError={onError} />
-      <div className="studio-footnotes">
-        <div>
-          <ShieldCheck size={15} />
-          <span>
-            {projectId
-              ? "Originales y stems: máximo 24 h. Descarga tus resultados antes de su caducidad."
-              : "El audio local permanece en tu navegador. Guarda tus eventos antes de cerrar."}
-          </span>
-        </div>
-        <span className="micro-tag">NO SE GENERAN NOTAS SIN EVIDENCIA</span>
-      </div>
-      {(doc.warnings.length > 0 || feature || selected || doc.analysis) && (
+      {selected && (
         <div className="detail-grid">
-          {doc.analysis && (
-            <section className="detail-card">
-              <h3>
-                Instrumentos probables <span>Detección automática</span>
-              </h3>
-              <p>
-                YAMNet compara los patrones de toda la pista con categorías
-                aprendidas de AudioSet. Abre las referencias para escuchar
-                ejemplos y comparar con tu audio. Las puntuaciones indican
-                activación del modelo; no son pistas separadas ni
-                identificaciones confirmadas.
-              </p>
-              {doc.analysis.instrumentPredictions.length ? (
-                <div className="instrument-predictions">
-                  {doc.analysis.instrumentPredictions.map((prediction) => (
-                    <span className="micro-tag" key={prediction.label}>
-                      {prediction.labelEs} ·{" "}
-                      {Math.round(prediction.score * 100)}%
-                      {prediction.kind === "family" && " · Familia"}
-                      {prediction.kind === "technique" && " · Técnica"}
-                      {prediction.kind === "voice" && " · Voz"}
-                      {prediction.referenceUrl && (
-                        <a
-                          href={prediction.referenceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`Referencia AudioSet de ${prediction.labelEs}`}
-                        >
-                          {" · Referencia AudioSet ↗"}
-                        </a>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p>
-                  No hay una identificación de instrumento suficientemente
-                  clara.
-                </p>
-              )}
-              <p>
-                <a
-                  href="https://research.google.com/audioset/ontology/musical_instrument_1.html"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Explorar instrumentos en AudioSet ↗
-                </a>
-                {" · "}Las referencias se abren en otra página. Tu audio se
-                analiza localmente.
-              </p>
-              {!!doc.analysis.excludedNotes?.length && (
-                <>
-                  <p>
-                    {doc.analysis.excludedNotes.length} detecciones breves o
-                    posibles armónicos se apartaron para limpiar la
-                    transcripción. Puedes recuperarlas y deshacer la
-                    recuperación.
-                  </p>
-                  <button
-                    className="button small"
-                    disabled={!editable || busy}
-                    onClick={() =>
-                      void invoke(async () => {
-                        state.edit(restoreExcludedNotes);
-                        setNotice(
-                          "Detecciones apartadas recuperadas para revisión.",
-                        );
-                      })
-                    }
-                  >
-                    Recuperar detecciones apartadas
-                  </button>
-                </>
-              )}
-            </section>
-          )}
-          {feature && (
-            <section
-              className="detail-card"
-              ref={acousticPanel}
-              tabIndex={-1}
-              aria-label="Análisis acústico del audio"
-            >
-              <h3>
-                Características acústicas <span>Meyda</span>
-              </h3>
-              <p>
-                Medidas de ventanas del canal principal; no representan una
-                transcripción.
-              </p>
-              <div className="acoustic-stats">
-                <div>
-                  <strong>{feature.rms.toFixed(3)}</strong>
-                  <small>RMS medio</small>
-                </div>
-                <div>
-                  <strong>{Math.round(feature.spectralCentroidHz)} Hz</strong>
-                  <small>Centroide espectral</small>
-                </div>
-                <div>
-                  <strong>{feature.clippingPercent.toFixed(1)}%</strong>
-                  <small>Clipping estimado</small>
-                </div>
-              </div>
-            </section>
-          )}
-          {doc.warnings.length > 0 && (
-            <section className="detail-card">
-              <h3>Revisión del análisis</h3>
-              {doc.warnings.map((w, i) => (
-                <p key={i} className="warning-text">
-                  {w}
-                </p>
-              ))}
-            </section>
-          )}
-          {selected && (
-            <section className="detail-card">
-              <h3>Nota seleccionada</h3>
-              <NotationPreview pitch={selected.midiNote ?? 60} />
-            </section>
-          )}
+          <section className="detail-card">
+            <h3>Nota seleccionada</h3>
+            <NotationPreview pitch={selected.midiNote ?? 60} />
+          </section>
         </div>
       )}
+      <IatpeWorkflowViewer
+        open={workflowOpen}
+        onClose={() => setWorkflowOpen(false)}
+        document={doc}
+        progress={localAnalysis}
+        fileName={fileName || doc.title}
+      />
     </div>
   );
 }

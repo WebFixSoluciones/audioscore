@@ -2,6 +2,29 @@ import { z } from "zod";
 
 export const PPQ = 128;
 export const confidenceSchema = z.number().min(0).max(1);
+export const musicalMetadataSchema = z.object({
+  downbeatTimes: z
+    .array(z.number().nonnegative().max(900))
+    .max(10000)
+    .optional(),
+  estimatedTimeSignature: z
+    .tuple([z.union([z.literal(3), z.literal(4)]), z.literal(4)])
+    .nullable()
+    .optional(),
+  beatTimes: z.array(z.number().nonnegative().max(900)).max(10000),
+  chords: z
+    .array(
+      z.object({
+        label: z.string().max(20),
+        startSeconds: z.number().nonnegative().max(900),
+        endSeconds: z.number().positive().max(900),
+        confidence: confidenceSchema,
+      }),
+    )
+    .max(2000),
+  method: z.string().max(150),
+  timeSignatureConfidence: confidenceSchema,
+});
 export const tempoSchema = z.object({
   startSeconds: z.number().nonnegative(),
   bpm: z.number().min(20).max(400),
@@ -124,6 +147,7 @@ export const documentSchema = z.object({
     .object({
       engine: z.string().max(100),
       keyConfidence: confidenceSchema,
+      musicalMetadata: musicalMetadataSchema.optional(),
       scoreOriginSeconds: z.number().nonnegative().optional(),
       excludedNotes: z
         .array(

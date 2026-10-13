@@ -457,8 +457,71 @@ select:focus-visible {
   background: #17161e;
   box-shadow: 0 16px 70px #08070d40;
 }
+.top-studio-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.studio-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #cdc8d8;
+}
+.studio-brand strong {
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+.studio-brand span {
+  color: #7b7388;
+  font-size: 12px;
+}
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.project-progress-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.project-progress-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #14131a;
+  border: 1px solid #2b2736;
+  border-radius: 7px;
+  font-size: 11px;
+  color: #a59cb3;
+}
+.project-progress-chip progress {
+  width: 100px;
+  height: 6px;
+  border-radius: 3px;
+}
+.project-progress-chip strong {
+  font-size: 11px;
+  color: #c4b5fd;
+}
+.project-progress-chip.ready strong {
+  color: #34d399;
+}
+.progress-stage-text {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .project-bar {
-  padding: 16px 19px;
+  padding: 14px 19px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -782,6 +845,245 @@ select:focus-visible {
 .editor-center {
   min-width: 0;
 }
+.separated-tracks {
+  background: #17151f;
+  border-block: 1px solid #393040;
+}
+.tracks-header {
+  padding: 22px 20px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+}
+.tracks-header > div,
+.tracks-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.tracks-header > div > svg {
+  color: #bd99f7;
+}
+.tracks-header h2 {
+  margin: 0 0 5px;
+  font-size: 17px;
+  font-weight: 500;
+}
+.tracks-header p,
+.tracks-hint,
+.separated-tracks footer {
+  color: #a194ae;
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0;
+}
+.tracks-hint {
+  padding: 0 20px 15px;
+}
+.tracks-ruler,
+.separated-track {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+}
+.tracks-ruler {
+  color: #92829f;
+  font-size: 10px;
+  padding-block: 10px;
+  border-block: 1px solid #312a3a;
+}
+.tracks-ruler > span {
+  padding-left: 20px;
+}
+.tracks-ruler > div {
+  display: flex;
+  justify-content: space-between;
+  padding-inline: 12px;
+}
+.separated-track {
+  border-bottom: 1px solid #302936;
+  min-height: 138px;
+  box-shadow: inset 3px 0 var(--track-color);
+  transition: background 150ms;
+}
+.track-selected {
+  background: color-mix(in srgb, var(--track-color) 7%, #17151f);
+}
+.track-details {
+  padding: 16px 18px;
+  border-right: 1px solid #302936;
+}
+.track-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  width: 100%;
+}
+.track-title strong {
+  display: block;
+  color: #ece3f5;
+  font-size: 14px;
+  font-weight: 500;
+}
+.track-title small {
+  display: block;
+  margin-top: 4px;
+  color: #97869f;
+  font-size: 9px;
+}
+.track-symbol {
+  color: var(--track-color);
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--track-color) 13%, transparent);
+}
+.track-buttons {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0;
+}
+.track-buttons button,
+.track-buttons a {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 26px;
+  border: 1px solid #433749;
+  border-radius: 5px;
+  color: #c4b0d0;
+  font-size: 11px;
+}
+.track-buttons .on {
+  background: var(--track-color);
+  color: #15121b;
+  border-color: var(--track-color);
+}
+.track-buttons .muted {
+  background: #834352;
+  color: #ffe0e8;
+  border-color: #be788b;
+}
+.track-volume,
+.track-pan {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #a391b0;
+  font-size: 9px;
+  margin-top: 8px;
+}
+.track-volume input,
+.track-pan input {
+  flex: 1;
+  width: 80px;
+  height: 8px;
+  accent-color: var(--track-color);
+  padding: 0;
+}
+.track-volume output,
+.track-pan output {
+  min-width: 36px;
+  text-align: right;
+  color: #d4c5de;
+}
+.track-wave {
+  align-self: center;
+  position: relative;
+  height: 84px;
+  margin: 18px 12px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(16.666% - 1px),
+    #ffffff07 calc(16.666% - 1px),
+    #ffffff07 16.666%
+  );
+}
+.track-wave svg {
+  width: 100%;
+  height: 100%;
+  opacity: 0.85;
+}
+.track-inaudible .track-wave svg {
+  opacity: 0.22;
+}
+.track-wave input {
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  cursor: crosshair;
+}
+.track-wave:focus-within {
+  outline: 2px solid var(--track-color);
+  outline-offset: 2px;
+}
+.track-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #f3eaff;
+  box-shadow: 0 0 7px #e5ccff88;
+  pointer-events: none;
+}
+.track-wave-pending {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #8e7c99;
+  font-size: 10px;
+}
+.separated-tracks footer {
+  padding: 12px 20px;
+  font-size: 10px;
+}
+@media (max-width: 760px) {
+  .tracks-ruler,
+  .separated-track {
+    grid-template-columns: 175px minmax(0, 1fr);
+  }
+  .track-details {
+    padding: 12px 10px;
+  }
+  .tracks-header {
+    padding: 16px 12px;
+  }
+  .track-title strong {
+    font-size: 12px;
+  }
+  .track-symbol {
+    width: 27px;
+    height: 27px;
+  }
+  .track-title {
+    gap: 6px;
+  }
+  .track-title small {
+    font-size: 8px;
+  }
+  .tracks-actions {
+    gap: 8px;
+  }
+  .track-wave {
+    margin-inline: 7px;
+  }
+}
 .wave-panel {
   background:
     radial-gradient(ellipse at 30% 45%, #251e3180, transparent 75%), #15131c;
@@ -799,7 +1101,7 @@ select:focus-visible {
   gap: 1px !important;
 }
 .wave-empty {
-  height: 165px;
+  height: 90px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -2265,4 +2567,138 @@ select:focus-visible {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+.local-library,
+.practice-panel,
+.musical-analysis,
+.tablature-view {
+  padding: 18px;
+  border: 1px solid #3b3149;
+  border-radius: 12px;
+  background: #19151f;
+  margin-bottom: 18px;
+}
+.local-library p,
+.practice-panel p,
+.musical-analysis p,
+.tablature-view p {
+  color: #aaa0bb;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.local-job-list {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-top: 10px;
+}
+.local-job-list button {
+  min-width: 190px;
+  max-width: 260px;
+  padding: 12px;
+  text-align: left;
+  background: #241c2e;
+  border: 1px solid #514064;
+  border-radius: 8px;
+  color: #e8ddf7;
+  cursor: pointer;
+}
+.local-job-list small {
+  display: block;
+  color: #baaad1;
+  margin-top: 6px;
+}
+.local-job-list button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.practice-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  margin: 14px 0;
+}
+.practice-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+.practice-controls select {
+  padding: 9px;
+  border: 1px solid #544365;
+  border-radius: 7px;
+  background: #211827;
+  color: #e8ddf7;
+}
+.practice-panel audio {
+  width: min(100%, 700px);
+}
+.chord-timeline {
+  display: flex;
+  overflow-x: auto;
+  gap: 7px;
+}
+.chord-timeline button {
+  min-width: 56px;
+  padding: 8px;
+  border: 1px solid #514064;
+  border-radius: 7px;
+  background: #241c2e;
+  color: #e8ddf7;
+  cursor: pointer;
+}
+.chord-timeline small {
+  display: block;
+  color: #b6a1cf;
+  font-size: 10px;
+  margin-top: 5px;
+}
+.chord-timeline .selected {
+  background: #644685;
+}
+.tablature-view {
+  overflow-x: auto;
+  border-radius: 0;
+  margin: 0;
+}
+
+/* The audio workspace has one track list and uses the full available width. */
+.editor-grid.editor-grid-audio {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.analysis-options {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.analysis-options summary {
+  cursor: pointer;
+  font-size: 12px;
+}
+.analysis-options-fields {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 14px;
+}
+.analysis-options-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+.analysis-options-fields select {
+  min-width: 170px;
+}
+.analysis-options-fields .analysis-noise {
+  flex-direction: row;
+  align-items: center;
+}
+.analysis-options p {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 10px;
 }

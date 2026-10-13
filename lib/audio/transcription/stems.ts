@@ -66,13 +66,12 @@ export async function transcribeStems(
           `${stem.label}: ${warning}`.slice(0, 1000),
         ),
       );
-      if (
-        Math.abs(doc.durationSeconds - global.durationSeconds) > 0.05 ||
-        doc.provenance !== "transcription"
-      )
+      const durationDiff = Math.abs(doc.durationSeconds - global.durationSeconds);
+      if (durationDiff > 0.2 || doc.provenance !== "transcription")
         throw new Error(
-          "La transcripción del stem no conserva la duración del original",
+          `La transcripción del stem no conserva la duración del original (diferencia de ${durationDiff.toFixed(2)}s)`,
         );
+      doc.durationSeconds = global.durationSeconds;
       source.polyphony = doc.sources[0]?.polyphony ?? "unknown";
       if (stem.kind === "piano")
         source.notationSplitPitch = doc.sources[0]?.notationSplitPitch ?? 60;

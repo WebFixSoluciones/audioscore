@@ -29,7 +29,13 @@ const titles: Record<Mode, string> = {
   "forgot-password": "Recupera tu acceso.",
   "verify-email": "Confirma tu correo.",
 };
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({
+  mode,
+  localMode = false,
+}: {
+  mode: Mode;
+  localMode?: boolean;
+}) {
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [error, setError] = useState(""),
@@ -49,13 +55,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
     });
     router.push(
       session.emailVerified
-        ? session.role === "admin"
-          ? "/admin"
-          : "/dashboard"
+        ? localMode
+          ? "/dashboard/studio"
+          : session.role === "admin"
+            ? "/admin"
+            : "/dashboard"
         : "/auth/verify-email",
     );
     router.refresh();
-  }, [router]);
+  }, [router, localMode]);
   const execute = useCallback(async (work: () => Promise<void>) => {
     setBusy(true);
     setError("");
@@ -128,12 +136,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
         </p>
         {!firebaseConfigured && (
           <div className="auth-config">
-            Firebase aún no está configurado. Puedes analizar y transcribir
-            audio, importar MIDI y editar notas sin cuenta en el{" "}
-            <Link href="/studio">
-              <u>estudio local</u>
-            </Link>
-            .
+            {localMode ? (
+              "Configura la conexión con Firebase para ingresar al estudio con tu cuenta."
+            ) : (
+              <>
+                Firebase aún no está configurado. Puedes analizar y transcribir
+                audio, importar MIDI y editar notas sin cuenta en el{" "}
+                <Link href="/studio">
+                  <u>estudio local</u>
+                </Link>
+                .
+              </>
+            )}
           </div>
         )}
         {mode === "verify-email" ? (

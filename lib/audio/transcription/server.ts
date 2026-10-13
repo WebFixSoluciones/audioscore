@@ -19,8 +19,11 @@ export async function transcribeLocalAudio(
     tempoMap?: MusicDocument["tempoMap"];
     onProgress?: (value: TranscriptionProgress) => Promise<void>;
     timeoutMs?: number;
+    signal?: AbortSignal;
+    reduceNoise?: boolean;
   } = {},
 ) {
+  options.signal?.throwIfAborted();
   const deadline =
     Date.now() + Math.min(options.timeoutMs ?? 12 * 60000, 12 * 60000);
   const pcmPath = join(dirname(input), "transcription.pcm");
@@ -35,6 +38,7 @@ export async function transcribeLocalAudio(
         "error",
         "-i",
         input,
+        ...(options.reduceNoise ? ["-af", "afftdn=nr=6:nf=-50:tn=1"] : []),
         "-vn",
         "-ac",
         "1",
@@ -55,17 +59,25 @@ export async function transcribeLocalAudio(
       },
       Math.min(120000, Math.max(1, deadline - Date.now())),
     );
+    const abort = () => {
+      child.kill();
+      reject(new DOMException("Análisis cancelado", "AbortError"));
+    };
+    options.signal?.addEventListener("abort", abort, { once: true });
     child.once("error", (error) => {
       clearTimeout(timer);
+      options.signal?.removeEventListener("abort", abort);
       reject(error);
     });
     child.once("close", (code) => {
       clearTimeout(timer);
+      options.signal?.removeEventListener("abort", abort);
       if (code === 0) resolve();
       else
         reject(new Error("No se pudo preparar el audio para transcripción."));
     });
   });
+  options.signal?.throwIfAborted();
   const wasmDirectory = join(process.cwd(), "public/models/tfjs") + sep;
   const result = await new Promise<TranscriptionResult>((resolve, reject) => {
     const worker = new Worker(
@@ -91,10 +103,14 @@ export async function transcribeLocalAudio(
         ),
       Math.max(1, deadline - Date.now()),
     );
+    const abort = () =>
+      finish(new DOMException("Análisis cancelado", "AbortError"));
+    options.signal?.addEventListener("abort", abort, { once: true });
     function finish(error?: Error, value?: TranscriptionResult) {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      options.signal?.removeEventListener("abort", abort);
       void worker.terminate();
       if (error) reject(error);
       else resolve(value!);

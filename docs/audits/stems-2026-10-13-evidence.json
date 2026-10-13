@@ -1,0 +1,186 @@
+{
+  "date": "2026-10-13",
+  "scope": "local uncommitted changes; no production code changed by this audit",
+  "checks": {
+    "typecheck": "passed",
+    "vitest": "3 files, 22 tests passed",
+    "lint": "5 errors; 11 TS warnings; Python excluded by ESLint"
+  },
+  "python": {
+    "windowReconstructionWithIdentityModel": [
+      {
+        "durationSeconds": 2,
+        "returnedDuration": 2.0,
+        "lastNonzeroSecond": null,
+        "silentTailSeconds": 2,
+        "allSilent": true,
+        "firstSample": 0.0
+      },
+      {
+        "durationSeconds": 8,
+        "returnedDuration": 8.0,
+        "lastNonzeroSecond": 7.99975,
+        "silentTailSeconds": 0.00013,
+        "allSilent": false,
+        "firstSample": 0.0
+      },
+      {
+        "durationSeconds": 9,
+        "returnedDuration": 9.0,
+        "lastNonzeroSecond": 7.99975,
+        "silentTailSeconds": 1.00012,
+        "allSilent": false,
+        "firstSample": 0.0
+      },
+      {
+        "durationSeconds": 12,
+        "returnedDuration": 12.0,
+        "lastNonzeroSecond": 7.99975,
+        "silentTailSeconds": 4.00012,
+        "allSilent": false,
+        "firstSample": 0.0
+      },
+      {
+        "durationSeconds": 16,
+        "returnedDuration": 16.0,
+        "lastNonzeroSecond": 13.99975,
+        "silentTailSeconds": 2.00013,
+        "allSilent": false,
+        "firstSample": 0.0
+      },
+      {
+        "durationSeconds": 30,
+        "returnedDuration": 30.0,
+        "lastNonzeroSecond": 25.99975,
+        "silentTailSeconds": 4.00012,
+        "allSilent": false,
+        "firstSample": 0.0
+      }
+    ],
+    "indexResampling10kHzTonePeakHz": 6000,
+    "float32AccumulatorBytesAt15min48k": 1382400000,
+    "method": "Original production function; controlled identity model and checkpoint loader; no trained inference."
+  },
+  "typescript": {
+    "yamnet": {
+      "backend": "cpu",
+      "elapsedMs": 6146,
+      "maxHeartbeatGapMs": 5905,
+      "inputShapes": [
+        [
+          48000
+        ],
+        [
+          48000
+        ]
+      ],
+      "errors": [],
+      "result": {
+        "topCandidate": "General Mixture",
+        "topScore": 0,
+        "candidates": []
+      }
+    },
+    "noEvidence": {
+      "mode": "ensemble",
+      "isSolo": false,
+      "channelCount": 4,
+      "primaryInstrument": "other",
+      "confidence": 0.75,
+      "channels": [
+        {
+          "id": "vocals",
+          "label": "Voz LÃ­der",
+          "instrument": "vocals",
+          "sourceAction": "demucs_stem",
+          "program": 53
+        },
+        {
+          "id": "drums",
+          "label": "BaterÃ­a / PercusiÃ³n",
+          "instrument": "drums",
+          "sourceAction": "demucs_stem",
+          "program": 0
+        },
+        {
+          "id": "bass",
+          "label": "Bajo",
+          "instrument": "bass",
+          "sourceAction": "demucs_stem",
+          "program": 32
+        },
+        {
+          "id": "other",
+          "label": "Otros Instrumentos",
+          "instrument": "other",
+          "sourceAction": "demucs_stem",
+          "program": 0
+        }
+      ],
+      "decisionReason": "Mezcla polifÃ³nica multi-instrumental detectada (textura musical densa). Despachando separaciÃ³n de pistas completa con motor neuronal.",
+      "recommendedEngine": "bs_roformer"
+    },
+    "whistleAndPiano": {
+      "mode": "solo",
+      "isSolo": true,
+      "channelCount": 1,
+      "primaryInstrument": "whistle",
+      "confidence": 0.85,
+      "channels": [
+        {
+          "id": "solo-whistle",
+          "label": "NUEVO / SILBIDO",
+          "instrument": "whistle",
+          "sourceAction": "bypass_separation",
+          "program": 78
+        }
+      ],
+      "decisionReason": "Sonido singular acÃºstico o micro-sonido identificado (NUEVO / SILBIDO). Asignado a 1 canal directo sin separaciÃ³n.",
+      "recommendedEngine": "bs_roformer"
+    },
+    "bassGuitar": {
+      "mode": "solo",
+      "isSolo": true,
+      "channelCount": 1,
+      "primaryInstrument": "guitar",
+      "confidence": 0.95,
+      "channels": [
+        {
+          "id": "solo-guitar",
+          "label": "Guitarra Solo",
+          "instrument": "guitar",
+          "sourceAction": "bypass_separation",
+          "program": 24
+        }
+      ],
+      "decisionReason": "Instrumento solista aislado confirmado (Guitarra). Se crea canal Ãºnico sin separaciÃ³n al no haber acompaÃ±amiento de fondo.",
+      "recommendedEngine": "bs_roformer"
+    },
+    "formats": [
+      {
+        "file": ".tmp/audit-gemini-audio/adpcm.wav",
+        "format": {
+          "codec": "dvi_adpcm",
+          "container": "wave",
+          "isLossless": true,
+          "durationSeconds": 1,
+          "channels": 1,
+          "sampleRate": 44100,
+          "bitrateKbps": 128
+        }
+      }
+    ]
+  },
+  "sourceSha256": {
+    "services/separator/bs_roformer_engine.py": "2f6ab27fdbbb624787807721653604ae0ce87862e4ca75562fd3890b3aa6b11c",
+    "services/separator/local_engine.py": "9409cfc7ba7fe58e94e6ba5c05c394bd584adef161367bb3a3c7809228d7eb97",
+    "services/separator/separate.py": "641912a2b9c5aba629ba81d03ffe4efcd794831a3dfb31311b3aff97d49a8780",
+    "services/local/server.ts": "98f03eababbef737b76f5649ba3090d9a3e1fa3020b4bb57d93860c9dcb07d4b",
+    "lib/audio/iatpe/engine.ts": "510cb6ddd9b6846581db1218ff619dc1c760e23243bdc549b3bbc803bab3ad01",
+    "lib/audio/iatpe/google-classifier.ts": "7c5089cc06333b489ee9660e379ff45d436997bc2d6490d5e2c59d58cf297125",
+    "lib/audio/iatpe/channel-dispatcher.ts": "0ae584a65a4796638ddba4465d90e8c4898d3cab5c3cf28e0b316259fd0fce74",
+    "lib/audio/iatpe/stream-decoder.ts": "a9c438836f329a0296daa28d361048297c12c094411899728486553c1da3a70e",
+    "lib/audio/transcription/stems.ts": "06eeca111715548b62f9550f1053838f995ee7af2d49e7f28072e0e40d517e86",
+    "components/audio/IatpeWorkflowViewer.tsx": "bed1123825f194d225c811a73a315d36e9887d5344b2f7e5342b8575c16eca6b"
+  }
+}

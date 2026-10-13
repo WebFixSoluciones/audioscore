@@ -1,14 +1,20 @@
 # AudioScore AI
 
-Estudio musical y base SaaS en Next.js + React + TypeScript. Interfaz oscura en español, editor MIDI, waveform, partituras y procesamiento asíncrono con archivos temporales. Todo el procesamiento propio usa JavaScript/TypeScript; FFmpeg procesa audio desde Node.
+Estudio musical y base SaaS en Next.js + React + TypeScript, con motor local Python/PyTorch. Interfaz oscura en español, editor MIDI, waveform, partituras y procesamiento asíncrono. FFmpeg prepara el audio; Python separa fuentes y analiza armonía, pulsos y primeros tiempos.
 
-**Estado:** estudio con transcripción integrada de audio a notas/MIDI/partitura e identificación probable de instrumentos, sin cuenta ni proveedor externo en modo local. Los modelos Basic Pitch y YAMNet se incluyen y ejecutan dentro de la aplicación usando TensorFlow.js/WASM. La separación de instrumentos en stems individuales todavía requiere un motor adicional. Firebase Auth (Email/password) y Firestore Standard en `nam5` están configurados en `audioscore-ca277`, con reglas e índices desplegados, planes inicializados y primera cuenta administradora aprovisionada. Se verificaron accesos y permisos contra Firebase real. Storage, Tasks, Cloud Run y los proveedores de IA todavía necesitan configuración. Consulta [docs/FIREBASE.md](docs/FIREBASE.md).
+**Estado local:** usuario de Firebase → nuevo audio → stems Demucs → notas/partitura por canal → guardado opcional como proyecto en este equipo. Basic Pitch/YAMNet ejecutan transcripción/clasificación con TensorFlow.js/WASM. Beat This! estima pulsos y compases; music21 revisa la estructura de la exportación MXL. El estudio presenta una única lista de pistas con controles completos. Firebase Auth Email/password y Firestore Standard `nam5` utilizan `audioscore-ca277`; usuarios, roles y planes permanecen en Firebase. Audio y proyectos del modo local no utilizan Storage, Tasks ni Vercel Blob. Consulta [docs/LOCAL.md](docs/LOCAL.md) y [docs/FIREBASE.md](docs/FIREBASE.md).
 
 Repositorio: [WebFixSoluciones/audioscore](https://github.com/WebFixSoluciones/audioscore). La rama principal es `main`; las versiones estables se identifican con etiquetas `vX.Y.Z` y se documentan en [CHANGELOG.md](CHANGELOG.md). `artifacts/` y los archivos temporales de análisis permanecen fuera del control de versiones.
+
+**Arquitectura comprobada:** [informe actual, tecnologías y pendientes](docs/ARCHITECTURE-CURRENT.md), [diagrama de arquitectura PNG](docs/diagrams/audioscore-arquitectura-actual-2026-10-12.png) y [modelo de procesos PNG](docs/diagrams/audioscore-modelo-procesos-2026-10-12.png). Esta es la referencia del motor local; el documento original de arquitectura y la referencia del modo navegador describen recorridos anteriores o alternativos.
 
 **Vercel:** importa ese repositorio desde [Vercel](https://vercel.com/new), selecciona la raíz y deja `main` como rama de producción. El repositorio incluye la configuración de compilación y Node 22; una vez vinculado, los siguientes pushes se publican automáticamente. El estudio funciona sin variables cloud. Para habilitar cuentas y proyectos, consulta [docs/VERCEL.md](docs/VERCEL.md). La vinculación y el despliegue remoto todavía deben realizarse en la cuenta del propietario.
 
 ## Inicio local
+
+Para **separación y transcripción en este equipo**, prepara Python con `npm run local:setup` y arranca con `npm run local`. Abre **http://audioscore.localhost:3000**, pulsa **Ingresar** e inicia sesión. El estudio comienza vacío. Solo **Guardar como proyecto** añade el trabajo a **Mis proyectos**; al reabrir conserva notas y ajustes de mezcla. Incluye stems Demucs, análisis de pulso/acordes, partitura SVG con OSMD, tablatura con VexFlow y práctica de velocidad/tono. Firebase verifica la cuenta y requiere conexión; el audio se procesa en este equipo. Consulta [docs/LOCAL.md](docs/LOCAL.md) y la evaluación de modelos en [docs/ANALYSIS-QUALITY.md](docs/ANALYSIS-QUALITY.md).
+
+El inicio siguiente conserva el estudio que analiza exclusivamente en el navegador:
 
 Node 22, npm y un navegador moderno.
 

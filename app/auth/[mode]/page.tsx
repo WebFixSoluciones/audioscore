@@ -16,6 +16,9 @@ export default async function AuthPage({
   return (
     <AuthForm
       mode={mode as "login" | "register" | "forgot-password" | "verify-email"}
+      localMode={
+        process.env.LOCAL_AUDIO_ENABLED === "1" && process.env.VERCEL !== "1"
+      }
     />
   );
 }

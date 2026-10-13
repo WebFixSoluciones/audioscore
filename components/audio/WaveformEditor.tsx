@@ -13,11 +13,13 @@ export function WaveformEditor({
   peaks,
   duration,
   onError,
+  localMode = false,
 }: {
   url?: string;
   peaks?: number[];
   duration?: number;
   onError: (message: string) => void;
+  localMode?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null),
     spectroRoot = useRef<HTMLDivElement>(null),
@@ -34,7 +36,7 @@ export function WaveformEditor({
     const ws = WaveSurfer.create({
       container: root.current,
       url,
-      height: 126,
+      height: 56,
       waveColor: "#62518f",
       progressColor: "#b596ff",
       cursorColor: "#e4d6ff",
@@ -47,14 +49,14 @@ export function WaveformEditor({
       plugins: [
         regions,
         Timeline.create({
-          height: 22,
+          height: 16,
           timeInterval: 5,
           primaryLabelInterval: 10,
-          style: { color: "#838396", fontSize: "10px" },
+          style: { color: "#838396", fontSize: "9px" },
         }),
         Hover.create({ lineColor: "#ffffff66", labelBackground: "#181622" }),
         Minimap.create({
-          height: 22,
+          height: 16,
           waveColor: "#3a334f",
           progressColor: "#765bae",
         }),
@@ -120,7 +122,7 @@ export function WaveformEditor({
     const plugin = wave.current.registerPlugin(
       Spectrogram.create({
         container: spectroRoot.current,
-        height: 90,
+        height: 60,
         labels: true,
         fftSamples: 512,
       }),
@@ -176,7 +178,7 @@ export function WaveformEditor({
             : "MP3, WAV, FLAC, M4A, AAC, OGG y AIFF"}
         </span>
         <span>
-          {url ? "Web Audio · WaveSurfer" : "Hasta 250 MB en la nube"}
+          {url ? "Web Audio · WaveSurfer" : localMode ? "Hasta 50 MB · en este equipo" : "Hasta 250 MB en la nube"}
         </span>
       </div>
     </div>

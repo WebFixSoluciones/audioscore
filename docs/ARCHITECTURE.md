@@ -1,5 +1,7 @@
 # AudioScore AI — arquitectura y decisiones
 
+> **Documento histórico y referencia del recorrido cloud.** Para el sistema local actual, consulta [ARCHITECTURE-CURRENT.md](ARCHITECTURE-CURRENT.md) y sus diagramas PNG (12 de octubre de 2026). Las decisiones originales «sin backend Python», «sin separación integrada» y «estudio local sin cuenta» han sido superadas por el motor local Python/Node con Firebase. Las protecciones y servicios cloud descritos abajo no deben interpretarse como activos en el proxy local.
+
 ## Alcance construido
 
 Aplicación Next.js App Router, React y TypeScript estricto. El estudio local transcribe archivos reales sin cuenta ni credenciales: Basic Pitch detecta notas polifónicas y YAMNet estima instrumentos probables, ejecutados con TensorFlow.js/WASM en un Web Worker. Los modelos se sirven desde `public/models/`, sin llamar a un servicio de inferencia externo. El worker Node reutiliza la misma inferencia en un hilo aislado. El SaaS usa Firebase Auth, Firestore, App Check, Admin, Storage temporal y Cloud Tasks. La separación en stems instrumentales requiere un motor adicional; la transcripción externa es una extensión opcional.

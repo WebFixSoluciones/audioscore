@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { adminFirebase } from "@/lib/firebase/admin";
 import { ApiError } from "@/lib/utils/errors";
+import { localAccessAllowed } from "@/lib/audio/local/access";
 export const sessionName = () =>
   process.env.SESSION_COOKIE_NAME || "audioscore_session";
 export type Account = {
@@ -15,6 +16,13 @@ export type Account = {
   activeJobs: number;
 };
 export function assertOrigin(request: Request) {
+  if (
+    process.env.LOCAL_AUDIO_ENABLED === "1" &&
+    process.env.VERCEL !== "1" &&
+    request.headers.get("origin") &&
+    localAccessAllowed(request, true)
+  )
+    return;
   const allowed = new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ).origin;

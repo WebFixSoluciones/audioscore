@@ -19,6 +19,9 @@ export default async function DashboardLayout({
   return (
     <Shell
       account={{ email: account.email, isAdmin: account.role === "admin" }}
+      localMode={
+        process.env.LOCAL_AUDIO_ENABLED === "1" && process.env.VERCEL !== "1"
+      }
     >
       {children}
     </Shell>

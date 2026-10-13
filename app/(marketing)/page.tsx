@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { FileMusic, ArrowRight, ArrowUpRight, ShieldCheck } from "lucide-react";
 export default function Home() {
+  const localMode =
+    process.env.LOCAL_AUDIO_ENABLED === "1" && process.env.VERCEL !== "1";
   return (
     <>
       <div className="landing">
@@ -22,9 +24,11 @@ export default function Home() {
           <Link className="button primary" href="/auth/login">
             Ingresar <ArrowUpRight size={16} />
           </Link>
-          <Link className="text-button" href="/studio">
-            Probar el estudio sin cuenta
-          </Link>
+          {!localMode && (
+            <Link className="text-button" href="/studio">
+              Probar el estudio sin cuenta
+            </Link>
+          )}
           <Link className="button secondary" href="/auth/register">
             Crear mi cuenta <ArrowRight size={15} />
           </Link>

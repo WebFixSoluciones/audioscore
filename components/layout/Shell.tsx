@@ -19,30 +19,50 @@ import { api, clientFirebase } from "@/lib/firebase/client";
 export function Shell({
   children,
   account,
+  localMode = false,
 }: {
   children: React.ReactNode;
   account?: { email: string; isAdmin: boolean };
+  localMode?: boolean;
 }) {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const links = [
-    ...(account
-      ? [{ href: "/dashboard", label: "Dashboard", icon: Activity }]
-      : []),
-    {
-      href: account ? "/dashboard/studio" : "/studio",
-      label: "Estudio musical",
-      icon: SlidersHorizontal,
-    },
-    { href: "/dashboard/projects", label: "Mis proyectos", icon: FolderOpen },
-    {
-      href: account ? "/dashboard/usage" : "/pricing",
-      label: "Planes y consumo",
-      icon: CreditCard,
-    },
-    { href: "/features", label: "Cómo funciona", icon: CircleHelp },
-  ];
+  const links = localMode
+    ? [
+        { href: "/dashboard", label: "Dashboard", icon: Activity },
+        {
+          href: "/dashboard/studio",
+          label: "Estudio musical",
+          icon: SlidersHorizontal,
+        },
+        {
+          href: "/dashboard/projects",
+          label: "Mis proyectos",
+          icon: FolderOpen,
+        },
+      ]
+    : [
+        ...(account
+          ? [{ href: "/dashboard", label: "Dashboard", icon: Activity }]
+          : []),
+        {
+          href: account ? "/dashboard/studio" : "/studio",
+          label: "Estudio musical",
+          icon: SlidersHorizontal,
+        },
+        {
+          href: "/dashboard/projects",
+          label: "Mis proyectos",
+          icon: FolderOpen,
+        },
+        {
+          href: account ? "/dashboard/usage" : "/pricing",
+          label: "Planes y consumo",
+          icon: CreditCard,
+        },
+        { href: "/features", label: "Cómo funciona", icon: CircleHelp },
+      ];
   return (
     <div className="app-shell">
       <button
@@ -53,7 +73,7 @@ export function Shell({
         {open ? <X size={20} /> : <Menu size={20} />}
       </button>
       <aside className={`sidebar ${open ? "is-open" : ""}`}>
-        <Link href="/" className="brand">
+        <Link href={localMode ? "/studio" : "/"} className="brand">
           <span className="brand-symbol">
             <AudioLines size={25} />
           </span>
@@ -72,7 +92,11 @@ export function Shell({
         <nav>
           {links.map((l) => (
             <Link
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                if (localMode && l.href === "/dashboard/studio")
+                  window.dispatchEvent(new Event("audioscore:new-audio"));
+              }}
               key={l.href}
               href={l.href}
               className={`nav-item ${(l.href === "/dashboard" ? path === l.href : path.startsWith(l.href)) ? "active" : ""}`}
@@ -93,8 +117,9 @@ export function Shell({
           <p>
             Trabaja con tu audio, revisa cada nota y dale forma a tu música.
           </p>
-          <Link href="/features">
-            Explorar herramientas <ArrowUpRight size={14} />
+          <Link href={localMode ? "/dashboard/projects" : "/features"}>
+            {localMode ? "Abrir mis proyectos" : "Explorar herramientas"}{" "}
+            <ArrowUpRight size={14} />
           </Link>
         </div>
         <div className="sidebar-bottom">

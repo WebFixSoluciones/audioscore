@@ -25,7 +25,13 @@ export type SeparatedStem = {
   transcriptionEligible?: boolean;
 };
 const manifestSchema = z.object({
-  model: z.enum(["htdemucs", "htdemucs_6s"]),
+  model: z.enum([
+    "htdemucs",
+    "htdemucs_6s",
+    "bs_roformer",
+    "mel_band_roformer",
+    "iatpe_ensemble",
+  ]),
   durationSeconds: z.number().positive().max(900),
   gain: z.number().positive().max(1),
   warnings: z.array(z.string().max(500)).max(100),
@@ -35,15 +41,16 @@ const manifestSchema = z.object({
         id: z.string().regex(/^[a-zA-Z0-9_-]{1,100}$/),
         kind: stemKindSchema,
         label: z.string().max(120),
-        file: z.string().regex(/^[a-z]+\.wav$/),
+        file: z.string().regex(/^[a-z0-9_-]+\.wav$/),
         confidence: z.literal(0),
         rms: z.number().finite().positive(),
         transcriptionEligible: z.boolean(),
       }),
     )
     .min(1)
-    .max(6),
+    .max(16),
 });
+export { manifestSchema as separationManifestSchema };
 
 export function separationEnabled() {
   return (

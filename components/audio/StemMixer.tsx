@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useMixer, activateStemMode } from "@/lib/editor/mixer-store";
+import { defaultMix, type ChannelMix } from "@/lib/audio/mixer";
 import { useEditor } from "@/lib/editor/store";
 import {
   Music2,
@@ -11,111 +12,24 @@ import {
 } from "lucide-react";
 import type { AudioSource } from "@/lib/music/types";
 const colors = ["#b090f6", "#5dd6c7", "#e9b567", "#eb83a5", "#69aaf7"];
-let mixerContext: AudioContext | undefined;
-let mixerUsers = 0;
 function StemRow({
   source,
   url,
   index,
-  soloed,
-  onSolo,
-  master,
   editable,
 }: {
   source: AudioSource;
   url?: string;
   index: number;
-  soloed?: string;
-  onSolo: () => void;
-  master: boolean;
   editable: boolean;
 }) {
-  const {
-    sourceId,
-    selectSource,
-    playing,
-    currentTime,
-    mode,
-    document: doc,
-  } = useEditor();
-  const [muted, setMuted] = useState(false),
-    [volume, setVolume] = useState(0.8),
-    [pan, setPan] = useState(0);
-  const audio = useRef<HTMLAudioElement>(null),
-    panner = useRef<StereoPannerNode | null>(null),
-    context = useRef<AudioContext | null>(null);
-  useEffect(() => {
-    if (!url) return;
-    const element = new Audio();
-    element.crossOrigin = "anonymous";
-    element.preload = "metadata";
-    element.src = url;
-    audio.current = element;
-    if (!mixerContext || mixerContext.state === "closed")
-      mixerContext = new AudioContext();
-    const ctx = mixerContext;
-    mixerUsers++;
-    const sourceNode = ctx.createMediaElementSource(element);
-    const node = ctx.createStereoPanner();
-    sourceNode.connect(node).connect(ctx.destination);
-    context.current = ctx;
-    panner.current = node;
-    const onTime = () => {
-      const s = useEditor.getState();
-      if (master && s.mode === "stems") {
-        if (s.loop && s.region && element.currentTime >= s.region[1])
-          element.currentTime = s.region[0];
-        s.seek(element.currentTime);
-      }
-    };
-    const onEnd = () => {
-      if (master && useEditor.getState().mode === "stems")
-        useEditor.getState().setPlaying(false);
-    };
-    element.addEventListener("timeupdate", onTime);
-    element.addEventListener("ended", onEnd);
-    return () => {
-      element.pause();
-      element.removeEventListener("timeupdate", onTime);
-      element.removeEventListener("ended", onEnd);
-      element.removeAttribute("src");
-      element.load();
-      audio.current = null;
-      sourceNode.disconnect();
-      node.disconnect();
-      mixerUsers--;
-      if (mixerUsers === 0) {
-        void ctx.close();
-        mixerContext = undefined;
-      }
-    };
-  }, [url, master]);
-  useEffect(() => {
-    if (panner.current) panner.current.pan.value = pan;
-  }, [pan]);
-  useEffect(() => {
-    const element = audio.current;
-    if (!element) return;
-    element.volume =
-      muted || (soloed !== undefined && soloed !== source.id) ? 0 : volume;
-  }, [muted, soloed, source.id, volume]);
-  useEffect(() => {
-    const element = audio.current;
-    if (!element || !url) return;
-    if (playing && mode === "stems") {
-      void context.current?.resume();
-      void element.play().catch(() => useEditor.getState().setPlaying(false));
-    } else element.pause();
-  }, [playing, url, mode]);
-  useEffect(() => {
-    const element = audio.current;
-    if (
-      element &&
-      Number.isFinite(element.duration) &&
-      Math.abs(element.currentTime - currentTime) > 0.3
-    )
-      element.currentTime = Math.min(currentTime, element.duration);
-  }, [currentTime]);
+  const { sourceId, selectSource, document: doc } = useEditor();
+  const channel = useMixer((s) => s.channels[source.id]) ?? defaultMix;
+  const { muted, volume, pan, solo } = channel;
+  const update = (patch: Partial<ChannelMix>) => {
+    activateStemMode();
+    useMixer.getState().update(source.id, patch);
+  };
   const Icon =
     source.category === "percussive"
       ? Drum
@@ -198,8 +112,9 @@ function StemRow({
       </select>
       <div className="stem-controls">
         <button
-          className={soloed === source.id ? "on" : ""}
-          onClick={onSolo}
+          className={solo ? "on" : ""}
+          onClick={() => update({ solo: !solo })}
+          aria-pressed={solo}
           aria-label={`Solo ${source.name}`}
           disabled={!url}
         >
@@ -207,7 +122,8 @@ function StemRow({
         </button>
         <button
           className={muted ? "on" : ""}
-          onClick={() => setMuted(!muted)}
+          onClick={() => update({ muted: !muted })}
+          aria-pressed={muted}
           aria-label={`Silenciar ${source.name}`}
           disabled={!url}
         >
@@ -241,7 +157,7 @@ function StemRow({
           max={1}
           step={0.01}
           value={volume}
-          onChange={(e) => setVolume(Number(e.target.value))}
+          onChange={(e) => update({ volume: Number(e.target.value) })}
           disabled={!url}
         />
         <input
@@ -251,7 +167,7 @@ function StemRow({
           max={1}
           step={0.01}
           value={pan}
-          onChange={(e) => setPan(Number(e.target.value))}
+          onChange={(e) => update({ pan: Number(e.target.value) })}
           disabled={!url}
         />
       </div>
@@ -266,7 +182,6 @@ export function StemMixer({
   editable?: boolean;
 }) {
   const { document: doc, edit, selectSource } = useEditor();
-  const [solo, setSolo] = useState<string>();
   const detected = (doc.analysis?.instrumentPredictions ?? []).filter(
     (prediction) => prediction.kind !== "technique",
   );
@@ -320,9 +235,6 @@ export function StemMixer({
             source={s}
             url={urls[s.id]}
             index={i}
-            soloed={solo}
-            onSolo={() => setSolo(solo === s.id ? undefined : s.id)}
-            master={s.id === Object.keys(urls)[0]}
             editable={editable}
           />
         ))}
@@ -391,7 +303,7 @@ export function StemMixer({
       <div className="stem-bottom">
         <span className="tiny-dot cyan" />{" "}
         {Object.keys(urls).length
-          ? "Stems temporales disponibles"
+          ? "Stems de audio disponibles"
           : "Sin stems de audio"}
         <p>
           {Object.keys(urls).length
