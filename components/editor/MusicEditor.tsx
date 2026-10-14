@@ -26,6 +26,7 @@ import {
   Layers,
   FileAudio,
   Workflow,
+  SlidersHorizontal,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { IatpeWorkflowViewer } from "@/components/audio/IatpeWorkflowViewer";
@@ -468,10 +469,17 @@ export function MusicEditor({
               `${result.document.sources.length} stems disponibles y ${result.document.events.length} notas para revisar. Selecciona cada pista para escucharla o ver su partitura.`,
             );
           } catch (error) {
-            setLocalAnalysis(undefined);
-            if (abort.signal.aborted)
+            if (abort.signal.aborted) {
+              setLocalAnalysis(undefined);
               setNotice("Análisis cancelado. Se conservó el arreglo anterior.");
-            else throw error;
+            } else {
+              const errMsg = messageOf(error);
+              setLocalAnalysis((prev) => ({
+                stage: `Error: ${errMsg}`,
+                progress: prev?.progress ?? 0,
+              }));
+              setNotice(errMsg);
+            }
           } finally {
             if (analysisAbort.current === abort) analysisAbort.current = null;
           }
@@ -587,12 +595,19 @@ export function MusicEditor({
               : "El análisis terminó sin notas tonales suficientemente claras. Prueba con una región o un instrumento aislado.",
           );
         } catch (error) {
-          setLocalAnalysis(undefined);
-          if (abort.signal.aborted)
+          if (abort.signal.aborted) {
+            setLocalAnalysis(undefined);
             setNotice(
               "Transcripción cancelada. Se conservó el arreglo anterior.",
             );
-          else throw error;
+          } else {
+            const errMsg = messageOf(error);
+            setLocalAnalysis((prev) => ({
+              stage: `Error: ${errMsg}`,
+              progress: prev?.progress ?? 0,
+            }));
+            setNotice(errMsg);
+          }
         } finally {
           if (analysisAbort.current === abort) analysisAbort.current = null;
         }
@@ -868,145 +883,6 @@ export function MusicEditor({
         }}
       />
 
-      {/* Una sola línea superior con todas las opciones y botones de acción */}
-      <div className="top-studio-bar">
-        <div className="studio-brand">
-          <span className="tiny-dot violet" />
-          <strong>AudioScore</strong>
-          <span>/ Estudio</span>
-        </div>
-        <div className="top-actions">
-          <button
-            className="button secondary small"
-            disabled={busy}
-            onClick={() => audioInput.current?.click()}
-          >
-            <Upload size={14} />
-            Abrir audio
-          </button>
-          <button
-            className="button secondary small"
-            disabled={busy}
-            onClick={() => midiInput.current?.click()}
-          >
-            <FileMusic size={14} />
-            Importar MIDI
-          </button>
-          {localEngine &&
-            (initialLocalJobId ? (
-              <Link
-                className="button secondary small"
-                href="/dashboard/studio"
-                aria-disabled={busy}
-                onClick={(event) => {
-                  if (busy) event.preventDefault();
-                  else newAudio();
-                }}
-              >
-                <RotateCcw size={14} />
-                Nuevo audio
-              </Link>
-            ) : (
-              <button
-                className="button secondary small"
-                disabled={busy}
-                onClick={newAudio}
-              >
-                <RotateCcw size={14} />
-                Nuevo audio
-              </button>
-            ))}
-          <button
-            className="button analyze small"
-            disabled={
-              busy ||
-              (!projectId && (localEngine ? !file : !feature)) ||
-              (job && ["running", "queued"].includes(job.status))
-            }
-            onClick={() => void analyze()}
-          >
-            <Sparkles size={14} />
-            {localEngine ? "Separar y transcribir" : "Analizar y transcribir"}
-            <ArrowUpRight size={13} />
-          </button>
-          <button
-            className="button secondary small"
-            onClick={() => setWorkflowOpen(true)}
-            title="Visualizador de Flujo IATPE en tiempo real (Estilo Make / n8n)"
-          >
-            <Workflow size={14} className="text-amber-400" />
-            Flujo IATPE
-          </button>
-          <button
-            className="button secondary small"
-            onClick={() => void save()}
-            disabled={!editable || (localEngine && !localJobId)}
-          >
-            <Save size={14} />
-            {localEngine
-              ? savedLocal
-                ? "Guardar cambios"
-                : "Guardar como proyecto"
-              : "Guardar"}
-          </button>
-          <div className="export-wrap">
-            <button
-              className="button primary small"
-              disabled={busy || !doc.events.length}
-              onClick={() => setExportOpen(!exportOpen)}
-            >
-              <Download size={14} />
-              Exportar
-              <ChevronDown size={13} />
-            </button>
-            {exportOpen && (
-              <div className="export-menu">
-                {(
-                  [
-                    "midi",
-                    "musicxml",
-                    ...(localEngine ? ["mxl" as const] : []),
-                    "mei",
-                    "pdf",
-                    "wav",
-                    "mp3",
-                    "json",
-                    "zip",
-                  ] as (ExportFormat | "mxl")[]
-                )
-                  .filter(
-                    (f) =>
-                      !localEngine ||
-                      [
-                        "midi",
-                        "musicxml",
-                        "mxl",
-                        "mei",
-                        "pdf",
-                        "wav",
-                        "json",
-                      ].includes(f),
-                  )
-                  .map((f) => (
-                    <button key={f} onClick={() => void exportFile(f)}>
-                      {f === "mxl"
-                        ? "MusicXML comprimido (.mxl)"
-                        : f.toUpperCase()}
-                      <span>
-                        {!projectId &&
-                        !localEngine &&
-                        !["midi", "musicxml", "json"].includes(f)
-                          ? "En la nube"
-                          : "↓"}
-                      </span>
-                    </button>
-                  ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       {notice && (
         <div className="notice" role="status">
           <Sparkles size={16} />
@@ -1031,12 +907,17 @@ export function MusicEditor({
           if (f) void openAudio(f);
         }}
       >
-        <div className="project-bar">
-          <div className="project-title">
-            <span className="project-icon">
-              <AudioLines size={18} />
-            </span>
-            <div>
+        {/* CONSOLA PRINCIPAL UNIFICADA DAW */}
+        <div className="daw-console-bar">
+          {/* Deck Izquierdo: Identidad de Estudio, Título del Track y Estado */}
+          <div className="daw-deck-left">
+            <div className="daw-brand-tag" title="AudioScore Studio DAW">
+              <span className="daw-led-dot" />
+              <strong>STUDIO</strong>
+            </div>
+
+            <div className="daw-project-field">
+              <AudioLines size={14} className="daw-field-icon" />
               <input
                 aria-label={
                   localEngine && !savedLocal
@@ -1046,6 +927,7 @@ export function MusicEditor({
                 value={doc.title}
                 maxLength={120}
                 disabled={!editable}
+                placeholder="Sin título"
                 onChange={(e) =>
                   state.edit((d) => ({
                     ...d,
@@ -1057,330 +939,472 @@ export function MusicEditor({
                   }))
                 }
               />
-              <span>
-                <span className="tiny-dot green" />
-                {projectId
-                  ? "Proyecto en la nube"
-                  : localEngine
-                    ? savedLocal
-                      ? "Proyecto guardado · este equipo"
-                      : "Audio en trabajo · sin guardar como proyecto"
-                    : "Estudio local · sesión del navegador"}
-              </span>
             </div>
-          </div>
-          <div className="project-progress-right">
-            {localAnalysis ? (
-              <div className="project-progress-chip" role="status">
-                <LoaderCircle className={busy ? "spin" : ""} size={14} />
-                <span className="progress-stage-text">{localAnalysis.stage}</span>
-                <progress max={100} value={localAnalysis.progress} />
-                <strong>{Math.round(localAnalysis.progress)}%</strong>
-                <button
-                  className="text-button"
-                  onClick={() => setWorkflowOpen(true)}
-                  style={{ marginLeft: "4px", color: "var(--accent, #a78bfa)", fontSize: "11px" }}
-                >
-                  Flujo
-                </button>
-                {busy && (
+
+            {/* Chip de Estado / Progreso de Análisis */}
+            <div className="daw-status-wrapper">
+              {localAnalysis ? (
+                <div className="daw-status-chip processing" role="status">
+                  <LoaderCircle className={busy ? "spin" : ""} size={12} />
+                  <span className="daw-status-stage">{localAnalysis.stage}</span>
+                  <progress max={100} value={localAnalysis.progress} />
+                  <strong>{Math.round(localAnalysis.progress)}%</strong>
                   <button
-                    className="text-button"
-                    onClick={() => analysisAbort.current?.abort()}
-                    style={{ color: "#ef4444", fontSize: "11px" }}
+                    className="daw-chip-btn"
+                    onClick={() => setWorkflowOpen(true)}
+                    title="Ver Flujo IATPE"
                   >
-                    Cancelar
+                    Flujo
                   </button>
-                )}
-              </div>
-            ) : job ? (
-              <div className="project-progress-chip">
-                <LoaderCircle
-                  className={
-                    job.status === "running" || job.status === "queued" ? "spin" : ""
-                  }
-                  size={14}
-                />
-                <span className="progress-stage-text">{stageLabels[job.stage] ?? job.stage}</span>
-                <progress max={100} value={job.progress} />
-                <strong>{job.progress}%</strong>
-                {projectId &&
-                  !["completed", "failed", "cancelled"].includes(job.status) && (
+                  {busy && (
                     <button
-                      className="text-button"
-                      onClick={() =>
-                        void invoke(async () => {
-                          await api(`/api/projects/${projectId}/cancel`, {
-                            method: "POST",
-                            body: "{}",
-                          });
-                          setJob({ ...job, status: "cancelled", stage: "cancelled" });
-                        })
-                      }
-                      style={{ color: "#ef4444", fontSize: "11px" }}
+                      className="daw-chip-btn cancel"
+                      onClick={() => analysisAbort.current?.abort()}
+                      title="Cancelar"
                     >
-                      Cancelar
+                      <X size={10} />
                     </button>
                   )}
-              </div>
-            ) : doc.events.length > 0 ? (
-              <div className="project-progress-chip ready">
-                <span className="tiny-dot green" />
-                <span className="progress-stage-text">
-                  {doc.sources.length} stems · {doc.events.length} notas listas
-                </span>
-                <strong className="text-emerald-400">100%</strong>
-              </div>
-            ) : (
-              <div className="project-progress-chip idle">
-                <span style={{ fontSize: "11px", color: "#8d859b" }}>Listo para procesar</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="transport">
-          <div className="transport-play">
-            <button
-              className="icon-button"
-              aria-label="Volver al inicio"
-              onClick={() => {
-                state.setPlaying(false);
-                state.seek(0);
-              }}
-            >
-              <SkipBack size={17} />
-            </button>
-            <button
-              className="play-button"
-              aria-label={state.playing ? "Pausar" : "Reproducir"}
-              disabled={
-                state.mode === "stems"
-                  ? !Object.keys(stemUrls).length
-                  : state.mode === "audio"
-                    ? !url
-                    : state.mode === "compare"
-                      ? !url || !doc.events.length
-                      : !doc.events.length
-              }
-              onClick={() => state.setPlaying(!state.playing)}
-            >
-              {state.playing ? (
-                <Pause size={17} />
+                </div>
+              ) : job ? (
+                <div className="daw-status-chip processing">
+                  <LoaderCircle
+                    className={
+                      job.status === "running" || job.status === "queued"
+                        ? "spin"
+                        : ""
+                    }
+                    size={12}
+                  />
+                  <span className="daw-status-stage">
+                    {stageLabels[job.stage] ?? job.stage}
+                  </span>
+                  <progress max={100} value={job.progress} />
+                  <strong>{job.progress}%</strong>
+                  {projectId &&
+                    !["completed", "failed", "cancelled"].includes(job.status) && (
+                      <button
+                        className="daw-chip-btn cancel"
+                        onClick={() =>
+                          void invoke(async () => {
+                            await api(`/api/projects/${projectId}/cancel`, {
+                              method: "POST",
+                              body: "{}",
+                            });
+                            setJob({ ...job, status: "cancelled", stage: "cancelled" });
+                          })
+                        }
+                      >
+                        <X size={10} />
+                      </button>
+                    )}
+                </div>
+              ) : doc.events.length > 0 ? (
+                <div className="daw-status-chip ready">
+                  <span className="tiny-dot green" />
+                  <span>
+                    {doc.sources.length} stems · {doc.events.length} notas
+                  </span>
+                </div>
               ) : (
-                <Play size={17} fill="currentColor" />
+                <div className="daw-status-chip idle">
+                  <span className="tiny-dot violet" />
+                  <span>Listo</span>
+                </div>
               )}
-            </button>
-            <span className="time-display">
-              {clock(state.currentTime)}
-              <small>/ {clock(doc.durationSeconds)}</small>
-            </span>
-            <button
-              className={`icon-button ${state.loop ? "selected" : ""}`}
-              aria-label="Repetir región"
-              disabled={!state.region}
-              onClick={() => state.setLoop(!state.loop)}
-            >
-              <Repeat2 size={17} />
-            </button>
+            </div>
           </div>
-          <div className="transport-music">
-            <label>
-              <input
-                aria-label="Tempo BPM"
-                disabled={!editable}
-                type="number"
-                min={20}
-                max={400}
-                value={doc.tempoMap[0].bpm}
-                onChange={(e) => {
-                  const bpm = Number(e.target.value);
-                  if (bpm >= 20 && bpm <= 400)
-                    state.edit((d) =>
-                      withTempoMap(d, [
-                        { startSeconds: 0, bpm, confidence: 1 },
-                      ]),
-                    );
+
+          {/* Deck Central: Transporte DAW, Reloj LCD y Parámetros Musicales */}
+          <div className="daw-deck-center">
+            <div className="daw-transport-group">
+              <button
+                className="daw-transport-btn"
+                aria-label="Volver al inicio"
+                title="Volver al inicio (0:00)"
+                onClick={() => {
+                  state.setPlaying(false);
+                  state.seek(0);
                 }}
-              />
-              <span>
-                BPM
-                {doc.provenance === "midi_import"
-                  ? " · MIDI"
-                  : doc.tempoMap[0].confidence === 1
-                    ? " · MANUAL"
-                    : doc.tempoMap[0].confidence
-                      ? " · ESTIMADO"
-                      : " · REFERENCIA"}
-              </span>
-            </label>
-            <label>
-              <select
-                aria-label="Compás"
-                disabled={!editable}
-                value={doc.timeSignature.join("/")}
-                onChange={(e) =>
-                  state.edit((d) => ({
-                    ...d,
-                    timeSignature: e.target.value
-                      .split("/")
-                      .map(Number) as MusicDocument["timeSignature"],
-                  }))
-                }
               >
-                {["4/4", "3/4", "2/4", "6/8", "9/8", "12/8", "5/4", "7/8"].map(
-                  (s) => (
-                    <option key={s}>{s}</option>
-                  ),
+                <SkipBack size={14} />
+              </button>
+
+              <button
+                className={`daw-play-btn ${state.playing ? "is-playing" : ""}`}
+                aria-label={state.playing ? "Pausar" : "Reproducir"}
+                title={state.playing ? "Pausar (Espacio)" : "Reproducir (Espacio)"}
+                disabled={
+                  state.mode === "stems"
+                    ? !Object.keys(stemUrls).length
+                    : state.mode === "audio"
+                      ? !url
+                      : state.mode === "compare"
+                        ? !url || !doc.events.length
+                        : !doc.events.length
+                }
+                onClick={() => state.setPlaying(!state.playing)}
+              >
+                {state.playing ? (
+                  <Pause size={15} />
+                ) : (
+                  <Play size={15} fill="currentColor" />
                 )}
-              </select>
-              <span>COMPÁS{doc.analysis ? " · REVISAR" : ""}</span>
-            </label>
-            <label>
-              <select
-                aria-label="Tonalidad"
-                disabled={!editable}
-                value={doc.key}
-                onChange={(e) =>
-                  state.edit((d) => ({
-                    ...d,
-                    key: e.target.value as MusicDocument["key"],
-                    ...(d.analysis
-                      ? { analysis: { ...d.analysis, keyConfidence: 1 } }
-                      : {}),
-                  }))
-                }
+              </button>
+
+              <button
+                className={`daw-transport-btn ${state.loop ? "selected" : ""}`}
+                aria-label="Repetir región"
+                title="Repetir región (Loop)"
+                disabled={!state.region}
+                onClick={() => state.setLoop(!state.loop)}
               >
-                {[
-                  "C",
-                  "G",
-                  "D",
-                  "A",
-                  "E",
-                  "B",
-                  "F#",
-                  "F",
-                  "Bb",
-                  "Eb",
-                  "Ab",
-                  "Db",
-                  "Gb",
-                  "Am",
-                  "Em",
-                  "Bm",
-                  "Dm",
-                  "Gm",
-                  "Cm",
-                  "C#m",
-                  "Ebm",
-                  "Fm",
-                  "F#m",
-                  "G#m",
-                  "Bbm",
-                ].map((k) => (
-                  <option key={k}>{k}</option>
-                ))}
-              </select>
-              <span>
-                TONALIDAD
-                {doc.analysis
-                  ? doc.analysis.keyConfidence === 1
-                    ? " · MANUAL"
-                    : doc.analysis.keyConfidence
-                      ? " · ESTIMADA"
-                      : " · REFERENCIA"
-                  : ""}
-              </span>
-            </label>
-          </div>
-          <div className="transport-right">
-            <select
-              aria-label="Modo de reproducción"
-              value={state.mode}
-              onChange={(e) =>
-                state.setMode(e.target.value as typeof state.mode)
-              }
-            >
-              <option value="audio">Audio original</option>
-              <option value="midi">MIDI sintetizado</option>
-              <option value="compare">Audio + MIDI</option>
-              <option value="stems">Mezcla de stems</option>
-            </select>
-          </div>
-        </div>
-        {localEngine && (
-          <details className="analysis-options">
-            <summary>Opciones de análisis</summary>
-            <div className="analysis-options-fields">
-              <label>
-                Separación
+                <Repeat2 size={14} />
+              </button>
+            </div>
+
+            {/* Reloj Digital LCD */}
+            <div className="daw-lcd-display" title="Tiempo actual / Duración total">
+              <span className="daw-lcd-time">{clock(state.currentTime)}</span>
+              <span className="daw-lcd-sep">/</span>
+              <span className="daw-lcd-total">{clock(doc.durationSeconds)}</span>
+            </div>
+
+            {/* Parámetros Musicales: BPM, Compás, Tonalidad, Modo */}
+            <div className="daw-params-group">
+              <label className="daw-param-item" title="Tempo en pulsos por minuto">
+                <span className="daw-param-tag">BPM</span>
+                <input
+                  aria-label="Tempo BPM"
+                  disabled={!editable}
+                  type="number"
+                  min={20}
+                  max={400}
+                  value={doc.tempoMap[0].bpm}
+                  onChange={(e) => {
+                    const bpm = Number(e.target.value);
+                    if (bpm >= 20 && bpm <= 400)
+                      state.edit((d) =>
+                        withTempoMap(d, [
+                          { startSeconds: 0, bpm, confidence: 1 },
+                        ]),
+                      );
+                  }}
+                />
+              </label>
+
+              <label className="daw-param-item" title="Métrica de compás">
+                <span className="daw-param-tag">COMPÁS</span>
                 <select
-                  aria-label="Calidad de separación"
-                  disabled={busy}
-                  value={analysisOptions.quality}
+                  aria-label="Compás"
+                  disabled={!editable}
+                  value={doc.timeSignature.join("/")}
                   onChange={(e) =>
-                    setAnalysisOptions((o) => ({
-                      ...o,
-                      quality: e.target
-                        .value as LocalAnalysisOptions["quality"],
+                    state.edit((d) => ({
+                      ...d,
+                      timeSignature: e.target.value
+                        .split("/")
+                        .map(Number) as MusicDocument["timeSignature"],
                     }))
                   }
                 >
-                  <option value="balanced">Equilibrada</option>
-                  <option value="careful">Cuidadosa · tarda más</option>
+                  {["4/4", "3/4", "2/4", "6/8", "9/8", "12/8", "5/4", "7/8"].map(
+                    (s) => (
+                      <option key={s}>{s}</option>
+                    ),
+                  )}
                 </select>
               </label>
-              <label>
-                Tempo
+
+              <label className="daw-param-item" title="Tonalidad estimada">
+                <span className="daw-param-tag">TONO</span>
                 <select
-                  aria-label="Seguimiento de tempo"
-                  disabled={busy}
-                  value={analysisOptions.tempo}
+                  aria-label="Tonalidad"
+                  disabled={!editable}
+                  value={doc.key}
                   onChange={(e) =>
-                    setAnalysisOptions((o) => ({
-                      ...o,
-                      tempo: e.target.value as LocalAnalysisOptions["tempo"],
+                    state.edit((d) => ({
+                      ...d,
+                      key: e.target.value as MusicDocument["key"],
+                      ...(d.analysis
+                        ? { analysis: { ...d.analysis, keyConfidence: 1 } }
+                        : {}),
                     }))
                   }
                 >
-                  <option value="steady">Pulso estable</option>
-                  <option value="adaptive">Seguir cambios de tempo</option>
+                  {[
+                    "C", "G", "D", "A", "E", "B", "F#", "F", "Bb", "Eb", "Ab", "Db", "Gb",
+                    "Am", "Em", "Bm", "Dm", "Gm", "Cm", "C#m", "Ebm", "Fm", "F#m", "G#m", "Bbm",
+                  ].map((k) => (
+                    <option key={k}>{k}</option>
+                  ))}
                 </select>
               </label>
-              <label className="analysis-noise">
-                <input
-                  type="checkbox"
-                  disabled={busy}
-                  checked={analysisOptions.detectBars}
+
+              <label className="daw-param-item mode-item" title="Salida de audio">
+                <span className="daw-param-tag">SALIDA</span>
+                <select
+                  aria-label="Modo de reproducción"
+                  value={state.mode}
                   onChange={(e) =>
-                    setAnalysisOptions((o) => ({
-                      ...o,
-                      detectBars: e.target.checked,
-                    }))
+                    state.setMode(e.target.value as typeof state.mode)
                   }
-                />
-                Estimar inicios de compás
-              </label>
-              <label className="analysis-noise">
-                <input
-                  type="checkbox"
-                  disabled={busy}
-                  checked={analysisOptions.reduceNoise}
-                  onChange={(e) =>
-                    setAnalysisOptions((o) => ({
-                      ...o,
-                      reduceNoise: e.target.checked,
-                    }))
-                  }
-                />
-                Reducir ruido para transcribir
+                >
+                  <option value="audio">Audio original</option>
+                  <option value="midi">MIDI sintetizado</option>
+                  <option value="compare">Audio + MIDI</option>
+                  <option value="stems">Mezcla de stems</option>
+                </select>
               </label>
             </div>
-            <p>
-              Se aplican al siguiente análisis. La reducción de ruido puede
-              afectar notas suaves; conserva el audio de tus pistas.
-            </p>
-          </details>
-        )}
+          </div>
+
+          {/* Deck Derecho: Opciones de Análisis IA Popover y Acciones */}
+          <div className="daw-deck-right">
+            {/* Popover elegante de Opciones de Análisis IA */}
+            {localEngine && (
+              <details className="daw-popover analysis-options">
+                <summary className="daw-tool-btn" title="Opciones de análisis y separación IA">
+                  <SlidersHorizontal size={13} />
+                  <span>Opciones IA</span>
+                  <ChevronDown size={11} className="daw-popover-chevron" />
+                </summary>
+                <div className="daw-popover-dropdown">
+                  <div className="daw-popover-title">
+                    <Sparkles size={13} className="text-violet-400" />
+                    <strong>Motor de Análisis IATPE</strong>
+                  </div>
+                  <div className="daw-popover-body">
+                    <label className="daw-popover-field">
+                      <span>Calidad de separación</span>
+                      <select
+                        aria-label="Calidad de separación"
+                        disabled={busy}
+                        value={analysisOptions.quality}
+                        onChange={(e) =>
+                          setAnalysisOptions((o) => ({
+                            ...o,
+                            quality: e.target
+                              .value as LocalAnalysisOptions["quality"],
+                          }))
+                        }
+                      >
+                        <option value="balanced">Equilibrada (Rápida)</option>
+                        <option value="careful">Cuidadosa · Alta fidelidad</option>
+                      </select>
+                    </label>
+
+                    <label className="daw-popover-field">
+                      <span>Seguimiento de tempo</span>
+                      <select
+                        aria-label="Seguimiento de tempo"
+                        disabled={busy}
+                        value={analysisOptions.tempo}
+                        onChange={(e) =>
+                          setAnalysisOptions((o) => ({
+                            ...o,
+                            tempo: e.target
+                              .value as LocalAnalysisOptions["tempo"],
+                          }))
+                        }
+                      >
+                        <option value="steady">Pulso constante</option>
+                        <option value="adaptive">Adaptativo · Seguir cambios</option>
+                      </select>
+                    </label>
+
+                    <div className="daw-popover-checks">
+                      <label className="daw-check-item">
+                        <input
+                          type="checkbox"
+                          disabled={busy}
+                          checked={analysisOptions.detectBars}
+                          onChange={(e) =>
+                            setAnalysisOptions((o) => ({
+                              ...o,
+                              detectBars: e.target.checked,
+                            }))
+                          }
+                        />
+                        <span>Estimar inicios de compás</span>
+                      </label>
+
+                      <label className="daw-check-item">
+                        <input
+                          type="checkbox"
+                          disabled={busy}
+                          checked={analysisOptions.reduceNoise}
+                          aria-label="Reducir ruido para transcribir"
+                          onChange={(e) =>
+                            setAnalysisOptions((o) => ({
+                              ...o,
+                              reduceNoise: e.target.checked,
+                            }))
+                          }
+                        />
+                        <span>Reducir ruido para transcribir</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="daw-popover-footer">
+                    <small>
+                      Separador autoadaptativo con preservación de frecuencias y pipeline 16kHz antialias.
+                    </small>
+                  </div>
+                </div>
+              </details>
+            )}
+
+            {/* Botón Abrir Audio */}
+            <button
+              className="daw-tool-btn"
+              disabled={busy}
+              onClick={() => audioInput.current?.click()}
+              title="Cargar archivo de audio (.mp3, .wav, .m4a, .flac)"
+            >
+              <Upload size={13} />
+              <span>Abrir audio</span>
+            </button>
+
+            {/* Botón Héroe: Separar y Transcribir */}
+            <button
+              className="daw-hero-btn"
+              disabled={
+                busy ||
+                (!projectId && (localEngine ? !file : !feature)) ||
+                (job && ["running", "queued"].includes(job.status))
+              }
+              onClick={() => void analyze()}
+              title="Ejecutar separación multicanal IATPE y transcripción automática"
+            >
+              <Sparkles size={13} />
+              <span>{localEngine ? "Separar y transcribir" : "Analizar y transcribir"}</span>
+              <ArrowUpRight size={12} />
+            </button>
+
+            {/* Botón Flujo IATPE */}
+            <button
+              className="daw-tool-btn daw-flow-btn"
+              onClick={() => setWorkflowOpen(true)}
+              title="Visualizador de Flujo IATPE en tiempo real"
+            >
+              <Workflow size={13} className="text-amber-400" />
+              <span>Flujo IATPE</span>
+            </button>
+
+            {/* Botón Guardar */}
+            <button
+              className="daw-tool-btn"
+              onClick={() => void save()}
+              disabled={!editable || (localEngine && !localJobId)}
+              title="Guardar como proyecto"
+            >
+              <Save size={13} />
+              <span>
+                {localEngine
+                  ? savedLocal
+                    ? "Guardar cambios"
+                    : "Guardar como proyecto"
+                  : "Guardar"}
+              </span>
+            </button>
+
+            {/* Menú Exportar */}
+            <div className="export-wrap">
+              <button
+                className="daw-tool-btn daw-export-btn"
+                disabled={busy || !doc.events.length}
+                onClick={() => setExportOpen(!exportOpen)}
+                title="Exportar archivo de audio o partitura"
+              >
+                <Download size={13} />
+                <span>Exportar</span>
+                <ChevronDown size={11} />
+              </button>
+              {exportOpen && (
+                <div className="export-menu">
+                  {(
+                    [
+                      "midi",
+                      "musicxml",
+                      ...(localEngine ? ["mxl" as const] : []),
+                      "mei",
+                      "pdf",
+                      "wav",
+                      "mp3",
+                      "json",
+                      "zip",
+                    ] as (ExportFormat | "mxl")[]
+                  )
+                    .filter(
+                      (f) =>
+                        !localEngine ||
+                        [
+                          "midi",
+                          "musicxml",
+                          "mxl",
+                          "mei",
+                          "pdf",
+                          "wav",
+                          "json",
+                        ].includes(f),
+                    )
+                    .map((f) => (
+                      <button key={f} onClick={() => void exportFile(f)}>
+                        {f === "mxl"
+                          ? "MusicXML comprimido (.mxl)"
+                          : f.toUpperCase()}
+                        <span>
+                          {!projectId &&
+                          !localEngine &&
+                          !["midi", "musicxml", "json"].includes(f)
+                            ? "En la nube"
+                            : "↓"}
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Acciones Secundarias Compactas: MIDI y Nuevo Audio */}
+            <div className="daw-extra-tools">
+              <button
+                className="daw-icon-tool"
+                disabled={busy}
+                onClick={() => midiInput.current?.click()}
+                title="Importar MIDI"
+              >
+                <FileMusic size={13} />
+              </button>
+
+              {localEngine &&
+                (initialLocalJobId ? (
+                  <Link
+                    className="daw-icon-tool"
+                    href="/dashboard/studio"
+                    aria-disabled={busy}
+                    title="Nuevo audio"
+                    onClick={(event) => {
+                      if (busy) event.preventDefault();
+                      else newAudio();
+                    }}
+                  >
+                    <RotateCcw size={13} />
+                  </Link>
+                ) : (
+                  <button
+                    className="daw-icon-tool"
+                    disabled={busy}
+                    onClick={newAudio}
+                    title="Nuevo audio"
+                  >
+                    <RotateCcw size={13} />
+                  </button>
+                ))}
+            </div>
+          </div>
+        </div>
         <div className="editor-grid editor-grid-audio">
           <StemPlayback
             urls={stemUrls}

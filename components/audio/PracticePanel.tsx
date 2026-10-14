@@ -61,20 +61,22 @@ export function PracticePanel({
             disabled={busy}
           >
             <option value="original">Audio original</option>
-            {Object.keys(urls).map((id) => (
-              <option key={id} value={id.replace("demucs-", "")}>
-                {(
-                  {
-                    piano: "Piano",
-                    guitar: "Guitarra",
-                    bass: "Bajo",
-                    drums: "Batería",
-                    vocals: "Voz",
-                    other: "Otros sonidos",
-                  } as Record<string, string>
-                )[id.replace("demucs-", "")] || id}
-              </option>
-            ))}
+            {Object.keys(urls).map((id) => {
+              const cleanId = id.replace(/^(demucs-|bs_roformer-|solo-)/, "");
+              const labelMap: Record<string, string> = {
+                piano: "Piano",
+                guitar: "Guitarra",
+                bass: "Bajo",
+                drums: "Batería",
+                vocals: "Voz",
+                other: "Otros sonidos",
+              };
+              return (
+                <option key={id} value={cleanId}>
+                  {labelMap[cleanId] || cleanId}
+                </option>
+              );
+            })}
           </select>
         </label>
         <label>

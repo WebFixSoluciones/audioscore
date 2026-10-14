@@ -38,12 +38,47 @@ export async function runIatpeAnalysis(
   options.signal?.throwIfAborted();
 
   // 2. Decodificación en streaming hacia memoria (Zero intermediate WAV)
-  const decoded = await streamAudioToFloat32(filePath, {
-    targetSampleRate: 22050,
-    channels: 1,
-    maxDurationSeconds: options.maxDurationSeconds ?? Math.min(30, format.durationSeconds),
-    signal: options.signal,
-  });
+  // Para audios mayores a 45s, realiza muestreo distribuido (intro + cuerpo central)
+  // para verificar la instrumentación completa y evitar falsos positivos de solista en intros
+  let decoded: { samples: Float32Array; sampleRate: number; channels: number; durationSeconds: number };
+  if (format.durationSeconds > 45 && !options.maxDurationSeconds) {
+    const midStart = Math.min(
+      format.durationSeconds - 15,
+      Math.max(15, format.durationSeconds * 0.45),
+    );
+    const [intro, body] = await Promise.all([
+      streamAudioToFloat32(filePath, {
+        targetSampleRate: 16000,
+        channels: 1,
+        startTimeSeconds: 0,
+        maxDurationSeconds: 15,
+        signal: options.signal,
+      }),
+      streamAudioToFloat32(filePath, {
+        targetSampleRate: 16000,
+        channels: 1,
+        startTimeSeconds: midStart,
+        maxDurationSeconds: 15,
+        signal: options.signal,
+      }),
+    ]);
+    const merged = new Float32Array(intro.samples.length + body.samples.length);
+    merged.set(intro.samples, 0);
+    merged.set(body.samples, intro.samples.length);
+    decoded = {
+      samples: merged,
+      sampleRate: intro.sampleRate,
+      channels: 1,
+      durationSeconds: intro.durationSeconds + body.durationSeconds,
+    };
+  } else {
+    decoded = await streamAudioToFloat32(filePath, {
+      targetSampleRate: 16000,
+      channels: 1,
+      maxDurationSeconds: options.maxDurationSeconds ?? Math.min(30, format.durationSeconds),
+      signal: options.signal,
+    });
+  }
 
   // 3. Perfil espectral de micro-sonidos y frecuencias
   const spectral = analyzeSpectralProfile(decoded.samples, decoded.sampleRate);
@@ -56,6 +91,7 @@ export async function runIatpeAnalysis(
     samples: decoded.samples,
     sampleRate: decoded.sampleRate,
     enableGemini: options.enableGemini,
+    signal: options.signal,
   });
   const t3 = performance.now();
 

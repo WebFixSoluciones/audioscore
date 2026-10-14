@@ -63,8 +63,10 @@ export function Shell({
         },
         { href: "/features", label: "Cómo funciona", icon: CircleHelp },
       ];
+  const isStudio = path.includes("/studio");
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isStudio ? "is-studio-mode" : ""}`}>
       <button
         className="mobile-menu icon-button"
         aria-label="Abrir navegación"
@@ -72,18 +74,18 @@ export function Shell({
       >
         {open ? <X size={20} /> : <Menu size={20} />}
       </button>
-      <aside className={`sidebar ${open ? "is-open" : ""}`}>
-        <Link href={localMode ? "/studio" : "/"} className="brand">
+      <aside className={`sidebar ${isStudio ? "is-studio-mode" : ""} ${open ? "is-open" : ""}`}>
+        <Link href={localMode ? "/studio" : "/"} className="brand" title="AudioScore AI">
           <span className="brand-symbol">
-            <AudioLines size={25} />
+            <AudioLines size={22} />
           </span>
-          <span>
+          <span className="brand-text">
             AudioScore<span className="brand-ai">AI</span>
           </span>
         </Link>
-        <div className="workspace-label">
+        <div className="workspace-label" title="Mi espacio musical">
           <span className="workspace-avatar">A</span>
-          <div>
+          <div className="workspace-text">
             Mi espacio musical<small>Audio · MIDI · Partituras</small>
           </div>
           <span className="tiny-dot" />
@@ -99,10 +101,11 @@ export function Shell({
               }}
               key={l.href}
               href={l.href}
+              title={l.label}
               className={`nav-item ${(l.href === "/dashboard" ? path === l.href : path.startsWith(l.href)) ? "active" : ""}`}
             >
               <l.icon size={18} />
-              {l.label}
+              <span className="nav-item-label">{l.label}</span>
               {(l.href === "/dashboard"
                 ? path === l.href
                 : path.startsWith(l.href)) && <span className="active-dot" />}
@@ -124,17 +127,18 @@ export function Shell({
         </div>
         <div className="sidebar-bottom">
           {account?.isAdmin && (
-            <Link href="/admin" className="nav-item">
+            <Link href="/admin" className="nav-item" title="Administración">
               <Shield size={17} />
-              Administración
+              <span className="nav-item-label">Administración</span>
             </Link>
           )}
           <Link
             href={account ? "/dashboard" : "/auth/login"}
             className="profile"
+            title={account ? account.email : "Tu cuenta"}
           >
             <span className="workspace-avatar">♪</span>
-            <div>
+            <div className="profile-text">
               {account ? account.email : "Tu cuenta"}
               <small>
                 {account
@@ -144,61 +148,63 @@ export function Shell({
                   : "Iniciar sesión"}
               </small>
             </div>
-            <ArrowUpRight size={16} />
+            <ArrowUpRight size={16} className="profile-arrow" />
           </Link>
         </div>
       </aside>
-      <main className="main-content">
-        <header className="topbar">
-          <span>
-            WORKSPACE{" "}
-            <span className="breadcrumb">
-              /{" "}
-              {path.includes("pricing")
-                ? "Planes"
-                : path.includes("admin")
-                  ? "Administración"
-                  : path === "/dashboard"
-                    ? "Dashboard"
-                    : path.includes("projects")
-                      ? "Proyectos"
-                      : path.includes("usage")
-                        ? "Consumo"
-                        : path.includes("features")
-                          ? "Herramientas"
-                          : "Estudio"}
+      <main className={`main-content ${isStudio ? "is-studio-mode" : ""}`}>
+        {!isStudio && (
+          <header className="topbar">
+            <span>
+              WORKSPACE{" "}
+              <span className="breadcrumb">
+                /{" "}
+                {path.includes("pricing")
+                  ? "Planes"
+                  : path.includes("admin")
+                    ? "Administración"
+                    : path === "/dashboard"
+                      ? "Dashboard"
+                      : path.includes("projects")
+                        ? "Proyectos"
+                        : path.includes("usage")
+                          ? "Consumo"
+                          : path.includes("features")
+                            ? "Herramientas"
+                            : "Estudio"}
+              </span>
             </span>
-          </span>
-          <div>
-            <span className="local-badge">
-              <span />
-              Archivos temporales
-            </span>
-            {account ? (
-              <button
-                className="text-button"
-                onClick={() =>
-                  void api("/api/auth/session", { method: "DELETE" })
-                    .then(async () => {
-                      await signOut(clientFirebase().auth);
-                      router.replace("/");
-                      router.refresh();
-                    })
-                    .catch(() => {
-                      router.replace("/auth/login");
-                      router.refresh();
-                    })
-                }
-              >
-                Cerrar sesión
-              </button>
-            ) : (
-              <Link className="top-link" href="/auth/login">
-                Conectar cuenta <ArrowUpRight size={14} />
-              </Link>
-            )}
-          </div>
-        </header>
+            <div>
+              <span className="local-badge">
+                <span />
+                Archivos temporales
+              </span>
+              {account ? (
+                <button
+                  className="text-button"
+                  onClick={() =>
+                    void api("/api/auth/session", { method: "DELETE" })
+                      .then(async () => {
+                        await signOut(clientFirebase().auth);
+                        router.replace("/");
+                        router.refresh();
+                      })
+                      .catch(() => {
+                        router.replace("/auth/login");
+                        router.refresh();
+                      })
+                  }
+                >
+                  Cerrar sesión
+                </button>
+              ) : (
+                <Link className="top-link" href="/auth/login">
+                  Conectar cuenta <ArrowUpRight size={14} />
+                </Link>
+              )}
+            </div>
+          </header>
+        )}
         {children}
       </main>
     </div>

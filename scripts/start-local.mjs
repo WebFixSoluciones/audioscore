@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { access } from "node:fs/promises";
 import { resolve } from "node:path";
+import { availableParallelism, cpus } from "node:os";
 const python = resolve(
   process.platform === "win32"
     ? ".tmp/separator-venv/Scripts/python.exe"
@@ -21,7 +22,7 @@ const env = {
   SEPARATION_ENGINE: "demucs",
   NEXT_PUBLIC_APP_URL: "http://audioscore.localhost:3000",
   VERCEL: "",
-  DEMUCS_THREADS: "2",
+  DEMUCS_THREADS: String(Math.max(1, availableParallelism?.() || cpus?.()?.length || 4)),
 };
 const worker = spawn(
   process.execPath,

@@ -26,7 +26,7 @@ def cached_model(model_name: str):
         return get_model(model_name).eval()
 
 
-def separate(input_path: Path, output: Path, model_name: str, device: str, quality: str = "balanced") -> dict:
+def separate(input_path: Path, output: Path, model_name: str, device: str, quality: str = "balanced", hierarchical_plan: dict = None) -> dict:
     import numpy as np
     import soundfile as sf
     import torch
@@ -35,39 +35,15 @@ def separate(input_path: Path, output: Path, model_name: str, device: str, quali
     if quality not in ("balanced", "careful"):
         raise ValueError("Calidad de separación desconocida")
 
-    torch.set_num_threads(max(1, int(os.environ.get("DEMUCS_THREADS", "2"))))
+    num_threads = int(os.environ.get("DEMUCS_THREADS", str(os.cpu_count() or 4)))
+    torch.set_num_threads(max(1, num_threads))
     torch.manual_seed(0)
     random.seed(0)
     np.random.seed(0)
     # Model loaders may print. Keep stdout reserved for the JSON contract.
     model = cached_model(model_name)
-    try:
-        import torchaudio
-        waveform, sample_rate = torchaudio.load(str(input_path))
-        if waveform.shape[0] == 1:
-            waveform = waveform.repeat(2, 1)
-        elif waveform.shape[0] > 2:
-            waveform = waveform[:2]
-        if sample_rate != model.samplerate:
-            waveform = torchaudio.functional.resample(waveform, sample_rate, model.samplerate)
-            sample_rate = model.samplerate
-        data = waveform.numpy().T
-    except Exception:
-        data, sample_rate = sf.read(input_path, dtype="float32", always_2d=True)
-        if data.shape[1] == 1:
-            data = np.repeat(data, 2, axis=1)
-        elif data.shape[1] > 2:
-            data = data[:, :2]
-        if sample_rate != model.samplerate:
-            try:
-                import librosa
-                data = librosa.resample(data.T, orig_sr=sample_rate, target_sr=model.samplerate).T
-                sample_rate = model.samplerate
-            except Exception:
-                pass
-        waveform = torch.from_numpy(data.T.copy())
-    if not np.isfinite(data).all() or len(data) == 0:
-        raise ValueError("Audio vacío o inválido")
+    from audio_io import load_audio
+    data, sample_rate = load_audio(input_path, target_sr=model.samplerate)
     duration = len(data) / sample_rate
     if duration > 900:
         raise ValueError("El separador integrado admite hasta 15 minutos")
@@ -105,9 +81,21 @@ def separate(input_path: Path, output: Path, model_name: str, device: str, quali
             "id": f"demucs-{kind}", "kind": kind, "label": LABELS[kind],
             "file": filename, "confidence": 0, "rms": rms,
             "transcriptionEligible": rms >= input_rms * gain * 0.031623,
+            "level": 1,
         })
     if not sources:
         raise ValueError("No se obtuvieron stems con señal utilizable")
+
+    # Ejecutar sub-separación semántica guiada por IATPE (Nivel 2) si fue planificada
+    if hierarchical_plan and hierarchical_plan.get("subExtractionsPlanned"):
+        try:
+            from hierarchical_subseparator import apply_hierarchical_subseparation
+            sub_sources = apply_hierarchical_subseparation(output, hierarchical_plan["subExtractionsPlanned"])
+            if sub_sources:
+                sources.extend(sub_sources)
+        except Exception as e:
+            sys.stderr.write(f"Aviso: Sub-separación Nivel 2 omitida por excepción: {e}\n")
+
     warnings = [
         "Demucs separa categorías estimadas; cada canal puede contener otros instrumentos.",
         "La energía de un canal no confirma la presencia del instrumento; revisa escuchando sus stems.",
@@ -129,9 +117,19 @@ if __name__ == "__main__":
     parser.add_argument("--model", choices=["htdemucs", "htdemucs_6s"], default="htdemucs_6s")
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     parser.add_argument("--quality", choices=["balanced", "careful"], default="balanced")
+    parser.add_argument("--plan", default=None, help="JSON string or path of hierarchical channel plan")
     args = parser.parse_args()
+    hierarchical_plan = None
+    if args.plan:
+        try:
+            if Path(args.plan).exists():
+                hierarchical_plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+            else:
+                hierarchical_plan = json.loads(args.plan)
+        except Exception:
+            pass
     try:
-        print(json.dumps(separate(args.input, args.output, args.model, args.device, args.quality), ensure_ascii=False))
+        print(json.dumps(separate(args.input, args.output, args.model, args.device, args.quality, hierarchical_plan), ensure_ascii=False))
     except Exception as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)

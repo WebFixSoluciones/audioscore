@@ -6,14 +6,11 @@ import type { AudioFormatInfo } from "./types";
 const LOSSLESS_CODECS = new Set([
   "flac",
   "alac",
-  "pcm_s16le",
-  "pcm_s24le",
-  "pcm_s32le",
-  "pcm_f32le",
-  "pcm",
-  "wav",
-  "wave",
-  "aiff",
+  "wavpack",
+  "ape",
+  "tak",
+  "shorten",
+  "tta",
 ]);
 
 export function getFfmpegBinary(): string {
@@ -31,10 +28,13 @@ export async function probeAudioFormat(filePath: string): Promise<AudioFormatInf
 
   const codecLower = (f.codec ?? "unknown").toLowerCase();
   const containerLower = (f.container ?? "").toLowerCase();
+
+  // Distinguir PCM y códecs sin pérdida reales de contenedores que pueden albergar audio comprimido con pérdida (p. ej. ADPCM en WAV)
   const isLossless =
-    LOSSLESS_CODECS.has(codecLower) ||
-    LOSSLESS_CODECS.has(containerLower) ||
-    f.lossless === true;
+    f.lossless === true ||
+    codecLower.startsWith("pcm_") ||
+    codecLower === "pcm" ||
+    LOSSLESS_CODECS.has(codecLower);
 
   return {
     codec: codecLower,
@@ -50,6 +50,7 @@ export async function probeAudioFormat(filePath: string): Promise<AudioFormatInf
 export interface StreamDecodeOptions {
   targetSampleRate?: number;
   channels?: number;
+  startTimeSeconds?: number;
   maxDurationSeconds?: number;
   timeoutMs?: number;
   signal?: AbortSignal;
@@ -74,9 +75,11 @@ export async function streamAudioToFloat32(
 
   options.signal?.throwIfAborted();
 
-  const args: string[] = [
-    "-v",
-    "error",
+  const args: string[] = ["-v", "error"];
+  if (options.startTimeSeconds && options.startTimeSeconds > 0) {
+    args.push("-ss", String(options.startTimeSeconds));
+  }
+  args.push(
     "-i",
     filePath,
     "-vn",
@@ -89,7 +92,7 @@ export async function streamAudioToFloat32(
     "-f",
     "f32le",
     "pipe:1",
-  ];
+  );
 
   const buffer = await new Promise<Buffer>((resolve, reject) => {
     const child = spawn(binary, args, {

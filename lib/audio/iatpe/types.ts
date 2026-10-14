@@ -34,6 +34,9 @@ export const googleClassificationResultSchema = z.object({
   topScore: z.number().min(0).max(1),
   candidates: z.array(instrumentCandidateSchema).max(30),
   googleGeminiReview: z.string().optional(),
+  classifierStatus: z
+    .enum(["confident", "low_confidence", "no_candidates", "failed"])
+    .optional(),
 });
 export type GoogleClassificationResult = z.infer<typeof googleClassificationResultSchema>;
 
@@ -41,8 +44,17 @@ export const channelItemSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   instrument: z.string().min(1),
-  sourceAction: z.enum(["bypass_separation", "demucs_stem", "custom_filter"]),
+  sourceAction: z.enum([
+    "bypass_separation",
+    "demucs_stem",
+    "custom_filter",
+    "sub_separation",
+    "hierarchical_stem",
+  ]),
   program: z.number().int().min(0).max(127).default(0),
+  parentStem: z.string().optional(),
+  family: z.string().optional(),
+  level: z.number().int().min(1).max(3).default(1),
 });
 export type ChannelItem = z.infer<typeof channelItemSchema>;
 
@@ -55,6 +67,16 @@ export const channelPlanSchema = z.object({
   channels: z.array(channelItemSchema).min(1).max(16),
   decisionReason: z.string().min(1),
   recommendedEngine: z.enum(["bs_roformer", "demucs", "ensemble"]).default("bs_roformer"),
+  isHierarchical: z.boolean().default(false),
+  hierarchicalLevels: z.number().int().min(1).max(3).default(1),
+  subExtractionsPlanned: z
+    .array(
+      z.object({
+        parentStem: z.string(),
+        targetInstruments: z.array(z.string()),
+      }),
+    )
+    .optional(),
 });
 export type ChannelPlan = z.infer<typeof channelPlanSchema>;
 

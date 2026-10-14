@@ -16,14 +16,16 @@ for line in sys.stdin:
                 result = analyze(Path(request["input"]), request.get("tempo", "steady"), request.get("detectBars", "true") == "true")
             elif request["action"] == "separate":
                 engine = request.get("engine", "bs_roformer")
+                plan = request.get("plan")
                 if engine in ("bs_roformer", "mel_band_roformer"):
                     from bs_roformer_engine import separate_bs_roformer
-                    result = separate_bs_roformer(Path(request["input"]), Path(request["output"]), "cpu", request.get("quality", "balanced"), engine)
+                    result = separate_bs_roformer(Path(request["input"]), Path(request["output"]), "cpu", request.get("quality", "balanced"), engine, hierarchical_plan=plan)
                 elif engine == "ensemble":
                     from bs_roformer_engine import separate_ensemble
-                    result = separate_ensemble(Path(request["input"]), Path(request["output"]), "cpu", request.get("quality", "balanced"))
+                    result = separate_ensemble(Path(request["input"]), Path(request["output"]), "cpu", request.get("quality", "balanced"), hierarchical_plan=plan)
                 else:
-                    result = separate(Path(request["input"]), Path(request["output"]), "htdemucs_6s", "cpu", request.get("quality", "balanced"))
+                    demucs_model = request.get("model", "htdemucs_6s")
+                    result = separate(Path(request["input"]), Path(request["output"]), demucs_model, "cpu", request.get("quality", "balanced"), hierarchical_plan=plan)
             elif request["action"] == "notation":
                 from notation import audit
                 result = audit(Path(request["input"]))

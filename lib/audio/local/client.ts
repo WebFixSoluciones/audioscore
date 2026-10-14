@@ -18,7 +18,15 @@ export async function localRequest<T>(
     ...options,
     cache: "no-store",
   });
-  const result = await response.json();
+  let result: any;
+  try {
+    result = await response.json();
+  } catch {
+    throw new LocalRequestError(
+      `El motor local respondió con error (${response.status}).`,
+      response.status,
+    );
+  }
   if (!response.ok)
     throw new LocalRequestError(
       result.error || "El motor local no respondió.",

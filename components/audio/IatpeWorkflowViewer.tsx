@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
+  AlertTriangle,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -37,7 +38,7 @@ interface WorkflowNode {
   title: string;
   subtitle: string;
   icon: typeof Cpu;
-  status: "idle" | "running" | "completed";
+  status: "idle" | "running" | "completed" | "failed";
   progressThreshold: number;
   data: Record<string, string | number | undefined>;
   description: string;
@@ -55,6 +56,13 @@ export function IatpeWorkflowViewer({
 
   const percent = progress?.progress ?? (document?.events?.length ? 100 : 0);
   const currentStage = progress?.stage || (document?.events?.length ? "Completado" : "Esperando inicio");
+  const hasError = Boolean(
+    progress?.stage?.toLowerCase().includes("error") ||
+    progress?.stage?.toLowerCase().includes("no se pudo") ||
+    progress?.stage?.toLowerCase().includes("timeout") ||
+    progress?.stage?.toLowerCase().includes("superó") ||
+    progress?.stage?.toLowerCase().includes("falló")
+  );
 
   // Telemetría en vivo derivada del documento y el progreso
   useEffect(() => {
@@ -63,8 +71,9 @@ export function IatpeWorkflowViewer({
     if (progress?.stage) {
       setLogs((prev) => {
         if (prev.length > 0 && prev[prev.length - 1].text === progress.stage) return prev;
-        const tag =
-          percent < 15
+        const tag = hasError
+          ? "ERROR"
+          : percent < 15
             ? "INGESTA"
             : percent < 30
               ? "ESPECTRAL"
@@ -76,13 +85,13 @@ export function IatpeWorkflowViewer({
         return [...prev.slice(-40), { time: now, text: `${progress.stage} (${percent}%)`, tag }];
       });
     }
-  }, [open, progress?.stage, percent]);
+  }, [open, progress?.stage, percent, hasError]);
 
   const nodes: WorkflowNode[] = useMemo(() => {
     const isCompleted = percent >= 100;
-    const getNodeStatus = (min: number, max: number): "idle" | "running" | "completed" => {
-      if (percent >= max || isCompleted) return "completed";
-      if (percent >= min && percent < max) return "running";
+    const getNodeStatus = (min: number, max: number): "idle" | "running" | "completed" | "failed" => {
+      if (percent >= max || (isCompleted && !hasError)) return "completed";
+      if (percent >= min && percent < max) return hasError ? "failed" : "running";
       return "idle";
     };
 
@@ -122,15 +131,17 @@ export function IatpeWorkflowViewer({
       },
       {
         id: "google-ai",
-        title: "3. IA Multimodal de Google",
-        subtitle: "YAMNet AudioSet + Gemini Multimodal",
+        title: "3. Clasificador Acústico Google",
+        subtitle: "YAMNet AudioSet (521 clases)",
         icon: Sparkles,
         status: getNodeStatus(20, 35),
         progressThreshold: 25,
-        description: "Reconocimiento acústico de timbres musicales, silbidos, chasquidos y toques corporales.",
+        description: "Reconocimiento acústico de timbres musicales, percusión, voces y micro-sonidos.",
         data: {
           "Modelo Acústico": "Google YAMNet (521 Clases AudioSet)",
-          "Razonador IA": "Google Gemini Audio Multimodal",
+          "Análisis Semántico": document?.warnings?.some((w) => w.includes("Gemini"))
+            ? "Gemini Audio (Cloud)"
+            : "Clasificación Local Offline",
           "Candidatos Detectados": predictions.length
             ? predictions.slice(0, 3).map((p) => `${p.label} (${Math.round(p.score * 100)}%)`).join(", ")
             : "Clasificando espectro sonoro...",
@@ -161,12 +172,14 @@ export function IatpeWorkflowViewer({
         progressThreshold: 60,
         description: "Aislamiento de planos sonoros en pistas independientes con retención tímbrica.",
         data: {
-          Motor: "BS-RoFormer (Transformer RoPE) + Ensamble IATPE",
-          "Aislamiento SDR": "> 12.8 dB (Quirúrgico sin bleed)",
+          Motor: document?.sources?.some((s) => s.id.startsWith("bs_roformer"))
+            ? "BS-RoFormer (Transformer RoPE)"
+            : "Demucs v4 (htdemucs_6s)",
+          "Medición SDR": "No evaluado sin pistas de referencia aislada (Separación ciega)",
           Pistas: document?.sources?.length
             ? `${document.sources.length} canales activos`
             : "Separando fuentes...",
-          "Modo de Calidad": "Band-Split sub-bandas ERB + Preservación de fase STFT",
+          "Modo de Calidad": "Separación neuronal con balance de ganancia compartida",
         },
       },
       {
@@ -222,7 +235,12 @@ export function IatpeWorkflowViewer({
                 <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
                   Estilo n8n Pipeline
                 </span>
-                {percent < 100 ? (
+                {hasError ? (
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    <AlertTriangle size={12} />
+                    Detenido con error · {percent}%
+                  </span>
+                ) : percent < 100 ? (
                   <span className="flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
                     En vivo · {percent}%
@@ -286,7 +304,11 @@ export function IatpeWorkflowViewer({
         {/* Barra de progreso global */}
         <div className="w-full bg-neutral-900 h-1 relative overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 via-pink-500 to-emerald-400 transition-all duration-300 ease-out"
+            className={`h-full transition-all duration-300 ease-out ${
+              hasError
+                ? "bg-rose-500"
+                : "bg-gradient-to-r from-purple-500 via-pink-500 to-emerald-400"
+            }`}
             style={{ width: `${percent}%` }}
           />
         </div>
@@ -297,9 +319,27 @@ export function IatpeWorkflowViewer({
           {/* VISTA 1: DIAGRAMA DE NODOS CONECTADOS (Estilo Make / n8n) */}
           {activeTab === "graph" && (
             <div className="space-y-6 max-w-4xl mx-auto">
+              {hasError && (
+                <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-200">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="text-rose-400 shrink-0 mt-0.5" size={20} />
+                    <div>
+                      <h4 className="text-sm font-semibold text-rose-100">El procesamiento se detuvo con un error</h4>
+                      <p className="text-xs text-rose-300 mt-1">{currentStage}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="px-3 py-1.5 text-xs font-medium bg-rose-900/60 hover:bg-rose-800/80 text-rose-100 border border-rose-500/30 rounded-lg transition-colors shrink-0"
+                  >
+                    Cerrar Visor
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
                 <span className="text-xs uppercase tracking-wider font-semibold text-neutral-400">
-                  Fase Actual: <strong className="text-purple-300">{currentStage}</strong>
+                  Fase Actual: <strong className={hasError ? "text-rose-400 font-bold" : "text-purple-300"}>{currentStage}</strong>
                 </span>
                 <span className="text-xs text-neutral-400">
                   Total nodos: {nodes.length} · Ejecutados: {nodes.filter((n) => n.status === "completed").length}
@@ -309,6 +349,7 @@ export function IatpeWorkflowViewer({
               <div className="relative pl-6 space-y-6 before:absolute before:left-[35px] before:top-6 before:bottom-6 before:w-0.5 before:bg-gradient-to-b before:from-purple-500 before:via-neutral-800 before:to-neutral-800">
                 {nodes.map((node, index) => {
                   const Icon = node.icon;
+                  const isFailed = node.status === "failed";
                   const isRunning = node.status === "running";
                   const isDone = node.status === "completed";
 
@@ -316,24 +357,30 @@ export function IatpeWorkflowViewer({
                     <div
                       key={node.id}
                       className={`relative flex items-start gap-4 p-5 rounded-xl border transition-all duration-300 ${
-                        isRunning
-                          ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_30px_rgba(168,85,247,0.15)] ring-1 ring-purple-500/30"
-                          : isDone
-                            ? "bg-neutral-900/50 border-neutral-800/80 hover:border-neutral-700"
-                            : "bg-neutral-950/40 border-neutral-900 opacity-60"
+                        isFailed
+                          ? "bg-rose-950/30 border-rose-500/60 shadow-[0_0_30px_rgba(244,63,94,0.15)] ring-1 ring-rose-500/30"
+                          : isRunning
+                            ? "bg-purple-950/20 border-purple-500/60 shadow-[0_0_30px_rgba(168,85,247,0.15)] ring-1 ring-purple-500/30"
+                            : isDone
+                              ? "bg-neutral-900/50 border-neutral-800/80 hover:border-neutral-700"
+                              : "bg-neutral-950/40 border-neutral-900 opacity-60"
                       }`}
                     >
                       {/* Nodo icono circular */}
                       <div
                         className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-xl border transition-transform duration-300 ${
-                          isRunning
-                            ? "bg-purple-600 text-white border-purple-400 shadow-lg scale-105"
-                            : isDone
-                              ? "bg-emerald-950/50 text-emerald-400 border-emerald-500/40"
-                              : "bg-neutral-900 text-neutral-500 border-neutral-800"
+                          isFailed
+                            ? "bg-rose-900/50 text-rose-300 border-rose-500/40 shadow-lg scale-105"
+                            : isRunning
+                              ? "bg-purple-600 text-white border-purple-400 shadow-lg scale-105"
+                              : isDone
+                                ? "bg-emerald-950/50 text-emerald-400 border-emerald-500/40"
+                                : "bg-neutral-900 text-neutral-500 border-neutral-800"
                         }`}
                       >
-                        {isRunning ? (
+                        {isFailed ? (
+                          <AlertTriangle size={22} className="text-rose-400" />
+                        ) : isRunning ? (
                           <Loader2 size={22} className="animate-spin text-white" />
                         ) : isDone ? (
                           <CheckCircle2 size={22} className="text-emerald-400" />
@@ -348,6 +395,11 @@ export function IatpeWorkflowViewer({
                           <div>
                             <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                               {node.title}
+                              {isFailed && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                                  <AlertTriangle size={10} /> FALLÓ
+                                </span>
+                              )}
                               {isRunning && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
                                   PROCESANDO

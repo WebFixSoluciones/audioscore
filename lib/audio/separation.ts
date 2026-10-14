@@ -12,6 +12,7 @@ export const stemKindSchema = z.enum([
   "drums",
   "vocals",
   "other",
+  "percussion",
   "unknown",
 ]);
 export type StemKind = z.infer<typeof stemKindSchema>;
@@ -23,6 +24,10 @@ export type SeparatedStem = {
   storagePath: string;
   localPath: string;
   transcriptionEligible?: boolean;
+  level?: number;
+  parentStem?: string;
+  program?: number;
+  family?: string;
 };
 const manifestSchema = z.object({
   model: z.enum([
@@ -42,9 +47,11 @@ const manifestSchema = z.object({
         kind: stemKindSchema,
         label: z.string().max(120),
         file: z.string().regex(/^[a-z0-9_-]+\.wav$/),
-        confidence: z.literal(0),
+        confidence: z.number().min(0).max(1),
         rms: z.number().finite().positive(),
         transcriptionEligible: z.boolean(),
+        level: z.number().int().min(1).max(3).optional(),
+        parentStem: z.string().optional(),
       }),
     )
     .min(1)

@@ -107,10 +107,9 @@ async function run(id: string) {
     await progress(id, "Analizando audio con motor IATPE", 4);
     const input = JSON.parse(await readFile(join(dir, "input.json"), "utf8"));
     const path = join(dir, input.file);
-    const [iatpe, peaks] = await Promise.all([
-      runIatpeAnalysis(path, { signal, maxDurationSeconds: 30 }),
-      audioPeaks(path),
-    ]);
+    const peaks = await audioPeaks(path);
+    signal.throwIfAborted();
+    const iatpe = await runIatpeAnalysis(path, { signal, maxDurationSeconds: 30 });
     if (iatpe.format.durationSeconds > 900)
       throw new Error("El motor local admite hasta 15 minutos.");
     signal.throwIfAborted();
@@ -149,9 +148,9 @@ async function run(id: string) {
       stems = [
         {
           id: soloChannel.id,
-          kind: (["piano", "guitar", "bass", "vocals", "drums"].includes(soloChannel.instrument)
+          kind: (["piano", "guitar", "bass", "vocals", "drums", "other"].includes(soloChannel.instrument)
             ? soloChannel.instrument
-            : "piano") as any,
+            : "other") as any,
           label: soloChannel.label,
           confidence: iatpe.channelPlan.confidence,
           transcriptionEligible: true,
@@ -161,16 +160,20 @@ async function run(id: string) {
       ];
       separationWarnings.push(iatpe.channelPlan.decisionReason);
     } else {
+      const needs6s = iatpe.channelPlan.channels.some(
+        (c) => c.instrument === "guitar" || c.instrument === "piano",
+      );
+      const demucsModel = needs6s ? "htdemucs_6s" : "htdemucs";
       const engine =
         options.separationEngine ??
         iatpe.channelPlan.recommendedEngine ??
-        "bs_roformer";
+        (process.env.BS_ROFORMER_CHECKPOINT ? "bs_roformer" : "demucs");
       const engineLabel =
         engine === "demucs"
-          ? "Demucs (Híbrido U-Net)"
+          ? `Demucs v4 (${demucsModel})`
           : engine === "ensemble"
-            ? "IATPE Ensamble Quirúrgico"
-            : "BS-RoFormer (Transformer RoPE SOTA)";
+            ? "IATPE Ensamble Multi-fuente"
+            : "BS-RoFormer (Transformer RoPE)";
       await progress(
         id,
         `Separación acústica autónoma (${iatpe.channelPlan.decisionReason.slice(0, 40)}...): ${engineLabel}`,
@@ -184,17 +187,33 @@ async function run(id: string) {
             output: join(dir, "separated"),
             quality: options.quality,
             engine,
+            model: demucsModel,
+            plan: iatpe.channelPlan,
           },
           signal,
         ),
       );
       separationWarnings = manifest.warnings;
       stemDurationSeconds = manifest.durationSeconds;
-      stems = manifest.sources.map((source) => ({
-        ...source,
-        localPath: join(dir, "separated", source.file),
-        storagePath: `local/${id}/${source.file}`,
-      }));
+      stems = manifest.sources.map((source) => {
+        const planMatch = iatpe.channelPlan.channels.find(
+          (c) =>
+            source.id.endsWith(c.id) ||
+            source.file.includes(c.id) ||
+            c.id === source.id ||
+            c.instrument === source.kind ||
+            (c.parentStem && c.parentStem === source.kind && source.level === 2),
+        );
+        return {
+          ...source,
+          localPath: join(dir, "separated", source.file),
+          storagePath: `local/${id}/${source.file}`,
+          program: planMatch?.program,
+          family:
+            planMatch?.family ||
+            (source.kind === "percussion" ? "percussion" : undefined),
+        };
+      });
     }
 
     const tempoMap =
@@ -226,6 +245,7 @@ async function run(id: string) {
         ...(iatpe.googleClassification.googleGeminiReview
           ? [iatpe.googleClassification.googleGeminiReview]
           : []),
+        ...separationWarnings,
       ],
       confidence: iatpe.channelPlan.confidence,
       provenance: "transcription",
@@ -902,21 +922,14 @@ async function main() {
         try {
           const input = z
             .object({
-              source: z.enum([
-                "original",
-                "piano",
-                "guitar",
-                "bass",
-                "drums",
-                "vocals",
-                "other",
-              ]),
+              source: z.string().min(1).max(100),
               speed: z.number().min(0.5).max(1.5).multipleOf(0.05),
               semitones: z.number().int().min(-12).max(12),
             })
             .parse(await body(req));
           let source = join(dir, "original.wav");
-          if (input.source === "original") {
+          const cleanSource = input.source.replace(/^(demucs-|bs_roformer-|solo-)/, "");
+          if (cleanSource === "original") {
             try {
               await stat(source);
             } catch {
@@ -924,7 +937,19 @@ async function main() {
               source = join(dir, inputConfig.file);
             }
           } else {
-            source = join(dir, "separated", `${input.source}.wav`);
+            const separatedPath = join(dir, "separated", `${cleanSource}.wav`);
+            try {
+              await stat(separatedPath);
+              source = separatedPath;
+            } catch {
+              // Si no existe en separated/ (p. ej. canal solista con bypass de separación), recurrir al audio original
+              try {
+                await stat(source);
+              } catch {
+                const inputConfig = JSON.parse(await readFile(join(dir, "input.json"), "utf8"));
+                source = join(dir, inputConfig.file);
+              }
+            }
           }
           await stat(source);
           const file = `practice-${input.source}-${input.speed}-${input.semitones}.wav`;

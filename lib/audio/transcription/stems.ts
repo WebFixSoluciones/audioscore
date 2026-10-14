@@ -3,7 +3,7 @@ import { secondsToTicks } from "@/lib/music/tempo-map";
 import type { AudioSource, MusicDocument } from "@/lib/music/types";
 import type { SeparatedStem } from "@/lib/audio/separation";
 
-const programs = {
+const programs: Record<string, number> = {
   piano: 0,
   guitar: 24,
   bass: 32,
@@ -11,6 +11,7 @@ const programs = {
   other: 0,
   unknown: 0,
   drums: 0,
+  percussion: 116,
 };
 
 export async function transcribeStems(
@@ -26,24 +27,25 @@ export async function transcribeStems(
     ),
   ];
   for (const [index, stem] of stems.entries()) {
+    const isPercussive = stem.kind === "drums" || stem.kind === "percussion";
     const source: AudioSource = {
       id: stem.id,
       name: stem.label,
       nameEs: stem.label,
       category:
-        stem.kind === "drums"
+        isPercussive
           ? "percussive"
           : stem.kind === "other" || stem.kind === "unknown"
             ? "mixed"
             : "tonal",
-      family: stem.label,
+      family: stem.family || stem.label,
       acousticOrElectronic: "unknown",
       analogOrDigital: "unknown",
       polyphony: "unknown",
       confidence: stem.confidence,
       evidence: "estimated",
-      program: programs[stem.kind],
-      channel: stem.kind === "drums" ? 10 : (index % 9) + 1,
+      program: stem.program !== undefined ? stem.program : (programs[stem.kind] ?? 0),
+      channel: isPercussive ? 10 : (index % 9) + 1,
       notationLayout: stem.kind === "piano" ? "piano" : "single",
       storagePath: stem.storagePath,
       warnings: [
@@ -51,9 +53,9 @@ export async function transcribeStems(
       ],
     };
     // Pitch detection is not a drum classifier. Keep the playable audio without inventing drum notes.
-    if (stem.kind === "drums") {
+    if (isPercussive) {
       source.warnings.push(
-        "Stem de batería disponible. La transcripción de percusión requiere un motor específico.",
+        "Stem de batería/percusión disponible. La transcripción de percusión requiere un motor específico.",
       );
     } else if (stem.transcriptionEligible === false) {
       source.warnings.push(

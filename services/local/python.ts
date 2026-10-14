@@ -25,7 +25,7 @@ export function stopPython() {
   } else active.kill();
 }
 export async function pythonRequest(
-  input: Record<string, string>,
+  input: Record<string, unknown>,
   signal: AbortSignal,
 ) {
   signal.throwIfAborted();
@@ -83,11 +83,11 @@ export async function pythonRequest(
   const timer = setTimeout(() => {
     pending?.reject(
       new Error(
-        "El motor Python superó 20 minutos. Prueba un audio más corto.",
+        "El motor Python superó el tiempo máximo (60 minutos). Prueba un audio más corto.",
       ),
     );
     stopPython();
-  }, 20 * 60000);
+  }, 60 * 60000);
   try {
     return await new Promise<unknown>((resolve, reject) => {
       pending = { id, resolve, reject };

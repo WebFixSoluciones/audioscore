@@ -401,6 +401,135 @@ describe("IATPE Dynamic Channel Dispatcher", () => {
     expect(novelPlan.channels[0].label).toBe("NUEVO / COPA DE CRISTAL");
     expect(novelPlan.channels[0].sourceAction).toBe("bypass_separation");
   });
+
+  it("asigna correctamente bajo a Bass guitar sin confundirlo con guitarra (F09)", async () => {
+    const { dispatchChannels } = await import(
+      "@/lib/audio/iatpe/channel-dispatcher"
+    );
+    const plan = dispatchChannels({
+      topCandidate: "Bass guitar",
+      topScore: 0.95,
+      candidates: [
+        { label: "Bass guitar", category: "bass_guitar", activation: 0.95 },
+      ],
+    });
+    expect(plan.isSolo).toBe(true);
+    expect(plan.primaryInstrument).toBe("bass");
+    expect(plan.channels[0].instrument).toBe("bass");
+    expect(plan.channels[0].label).toContain("Bajo");
+    expect(plan.channels[0].program).toBe(33); // Electric Bass MIDI program
+  });
+
+  it("NO omite la separación si un micro-sonido está acompañado de otro instrumento (F05)", async () => {
+    const { dispatchChannels } = await import(
+      "@/lib/audio/iatpe/channel-dispatcher"
+    );
+    // Dúo de silbido y piano: debe ir a ensamble/separación, NO a bypass_separation
+    const plan = dispatchChannels({
+      topCandidate: "Whistling",
+      topScore: 0.85,
+      candidates: [
+        { label: "Whistling", category: "whistle", activation: 0.85 },
+        { label: "Piano", category: "piano", activation: 0.80 },
+      ],
+    });
+    expect(plan.isSolo).toBe(false);
+    expect(plan.mode).toBe("ensemble");
+    expect(plan.channels.some((c) => c.sourceAction === "demucs_stem")).toBe(true);
+  });
+
+  it("no inventa 75% de confianza si no hubo candidatos concluyentes (F10)", async () => {
+    const { dispatchChannels } = await import(
+      "@/lib/audio/iatpe/channel-dispatcher"
+    );
+    const plan = dispatchChannels({
+      topCandidate: "General Mixture",
+      topScore: 0,
+      candidates: [],
+    });
+    expect(plan.confidence).toBe(0);
+    expect(plan.decisionReason).toContain("precautorio");
+  });
+
+  it("planifica separación jerárquica Nivel 2 para pistas multi-instrumentales latinas / bomba (congas, timbales, metales)", async () => {
+    const { dispatchChannels } = await import(
+      "@/lib/audio/iatpe/channel-dispatcher"
+    );
+    const latinMix = {
+      topCandidate: "Bomba / Salsa Ensemble",
+      topScore: 0.92,
+      candidates: [
+        { label: "Singing", category: "vocals", activation: 0.90 },
+        { label: "Drum kit", category: "drums", activation: 0.88 },
+        { label: "Conga", category: "conga", activation: 0.75 },
+        { label: "Timbales", category: "timbales", activation: 0.72 },
+        { label: "Trumpet", category: "trumpet", activation: 0.82 },
+        { label: "Bass guitar", category: "bass_guitar", activation: 0.85 },
+        { label: "Piano", category: "piano", activation: 0.78 },
+      ],
+    };
+    const plan = dispatchChannels(latinMix);
+    expect(plan.isSolo).toBe(false);
+    expect(plan.mode).toBe("ensemble");
+    expect(plan.isHierarchical).toBe(true);
+    expect(plan.hierarchicalLevels).toBe(2);
+    expect(plan.channelCount).toBeGreaterThanOrEqual(7);
+
+    // Verificación de Level 2 Stems de percusión y metales
+    const congaChannel = plan.channels.find((c) => c.id === "percussion-congas");
+    expect(congaChannel).toBeDefined();
+    expect(congaChannel?.level).toBe(2);
+    expect(congaChannel?.parentStem).toBe("drums");
+    expect(congaChannel?.program).toBe(116);
+
+    const timbalesChannel = plan.channels.find((c) => c.id === "percussion-timbales");
+    expect(timbalesChannel).toBeDefined();
+    expect(timbalesChannel?.level).toBe(2);
+    expect(timbalesChannel?.parentStem).toBe("drums");
+    expect(timbalesChannel?.program).toBe(119);
+
+    const brassChannel = plan.channels.find((c) => c.id === "brass");
+    expect(brassChannel).toBeDefined();
+    expect(brassChannel?.level).toBe(2);
+    expect(brassChannel?.parentStem).toBe("other");
+    expect(brassChannel?.program).toBe(61);
+
+    expect(plan.subExtractionsPlanned).toBeDefined();
+    expect(plan.subExtractionsPlanned?.some((s) => s.parentStem === "drums")).toBe(true);
+    expect(plan.subExtractionsPlanned?.some((s) => s.parentStem === "other")).toBe(true);
+  });
+
+  it("planifica separación jerárquica para orquesta con cuerdas y metales", async () => {
+    const { dispatchChannels } = await import(
+      "@/lib/audio/iatpe/channel-dispatcher"
+    );
+    const orchestraMix = {
+      topCandidate: "Symphony Orchestra",
+      topScore: 0.95,
+      candidates: [
+        { label: "Violin", category: "violin", activation: 0.88 },
+        { label: "Strings", category: "strings", activation: 0.86 },
+        { label: "Trumpet", category: "trumpet", activation: 0.80 },
+        { label: "Trombone", category: "trombone", activation: 0.75 },
+      ],
+    };
+    const plan = dispatchChannels(orchestraMix);
+    expect(plan.isHierarchical).toBe(true);
+    expect(plan.hierarchicalLevels).toBe(2);
+
+    const brassChannel = plan.channels.find((c) => c.id === "brass");
+    expect(brassChannel).toBeDefined();
+    expect(brassChannel?.level).toBe(2);
+    expect(brassChannel?.parentStem).toBe("other");
+
+    const stringsChannel = plan.channels.find((c) => c.id === "strings");
+    expect(stringsChannel).toBeDefined();
+    expect(stringsChannel?.level).toBe(2);
+    expect(stringsChannel?.parentStem).toBe("other");
+    expect(stringsChannel?.program).toBe(48);
+
+    expect(plan.subExtractionsPlanned?.some((s) => s.parentStem === "other")).toBe(true);
+  });
 });
 
 describe("IATPE Integrated Audio Engine Orchestrator", () => {

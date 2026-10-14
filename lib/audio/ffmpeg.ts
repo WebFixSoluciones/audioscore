@@ -94,7 +94,7 @@ export async function audioPeaks(path: string) {
     const timeout = setTimeout(() => {
       child.kill();
       reject(new Error("Timeout en peaks"));
-    }, 60000);
+    }, 180000);
     child.stdout.on("data", (b: Buffer) => {
       size += b.length;
       if (size > 120_000_000) {

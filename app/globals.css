@@ -250,7 +250,100 @@ select:focus-visible {
   margin-left: 234px;
   width: calc(100% - 234px);
   min-width: 0;
+  transition: margin-left 0.2s ease, width 0.2s ease;
 }
+
+/* Modo Estudio DAW: Barra Lateral Solo Iconos */
+.sidebar.is-studio-mode {
+  width: 58px;
+  padding: 16px 8px 14px;
+  align-items: center;
+}
+.sidebar.is-studio-mode .brand {
+  justify-content: center;
+  padding: 0;
+}
+.sidebar.is-studio-mode .brand-symbol {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+.sidebar.is-studio-mode .brand-text,
+.sidebar.is-studio-mode .workspace-text,
+.sidebar.is-studio-mode .workspace-label > .tiny-dot,
+.sidebar.is-studio-mode .nav-label,
+.sidebar.is-studio-mode .nav-item-label,
+.sidebar.is-studio-mode .sidebar-tip,
+.sidebar.is-studio-mode .profile-text,
+.sidebar.is-studio-mode .profile-arrow {
+  display: none !important;
+}
+.sidebar.is-studio-mode .workspace-label {
+  padding: 6px 0;
+  margin: 12px 0;
+  border: 0;
+  justify-content: center;
+  width: 100%;
+}
+.sidebar.is-studio-mode .workspace-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+.sidebar.is-studio-mode nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+.sidebar.is-studio-mode .nav-item {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  margin: 0;
+  position: relative;
+}
+.sidebar.is-studio-mode .nav-item svg {
+  margin: 0;
+}
+.sidebar.is-studio-mode .nav-item .active-dot {
+  position: absolute;
+  right: 3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: #b596ee;
+}
+.sidebar.is-studio-mode .sidebar-bottom {
+  padding-top: 10px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.sidebar.is-studio-mode .profile {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  justify-content: center;
+}
+
+.main-content.is-studio-mode {
+  margin-left: 58px;
+  width: calc(100% - 58px);
+}
+.main-content.is-studio-mode .studio-page {
+  max-width: 100%;
+  padding: 8px 14px 20px;
+}
+
 .topbar {
   height: 71px;
   border-bottom: 1px solid #26252e;
@@ -457,130 +550,536 @@ select:focus-visible {
   background: #17161e;
   box-shadow: 0 16px 70px #08070d40;
 }
-.top-studio-bar {
+/* ==========================================================================
+   CONSOLA PRINCIPAL UNIFICADA DAW (Deck Superior Estilo Hardware)
+   ========================================================================== */
+
+.daw-console-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-.studio-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #cdc8d8;
-}
-.studio-brand strong {
-  font-weight: 600;
-  letter-spacing: -0.3px;
-}
-.studio-brand span {
-  color: #7b7388;
-  font-size: 12px;
-}
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.project-progress-right {
-  display: flex;
-  align-items: center;
   gap: 10px;
+  padding: 8px 14px;
+  background: #14121a;
+  border-bottom: 1px solid #272233;
+  border-radius: 10px 10px 0 0;
+  min-height: 52px;
+  flex-wrap: wrap;
 }
-.project-progress-chip {
+
+/* Deck Izquierdo: Identidad, Título, Estado */
+.daw-deck-left {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  background: #14131a;
-  border: 1px solid #2b2736;
-  border-radius: 7px;
-  font-size: 11px;
-  color: #a59cb3;
+  flex-shrink: 0;
 }
-.project-progress-chip progress {
-  width: 100px;
+
+.daw-brand-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  background: #1d1a26;
+  border: 1px solid #362e45;
+  border-radius: 5px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #c9bade;
+}
+
+.daw-brand-tag strong {
+  font-weight: 700;
+  color: #e2d6f5;
+}
+
+.daw-led-dot {
+  width: 6px;
   height: 6px;
+  border-radius: 50%;
+  background: #a78bfa;
+  box-shadow: 0 0 7px #a78bfaaa;
+  flex-shrink: 0;
+}
+
+.daw-project-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #0f0e15;
+  border: 1px solid #282335;
+  border-radius: 6px;
+  transition: border-color 0.15s;
+}
+
+.daw-project-field:focus-within {
+  border-color: #8b5cf6;
+}
+
+.daw-field-icon {
+  color: #8c7e9f;
+  flex-shrink: 0;
+}
+
+.daw-project-field input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f1ebf9;
+  font-size: 12px;
+  font-weight: 500;
+  width: 150px;
+  padding: 0;
+  transition: width 0.15s;
+}
+
+.daw-project-field input:focus {
+  width: 200px;
+}
+
+.daw-status-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.daw-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  background: #100f17;
+  border: 1px solid #282336;
+  border-radius: 5px;
+  font-size: 10px;
+  color: #a497b7;
+}
+
+.daw-status-chip progress {
+  width: 65px;
+  height: 5px;
   border-radius: 3px;
 }
-.project-progress-chip strong {
-  font-size: 11px;
+
+.daw-status-chip strong {
   color: #c4b5fd;
+  font-size: 10px;
 }
-.project-progress-chip.ready strong {
-  color: #34d399;
-}
-.progress-stage-text {
-  max-width: 240px;
+
+.daw-status-stage {
+  max-width: 130px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.project-bar {
-  padding: 14px 19px;
+
+.daw-chip-btn {
+  padding: 1px 5px;
+  background: #2b233a;
+  border: 1px solid #4a3c61;
+  border-radius: 4px;
+  color: #c084fc;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.daw-chip-btn:hover {
+  background: #3c2f52;
+}
+
+.daw-chip-btn.cancel {
+  background: #3b1820;
+  border-color: #632230;
+  color: #f87171;
+}
+
+/* Deck Central: Transporte DAW & Parámetros */
+.daw-deck-center {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #2b2836;
-  background: #1b1923;
-  border-radius: 11px 11px 0 0;
+  gap: 10px;
+  background: #0d0c12;
+  border: 1px solid #231f2f;
+  border-radius: 7px;
+  padding: 3px 8px;
 }
-.project-title {
+
+.daw-transport-group {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 3px;
 }
-.project-icon {
-  width: 34px;
-  height: 36px;
-  border-radius: 8px;
-  color: #b69ada;
-  background: #30283f;
+
+.daw-transport-btn {
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
-  border: 1px solid #4f3e60;
+  border: 1px solid #2c2738;
+  background: #191622;
+  color: #a79cb7;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.12s;
+  padding: 0;
 }
-.project-title input {
+
+.daw-transport-btn:hover:not(:disabled) {
+  background: #262133;
+  color: #ded6ec;
+  border-color: #493d5f;
+}
+
+.daw-transport-btn.selected {
+  background: #33214c;
+  color: #c084fc;
+  border-color: #7c3aed;
+  box-shadow: 0 0 8px #7c3aed40;
+}
+
+.daw-play-btn {
+  width: 32px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #5b3d8c;
+  background: #362254;
+  color: #e9dcff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.12s;
+  padding: 0;
+}
+
+.daw-play-btn:hover:not(:disabled) {
+  background: #4a2f73;
+  border-color: #7c52ba;
+}
+
+.daw-play-btn.is-playing {
+  background: #059669;
+  border-color: #10b981;
+  color: #ecfdf5;
+  box-shadow: 0 0 12px #10b98160;
+}
+
+/* Digital LCD Display */
+.daw-lcd-display {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #060509;
+  border: 1px solid #1c1a27;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.8px;
+  color: #a78bfa;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 1px 4px #0009;
+}
+
+.daw-lcd-sep {
+  color: #554d66;
+  font-size: 10px;
+}
+
+.daw-lcd-total {
+  color: #716685;
+  font-size: 10px;
+}
+
+/* Musical Parameters */
+.daw-params-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 1px solid #231f2f;
+  padding-left: 10px;
+}
+
+.daw-param-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.daw-param-tag {
+  font-size: 7px;
+  letter-spacing: 0.8px;
+  color: #7b718b;
+  font-weight: 600;
+}
+
+.daw-param-item input,
+.daw-param-item select {
   border: 0;
   outline: 0;
   background: transparent;
-  font-size: 13px;
-  width: 260px;
+  color: #dfd7eb;
+  font-size: 11px;
   font-weight: 500;
+  padding: 0;
+  width: 46px;
+  cursor: pointer;
 }
-.project-title span:not(.project-icon) {
-  font-size: 9px;
-  color: #8d859b;
+
+.daw-param-item.mode-item select {
+  width: 95px;
+  color: #a596bd;
+  font-size: 10px;
+}
+
+/* Deck Derecho: Opciones IA & Acciones */
+.daw-deck-right {
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 5px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
-.project-actions {
+
+/* Tactile DAW Buttons */
+.daw-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 29px;
+  padding: 0 9px;
+  background: #1a1822;
+  border: 1px solid #312b3e;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #c9bed8;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.daw-tool-btn:hover:not(:disabled) {
+  background: #252131;
+  color: #f1ecf9;
+  border-color: #493f5c;
+}
+
+.daw-tool-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Hero Button: Separar y Transcribir */
+.daw-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 29px;
+  padding: 0 11px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  border: 1px solid #9061f9;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 14px #7c3aed40;
+  transition: filter 0.12s, transform 0.12s;
+  white-space: nowrap;
+}
+
+.daw-hero-btn:hover:not(:disabled) {
+  filter: brightness(1.15);
+  box-shadow: 0 0 20px #7c3aed66;
+}
+
+.daw-hero-btn:disabled {
+  opacity: 0.4;
+  filter: grayscale(0.8);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.daw-flow-btn {
+  border-color: #4b3e2b;
+  color: #f6d28b;
+}
+
+.daw-flow-btn:hover:not(:disabled) {
+  background: #2b2319;
+  border-color: #6d5838;
+}
+
+/* AI Options Popover */
+.daw-popover {
+  position: relative;
+}
+
+.daw-popover summary {
+  list-style: none;
+}
+
+.daw-popover summary::-webkit-details-marker {
+  display: none;
+}
+
+.daw-popover-chevron {
+  transition: transform 0.15s ease;
+}
+
+.daw-popover[open] .daw-popover-chevron {
+  transform: rotate(180deg);
+}
+
+.daw-popover[open] > summary {
+  background: #282136;
+  border-color: #6d4fa8;
+  color: #e5d9f7;
+}
+
+.daw-popover-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 285px;
+  background: #171520;
+  border: 1px solid #3c344c;
+  border-radius: 8px;
+  box-shadow: 0 14px 45px #000c;
+  padding: 12px;
+  z-index: 60;
+  backdrop-filter: blur(8px);
+}
+
+.daw-popover-title {
   display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #dfd5eb;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #282334;
+}
+
+.daw-popover-body {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+}
+
+.daw-popover-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #aea2bf;
+}
+
+.daw-popover-field select {
+  background: #0f0e15;
+  border: 1px solid #30283d;
+  border-radius: 5px;
+  padding: 4px 7px;
+  color: #ddd4e8;
+  font-size: 11px;
+  max-width: 155px;
+}
+
+.daw-popover-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid #252031;
+}
+
+.daw-check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #c4b7d6;
+  cursor: pointer;
+}
+
+.daw-check-item input[type="checkbox"] {
+  accent-color: #8b5cf6;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
+.daw-popover-footer {
+  margin-top: 10px;
+  padding-top: 6px;
+  border-top: 1px solid #241f30;
+  font-size: 9px;
+  color: #796d8b;
+  line-height: 1.4;
+}
+
+/* Secondary Compact Icon Tools */
+.daw-extra-tools {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border-left: 1px solid #272234;
+  padding-left: 5px;
+}
+
+.daw-icon-tool {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #2d273a;
+  background: #17151f;
+  border-radius: 5px;
+  color: #9f93b2;
+  cursor: pointer;
+  transition: all 0.12s;
+  padding: 0;
+}
+
+.daw-icon-tool:hover:not(:disabled) {
+  background: #242030;
+  color: #ddd5e9;
+  border-color: #463b59;
+}
+
+.daw-icon-tool:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Clases de retrocompatibilidad */
+.top-studio-bar {
+  display: none;
+}
+.project-bar {
+  display: none;
+}
+.transport {
+  display: none;
 }
 .export-wrap {
   position: relative;
 }
 .export-menu {
   position: absolute;
-  top: 38px;
+  top: 36px;
   right: 0;
   width: 190px;
-  background: #24202e;
-  border: 1px solid #544167;
+  background: #221f2c;
+  border: 1px solid #4a3c5d;
   border-radius: 8px;
-  z-index: 30;
+  z-index: 50;
   padding: 6px;
-  box-shadow: 0 10px 30px #0007;
+  box-shadow: 0 10px 30px #0008;
 }
 .export-menu button {
-  padding: 10px;
+  padding: 8px 10px;
   width: 100%;
   border: 0;
   display: flex;
@@ -588,107 +1087,15 @@ select:focus-visible {
   font-size: 11px;
   color: #d4c7e7;
   border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
 }
 .export-menu button:hover {
-  background: #493759;
+  background: #3a2e4a;
 }
 .export-menu button span {
   font-size: 9px;
   color: #9c8aae;
-}
-.transport {
-  min-height: 67px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 17px;
-  border-bottom: 1px solid #2c2834;
-}
-.transport-play {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.icon-button {
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  border: 0;
-  border-radius: 5px;
-  color: #9e94ac;
-  flex-shrink: 0;
-}
-.icon-button:hover:not(:disabled) {
-  color: #d6c2f4;
-  background: #31283d;
-}
-.icon-button.selected,
-.text-button.selected {
-  color: #c09bff;
-  background: #34273f;
-}
-.play-button {
-  height: 32px;
-  width: 33px;
-  display: grid;
-  place-items: center;
-  color: #e2d1ff;
-  background: #62488b;
-  border: 1px solid #8a6bad;
-  border-radius: 7px;
-}
-.time-display {
-  font-size: 14px;
-  letter-spacing: 1px;
-  font-variant-numeric: tabular-nums;
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-  white-space: nowrap;
-}
-.time-display small {
-  font-size: 10px;
-  color: #7e758f;
-}
-.transport-music {
-  display: flex;
-  gap: 20px;
-  border-left: 1px solid #393040;
-  padding-left: 20px;
-}
-.transport-music label {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.transport-music input,
-.transport-music select {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  font-size: 12px;
-  width: 54px;
-  outline-offset: 2px;
-}
-.transport-music label span {
-  font-size: 7px;
-  color: #8d829b;
-  letter-spacing: 1px;
-}
-.transport-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.transport-right select {
-  border: 0;
-  color: #a498b5;
-  font-size: 10px;
-  max-width: 105px;
 }
 .editor-grid {
   display: grid;
@@ -903,17 +1310,24 @@ select:focus-visible {
   padding-inline: 12px;
 }
 .separated-track {
-  border-bottom: 1px solid #302936;
-  min-height: 138px;
-  box-shadow: inset 3px 0 var(--track-color);
-  transition: background 150ms;
+  border-bottom: 1px solid #25202d;
+  background: #14131c;
+  min-height: 124px;
+  box-shadow: inset 4px 0 var(--track-color);
+  transition: background 150ms ease;
+}
+.separated-track:hover {
+  background: #171522;
 }
 .track-selected {
-  background: color-mix(in srgb, var(--track-color) 7%, #17151f);
+  background: color-mix(in srgb, var(--track-color) 8%, #14131c);
 }
 .track-details {
-  padding: 16px 18px;
-  border-right: 1px solid #302936;
+  padding: 14px 16px;
+  border-right: 1px solid #25202d;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .track-title {
   display: flex;
@@ -926,73 +1340,94 @@ select:focus-visible {
 }
 .track-title strong {
   display: block;
-  color: #ece3f5;
-  font-size: 14px;
-  font-weight: 500;
+  color: #f1ebf8;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
 }
 .track-title small {
   display: block;
-  margin-top: 4px;
-  color: #97869f;
+  margin-top: 3px;
+  color: #92839d;
   font-size: 9px;
 }
 .track-symbol {
   color: var(--track-color);
-  width: 35px;
-  height: 35px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--track-color) 13%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--track-color) 16%, #1a1824);
+  border: 1px solid color-mix(in srgb, var(--track-color) 40%, transparent);
 }
 .track-buttons {
   display: flex;
-  gap: 6px;
-  margin: 12px 0;
+  gap: 5px;
+  margin: 10px 0;
 }
 .track-buttons button,
 .track-buttons a {
   display: grid;
   place-items: center;
-  width: 29px;
-  height: 26px;
-  border: 1px solid #433749;
+  width: 28px;
+  height: 25px;
+  border: 1px solid #362f42;
   border-radius: 5px;
-  color: #c4b0d0;
-  font-size: 11px;
+  background: #1a1724;
+  color: #b1a4c4;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
 }
+.track-buttons button:hover,
+.track-buttons a:hover {
+  background: #282336;
+  color: #f3ecfb;
+  border-color: #4f4362;
+}
+/* Solo [S] - Amber LED */
 .track-buttons .on {
-  background: var(--track-color);
-  color: #15121b;
-  border-color: var(--track-color);
+  background: #d97706 !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 10px #f59e0b77;
 }
+/* Mute [M] - Ruby Red LED */
 .track-buttons .muted {
-  background: #834352;
-  color: #ffe0e8;
-  border-color: #be788b;
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 10px #ef444477;
 }
 .track-volume,
 .track-pan {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #a391b0;
+  gap: 7px;
+  color: #9c8fb0;
   font-size: 9px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .track-volume input,
 .track-pan input {
   flex: 1;
-  width: 80px;
-  height: 8px;
+  width: 75px;
+  height: 6px;
+  border-radius: 3px;
+  background: #0f0e15;
   accent-color: var(--track-color);
   padding: 0;
+  cursor: pointer;
 }
 .track-volume output,
 .track-pan output {
-  min-width: 36px;
+  min-width: 34px;
   text-align: right;
-  color: #d4c5de;
+  color: #d6cae2;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 10px;
 }
 .track-wave {
   align-self: center;
