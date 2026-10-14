@@ -5,7 +5,20 @@ from pathlib import Path
 def analyze(input_path: Path, tempo_mode: str = "steady", detect_bars: bool = False) -> dict:
     import librosa
     import numpy as np
-    y, sr = librosa.load(input_path, sr=22050, mono=True, duration=900)
+    try:
+        from audio_io import load_audio
+        audio_data, native_sr = load_audio(input_path)
+        if audio_data.ndim == 2:
+            audio_data = audio_data.mean(axis=1)
+        if native_sr != 22050:
+            y = librosa.resample(audio_data, orig_sr=native_sr, target_sr=22050)
+            sr = 22050
+        else:
+            y = audio_data
+            sr = native_sr
+    except Exception:
+        y, sr = librosa.load(input_path, sr=22050, mono=True, duration=900)
+
     if len(y) == 0 or not np.isfinite(y).all() or np.sqrt(np.mean(y ** 2)) < 1e-6:
         raise ValueError("Audio vacío o silencioso")
     duration = len(y) / sr
@@ -35,21 +48,26 @@ def analyze(input_path: Path, tempo_mode: str = "steady", detect_bars: bool = Fa
     downbeats, meter, meter_confidence = np.array([]), None, 0.0
     rhythm_method = "librosa beat tracking"
     if detect_bars:
-        from rhythm import analyze_rhythm
-        detected, downbeats, meter, meter_confidence = analyze_rhythm(input_path, duration)
-        if len(detected) >= 4:
-            beats = detected
-            intervals = np.diff(beats)
-            median = float(np.median(intervals))
-            bpm = 60.0 / median
-            if not 20 <= bpm <= 400:
-                bpm, beats, downbeats, meter, meter_confidence = 120.0, np.array([]), np.array([]), None, 0.0
-                tempo_confidence = 0.0
-            else:
-                # Consistency is a heuristic, not a calibrated neural confidence.
-                stability = max(0.0, 1 - float(np.median(np.abs(intervals - median))) / median)
-                tempo_confidence = min(0.9, stability * 0.8)
-        rhythm_method = "Beat This! final0"
+        try:
+            from rhythm import analyze_rhythm
+            detected, downbeats, meter, meter_confidence = analyze_rhythm(input_path, duration)
+            if len(detected) >= 4:
+                beats = detected
+                intervals = np.diff(beats)
+                median = float(np.median(intervals))
+                bpm = 60.0 / median
+                if not 20 <= bpm <= 400:
+                    bpm, beats, downbeats, meter, meter_confidence = 120.0, np.array([]), np.array([]), None, 0.0
+                    tempo_confidence = 0.0
+                else:
+                    # Consistency is a heuristic, not a calibrated neural confidence.
+                    stability = max(0.0, 1 - float(np.median(np.abs(intervals - median))) / median)
+                    tempo_confidence = min(0.9, stability * 0.8)
+            rhythm_method = "Beat This! final0"
+        except Exception as e:
+            import sys
+            print(f"[Rhythm Tracker Fallback] {e}", file=sys.stderr)
+            rhythm_method = "librosa beat tracking"
     chroma = librosa.feature.chroma_stft(y=y, sr=sr, hop_length=hop, n_fft=2048)
     spectrum = chroma.mean(axis=1)
     major = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])

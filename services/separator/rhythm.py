@@ -7,8 +7,8 @@ from pathlib import Path
 def tracker():
     import torch
     torch.set_num_threads(2)
-    from beat_this.inference import File2Beats
-    return File2Beats(checkpoint_path="final0", device="cpu", dbn=False)
+    from beat_this.inference import Audio2Beats
+    return Audio2Beats(checkpoint_path="final0", device="cpu", dbn=False)
 
 
 def infer_meter(beats, downbeats):
@@ -34,7 +34,12 @@ def infer_meter(beats, downbeats):
 
 def analyze_rhythm(path: Path, duration: float):
     import numpy as np
-    beats, downbeats = tracker()(str(path))
+    from audio_io import load_audio
+    signal, sr = load_audio(path)
+    if signal.ndim == 2:
+        signal = signal.mean(axis=1)
+    signal = np.asanyarray(signal, dtype="float64")
+    beats, downbeats = tracker()(signal, sr)
     beats = np.asarray(beats)
     downbeats = np.asarray(downbeats)
     beats = beats[np.isfinite(beats) & (beats >= 0) & (beats < duration)]
