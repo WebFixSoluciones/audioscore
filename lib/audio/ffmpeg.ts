@@ -7,28 +7,98 @@ import { readFile } from "node:fs/promises";
 import { ApiError } from "@/lib/utils/errors";
 const binary = () => process.env.FFMPEG_PATH || ffmpegStatic;
 export async function probeAudio(path: string) {
-  const metadata = await parseFile(path, { duration: true });
-  const f = metadata.format;
-  if (
-    !f.duration ||
-    !Number.isFinite(f.duration) ||
-    f.duration <= 0 ||
-    !f.sampleRate ||
-    f.sampleRate < 8000 ||
-    f.sampleRate > 192000 ||
-    !f.numberOfChannels ||
-    f.numberOfChannels > 8
-  )
-    throw new ApiError(
-      422,
-      "Audio vacío, corrupto o con formato no compatible",
+  try {
+    const metadata = await parseFile(path, { duration: true });
+    const f = metadata.format;
+    if (
+      f.duration &&
+      Number.isFinite(f.duration) &&
+      f.duration > 0 &&
+      f.sampleRate &&
+      f.sampleRate >= 8000 &&
+      f.sampleRate <= 192000 &&
+      f.numberOfChannels &&
+      f.numberOfChannels <= 8
+    ) {
+      return {
+        durationSeconds: f.duration,
+        sampleRate: f.sampleRate,
+        channels: f.numberOfChannels,
+        codec: f.codec ?? "unknown",
+      };
+    }
+  } catch {
+    // Si parseFile falla al procesar el archivo, recurrimos a FFmpeg
+  }
+
+  const executable = binary();
+  if (!executable) throw new ApiError(503, "FFmpeg no disponible");
+
+  return new Promise<{
+    durationSeconds: number;
+    sampleRate: number;
+    channels: number;
+    codec: string;
+  }>((resolve, reject) => {
+    const proc = spawn(executable, ["-i", path, "-hide_banner"], {
+      windowsHide: true,
+    });
+    let stderr = "";
+    proc.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+    proc.on("error", (err) =>
+      reject(new ApiError(500, `Error al invocar FFmpeg: ${err.message}`)),
     );
-  return {
-    durationSeconds: f.duration,
-    sampleRate: f.sampleRate,
-    channels: f.numberOfChannels,
-    codec: f.codec ?? "unknown",
-  };
+    proc.on("close", () => {
+      const durMatch = stderr.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/i);
+      const audioMatch = stderr.match(
+        /Stream\s+#\d+:\d+(?:\[[^\]]*\])?(?:\([^)]*\))?:\s*Audio:\s*([^,\n\r]+)/i,
+      );
+
+      if (!durMatch) {
+        return reject(
+          new ApiError(422, "Audio vacío, corrupto o con formato no compatible"),
+        );
+      }
+
+      const durationSeconds =
+        parseFloat(durMatch[1]) * 3600 +
+        parseFloat(durMatch[2]) * 60 +
+        parseFloat(durMatch[3]);
+
+      if (durationSeconds <= 0 || !Number.isFinite(durationSeconds)) {
+        return reject(
+          new ApiError(422, "Audio vacío, corrupto o con formato no compatible"),
+        );
+      }
+
+      let sampleRate = 44100;
+      let channels = 2;
+      let codec = "unknown";
+
+      if (audioMatch) {
+        const fullAudioLine = stderr.slice(stderr.indexOf(audioMatch[0]));
+        const line = fullAudioLine.split("\n")[0] || "";
+        codec = audioMatch[1].trim().split(" ")[0].toLowerCase();
+        const srMatch = line.match(/(\d+)\s*Hz/i);
+        if (srMatch) sampleRate = parseInt(srMatch[1], 10);
+        if (/mono/i.test(line)) channels = 1;
+        else if (/stereo/i.test(line)) channels = 2;
+        else {
+          const chNumMatch = line.match(/(\d+)\s*channels/i);
+          if (chNumMatch) channels = parseInt(chNumMatch[1], 10);
+        }
+      }
+
+      resolve({
+        durationSeconds,
+        sampleRate: Math.min(Math.max(8000, sampleRate), 192000),
+        channels: Math.min(Math.max(1, channels), 8),
+        codec,
+      });
+    });
+  });
 }
 export function transcodeAudio(
   input: string,

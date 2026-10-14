@@ -19,32 +19,115 @@ export function getFfmpegBinary(): string {
   return binary;
 }
 
+export async function probeWithFfmpeg(filePath: string): Promise<AudioFormatInfo> {
+  const binary = getFfmpegBinary();
+  return new Promise((resolve, reject) => {
+    const proc = spawn(binary, ["-i", filePath, "-hide_banner"], {
+      windowsHide: true,
+    });
+    let stderr = "";
+    proc.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+    proc.on("error", (err) =>
+      reject(new Error(`Error al invocar FFmpeg para inspección: ${err.message}`)),
+    );
+    proc.on("close", () => {
+      const durMatch = stderr.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/i);
+      const audioMatch = stderr.match(
+        /Stream\s+#\d+:\d+(?:\[[^\]]*\])?(?:\([^)]*\))?:\s*Audio:\s*([^,\n\r]+)/i,
+      );
+      const containerMatch = stderr.match(/Input\s+#\d+,\s*([^,]+),/i);
+      const bitrateMatch = stderr.match(/bitrate:\s*(\d+)\s*kb\/s/i);
+
+      if (!durMatch) {
+        return reject(
+          new Error("No se pudo inspeccionar el formato del audio o está corrupto"),
+        );
+      }
+
+      const durationSeconds =
+        parseFloat(durMatch[1]) * 3600 +
+        parseFloat(durMatch[2]) * 60 +
+        parseFloat(durMatch[3]);
+
+      if (durationSeconds <= 0 || !Number.isFinite(durationSeconds)) {
+        return reject(
+          new Error("No se pudo inspeccionar el formato del audio o está corrupto"),
+        );
+      }
+
+      let sampleRate = 44100;
+      let channels = 2;
+      let codecLower = "unknown";
+
+      if (audioMatch) {
+        const fullAudioLine = stderr.slice(stderr.indexOf(audioMatch[0]));
+        const line = fullAudioLine.split("\n")[0] || "";
+        codecLower = audioMatch[1].trim().split(" ")[0].toLowerCase();
+        const srMatch = line.match(/(\d+)\s*Hz/i);
+        if (srMatch) sampleRate = parseInt(srMatch[1], 10);
+        if (/mono/i.test(line)) channels = 1;
+        else if (/stereo/i.test(line)) channels = 2;
+        else {
+          const chNumMatch = line.match(/(\d+)\s*channels/i);
+          if (chNumMatch) channels = parseInt(chNumMatch[1], 10);
+        }
+      }
+
+      const containerLower = containerMatch
+        ? containerMatch[1].trim().split(",")[0].toLowerCase()
+        : codecLower;
+
+      const isLossless =
+        codecLower.startsWith("pcm_") ||
+        codecLower === "pcm" ||
+        LOSSLESS_CODECS.has(codecLower);
+
+      resolve({
+        codec: codecLower,
+        container: containerLower || codecLower,
+        isLossless,
+        durationSeconds,
+        channels: Math.min(Math.max(1, channels), 8),
+        sampleRate: Math.min(Math.max(8000, sampleRate), 192000),
+        bitrateKbps: bitrateMatch ? parseInt(bitrateMatch[1], 10) : undefined,
+      });
+    });
+  });
+}
+
 export async function probeAudioFormat(filePath: string): Promise<AudioFormatInfo> {
-  const metadata = await parseFile(filePath, { duration: true });
-  const f = metadata.format;
-  if (!f.duration || !f.sampleRate || !f.numberOfChannels) {
-    throw new Error("No se pudo inspeccionar el formato del audio o está corrupto");
+  try {
+    const metadata = await parseFile(filePath, { duration: true });
+    const f = metadata.format;
+    if (f.duration && f.duration > 0 && f.sampleRate && f.numberOfChannels) {
+      const codecLower = (f.codec ?? "unknown").toLowerCase();
+      const containerLower = (f.container ?? "").toLowerCase();
+
+      const isLossless =
+        f.lossless === true ||
+        codecLower.startsWith("pcm_") ||
+        codecLower === "pcm" ||
+        LOSSLESS_CODECS.has(codecLower);
+
+      return {
+        codec: codecLower,
+        container: containerLower || codecLower,
+        isLossless,
+        durationSeconds: f.duration,
+        channels: f.numberOfChannels,
+        sampleRate: f.sampleRate,
+        bitrateKbps: f.bitrate ? Math.round(f.bitrate / 1000) : undefined,
+      };
+    }
+  } catch {
+    // Si parseFile falla por etiquetas no estándar o contenedor no coincidente con la extensión,
+    // recurrimos a FFmpeg que inspecciona el flujo binario real de forma nativa.
   }
 
-  const codecLower = (f.codec ?? "unknown").toLowerCase();
-  const containerLower = (f.container ?? "").toLowerCase();
-
-  // Distinguir PCM y códecs sin pérdida reales de contenedores que pueden albergar audio comprimido con pérdida (p. ej. ADPCM en WAV)
-  const isLossless =
-    f.lossless === true ||
-    codecLower.startsWith("pcm_") ||
-    codecLower === "pcm" ||
-    LOSSLESS_CODECS.has(codecLower);
-
-  return {
-    codec: codecLower,
-    container: containerLower || codecLower,
-    isLossless,
-    durationSeconds: f.duration,
-    channels: f.numberOfChannels,
-    sampleRate: f.sampleRate,
-    bitrateKbps: f.bitrate ? Math.round(f.bitrate / 1000) : undefined,
-  };
+  // Fallback con FFmpeg para archivos DASH/AAC con extensión .mp3, VBR sin cabecera Xing, o contenedores especiales
+  return await probeWithFfmpeg(filePath);
 }
 
 export interface StreamDecodeOptions {

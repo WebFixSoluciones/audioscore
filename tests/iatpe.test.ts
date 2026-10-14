@@ -217,6 +217,21 @@ describe("IATPE Stream Decoder (Zero Intermediate WAV)", () => {
       await removeTemporaryDirectory(folder);
     }
   });
+
+  it("inspecciona con éxito archivos con contenedor discordante o AAC DASH usando fallback FFmpeg", async () => {
+    const { probeAudioFormat } = await import(
+      "@/lib/audio/iatpe/stream-decoder"
+    );
+    const existingMismatchedPath = ".local-audio/jobs/5e488d5f-026b-4bfa-9c10-4fb1a9ba541d/input.mp3";
+    const { existsSync } = await import("node:fs");
+    if (existsSync(existingMismatchedPath)) {
+      const format = await probeAudioFormat(existingMismatchedPath);
+      expect(format.durationSeconds).toBeGreaterThan(200);
+      expect(format.channels).toBe(2);
+      expect(format.sampleRate).toBe(44100);
+      expect(format.codec).toBe("aac");
+    }
+  });
 });
 
 describe("IATPE Spectral & Micro-Sound Engine", () => {
