@@ -70,3 +70,107 @@ export function beatsToMeasure(beats: number, signature: [number, number]) {
     beat: ((beats % quarterBeats) * signature[1]) / 4 + 1,
   };
 }
+
+export interface BarInfo {
+  barNumber: number;
+  startSeconds: number;
+  endSeconds: number;
+  startTick: number;
+  durationTicks: number;
+  bpm: number;
+  beats: Array<{
+    beatNumber: number;
+    timeSeconds: number;
+    isDownbeat: boolean;
+  }>;
+}
+
+export function computeBarsAndBeats(
+  tempoMap: TempoChange[],
+  durationSeconds: number,
+  timeSignature: [number, number] = [4, 4],
+): BarInfo[] {
+  validateTempoMap(tempoMap);
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) return [];
+  const [numerator, denominator] = timeSignature;
+  const quarterBeatsPerBar = (numerator * 4) / denominator;
+  const ticksPerBar = Math.round(quarterBeatsPerBar * PPQ);
+  const ticksPerBeat = Math.round((4 / denominator) * PPQ);
+  const totalTicks = secondsToTicks(durationSeconds, tempoMap);
+
+  const bars: BarInfo[] = [];
+  let currentBarTick = 0;
+  let barIndex = 1;
+
+  while (currentBarTick < totalTicks) {
+    const nextBarTick = Math.min(totalTicks, currentBarTick + ticksPerBar);
+    const startSec = ticksToSeconds(currentBarTick, tempoMap);
+    const endSec = ticksToSeconds(nextBarTick, tempoMap);
+
+    let effectiveBpm = tempoMap[0].bpm;
+    for (const t of tempoMap) {
+      if (t.startSeconds <= startSec) effectiveBpm = t.bpm;
+      else break;
+    }
+
+    const beats: Array<{
+      beatNumber: number;
+      timeSeconds: number;
+      isDownbeat: boolean;
+    }> = [];
+    for (let b = 0; b < numerator; b++) {
+      const beatTick = currentBarTick + b * ticksPerBeat;
+      if (beatTick >= totalTicks) break;
+      beats.push({
+        beatNumber: b + 1,
+        timeSeconds: ticksToSeconds(beatTick, tempoMap),
+        isDownbeat: b === 0,
+      });
+    }
+
+    bars.push({
+      barNumber: barIndex,
+      startSeconds: startSec,
+      endSeconds: endSec,
+      startTick: currentBarTick,
+      durationTicks: nextBarTick - currentBarTick,
+      bpm: effectiveBpm,
+      beats,
+    });
+
+    currentBarTick = nextBarTick;
+    barIndex++;
+  }
+
+  return bars;
+}
+
+export function getCurrentBarAndBeat(
+  currentTime: number,
+  bars: BarInfo[],
+): { barNumber: number; beatNumber: number; isDownbeat: boolean } {
+  if (!bars.length) return { barNumber: 1, beatNumber: 1, isDownbeat: true };
+  const time = Math.max(0, currentTime);
+  const bar =
+    bars.find((b) => time >= b.startSeconds && time < b.endSeconds) ??
+    (time >= bars[bars.length - 1].endSeconds
+      ? bars[bars.length - 1]
+      : bars[0]);
+
+  let activeBeat = 1;
+  let isDownbeat = true;
+  for (const b of bar.beats) {
+    if (time >= b.timeSeconds) {
+      activeBeat = b.beatNumber;
+      isDownbeat = b.isDownbeat;
+    } else {
+      break;
+    }
+  }
+
+  return {
+    barNumber: bar.barNumber,
+    beatNumber: activeBeat,
+    isDownbeat,
+  };
+}

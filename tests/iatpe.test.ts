@@ -530,6 +530,121 @@ describe("IATPE Dynamic Channel Dispatcher", () => {
 
     expect(plan.subExtractionsPlanned?.some((s) => s.parentStem === "other")).toBe(true);
   });
+
+  it("planifica ensamble de banda sinfónica extendida con más de 15 canales sin truncamiento ni error (hasta 64 canales)", async () => {
+    const { dispatchChannels } = await import(
+      "@/lib/audio/iatpe/channel-dispatcher"
+    );
+    const symphonicBandMix = {
+      topCandidate: "Symphonic Wind Band / Wind Ensemble",
+      topScore: 0.98,
+      candidates: [
+        { label: "Piccolo", category: "piccolo", activation: 0.90 },
+        { label: "Flute", category: "flute", activation: 0.88 },
+        { label: "Clarinet", category: "clarinet", activation: 0.89 },
+        { label: "Bass Clarinet", category: "bass_clarinet", activation: 0.82 },
+        { label: "Oboe", category: "oboe", activation: 0.84 },
+        { label: "English Horn", category: "english_horn", activation: 0.81 },
+        { label: "Bassoon", category: "bassoon", activation: 0.83 },
+        { label: "Contrabassoon", category: "contrabassoon", activation: 0.79 },
+        { label: "Trumpet", category: "trumpet", activation: 0.92 },
+        { label: "Cornet", category: "cornet", activation: 0.85 },
+        { label: "Flugelhorn", category: "flugelhorn", activation: 0.80 },
+        { label: "French Horn", category: "french_horn", activation: 0.88 },
+        { label: "Trombone", category: "trombone", activation: 0.87 },
+        { label: "Euphonium", category: "euphonium", activation: 0.86 },
+        { label: "Tuba", category: "tuba", activation: 0.91 },
+        { label: "Timpani", category: "timpani", activation: 0.89 },
+        { label: "Glockenspiel", category: "glockenspiel", activation: 0.82 },
+        { label: "Tubular Bells", category: "tubular_bells", activation: 0.78 },
+        { label: "Alto Saxophone", category: "alto_saxophone", activation: 0.85 },
+        { label: "Tenor Saxophone", category: "tenor_saxophone", activation: 0.84 },
+        { label: "Baritone Saxophone", category: "baritone_saxophone", activation: 0.81 },
+      ],
+    };
+    const plan = dispatchChannels(symphonicBandMix);
+    expect(plan.isHierarchical).toBe(true);
+    // Debe tener significativamente más de 15 canales sin saturar el esquema
+    expect(plan.channelCount).toBeGreaterThan(15);
+    expect(plan.channels.length).toBe(plan.channelCount);
+
+    // Verificar que canales específicos de banda sinfónica estén presentes
+    expect(plan.channels.some((c) => c.id === "piccolo")).toBe(true);
+    expect(plan.channels.some((c) => c.id === "euphonium")).toBe(true);
+    expect(plan.channels.some((c) => c.id === "percussion-timpani")).toBe(true);
+    expect(plan.channels.some((c) => c.id === "bass_clarinet")).toBe(true);
+    expect(plan.channels.some((c) => c.id === "contrabassoon")).toBe(true);
+
+    // Validar contra channelPlanSchema de Zod (asegura que max 64 no arroje error)
+    const validated = channelPlanSchema.parse(plan);
+    expect(validated.channelCount).toBe(plan.channelCount);
+  });
+
+  it("despacha efectos de sonido y foley (Sound FX / AST) asignando notación percusiva de efectos", async () => {
+    const { dispatchChannels } = await import(
+      "@/lib/audio/iatpe/channel-dispatcher"
+    );
+    const fxMix = {
+      topCandidate: "Cinematic Sound Effects",
+      topScore: 0.94,
+      candidates: [
+        { label: "Explosion", category: "explosion", activation: 0.92 },
+        { label: "Gunshot", category: "gunshot", activation: 0.88 },
+        { label: "Wind", category: "wind", activation: 0.76 },
+      ],
+    };
+    const plan = dispatchChannels(fxMix);
+    expect(plan.channels.some((c) => c.instrument === "sound_fx")).toBe(true);
+    const fxChannel = plan.channels.find((c) => c.instrument === "sound_fx");
+    expect(fxChannel?.sourceAction).toBe("sound_fx");
+    expect(fxChannel?.program).toBe(127);
+  });
+
+  it("despacha coro polifónico y voces SATB", async () => {
+    const { dispatchChannels } = await import(
+      "@/lib/audio/iatpe/channel-dispatcher"
+    );
+    const choirMix = {
+      topCandidate: "SATB Choral Ensemble",
+      topScore: 0.93,
+      candidates: [
+        { label: "Choir", category: "choir", activation: 0.90 },
+        { label: "Soprano", category: "soprano", activation: 0.85 },
+        { label: "Contralto", category: "contralto", activation: 0.82 },
+        { label: "Tenor", category: "tenor_voice", activation: 0.84 },
+        { label: "Baritone", category: "baritone_voice", activation: 0.81 },
+      ],
+    };
+    const plan = dispatchChannels(choirMix);
+    expect(plan.channels.some((c) => c.id === "vocals-choir")).toBe(true);
+    expect(plan.channels.some((c) => c.id === "vocals_soprano")).toBe(true);
+    expect(plan.channels.some((c) => c.id === "vocals_alto")).toBe(true);
+    expect(plan.channels.some((c) => c.id === "vocals_tenor")).toBe(true);
+    expect(plan.channels.some((c) => c.id === "vocals_bass")).toBe(true);
+  });
+
+  it("disentanglePolyphonicVoices desentrelaza acordes polifónicos en partes ordenadas por tesitura", async () => {
+    const { disentanglePolyphonicVoices } = await import(
+      "@/lib/audio/transcription/stems"
+    );
+    // Un acorde de 4 notas sonando al mismo tiempo (ej: C4, E4, G4, C5)
+    const simultaneousNotes = [
+      { startSeconds: 1.0, midiNote: 60, id: "c4" },
+      { startSeconds: 1.0, midiNote: 64, id: "e4" },
+      { startSeconds: 1.0, midiNote: 67, id: "g4" },
+      { startSeconds: 1.0, midiNote: 72, id: "c5" },
+    ];
+    const voices = disentanglePolyphonicVoices(simultaneousNotes, 4);
+    expect(voices).toHaveLength(4);
+    // Voz 0 (más aguda / Soprano): C5 = 72
+    expect(voices[0][0].midiNote).toBe(72);
+    // Voz 1 (Alto): G4 = 67
+    expect(voices[1][0].midiNote).toBe(67);
+    // Voz 2 (Tenor): E4 = 64
+    expect(voices[2][0].midiNote).toBe(64);
+    // Voz 3 (más grave / Bajo): C4 = 60
+    expect(voices[3][0].midiNote).toBe(60);
+  });
 });
 
 describe("IATPE Integrated Audio Engine Orchestrator", () => {

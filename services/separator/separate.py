@@ -47,28 +47,41 @@ def separate(input_path: Path, output: Path, model_name: str, device: str, quali
     duration = len(data) / sample_rate
     if duration > 900:
         raise ValueError("El separador integrado admite hasta 15 minutos")
-    waveform = torch.from_numpy(data.T.copy())
-    reference = waveform.mean(0)
-    mean, std = reference.mean(), reference.std()
-    if std.item() < 1e-6:
-        raise ValueError("El audio está en silencio")
-    normalized = (waveform - mean) / std
-    with torch.inference_mode(), contextlib.redirect_stdout(sys.stderr):
-        separated = apply_model(
-            model, normalized[None], device=device, shifts=2 if quality == "careful" else 1, split=True,
-            overlap=0.5 if quality == "careful" else 0.25, progress=False, num_workers=0,
-        )[0].cpu() * std + mean
-    if separated.shape[-1] != len(data) or not torch.isfinite(separated).all():
-        raise ValueError("El modelo no conservó la duración o produjo valores inválidos")
-    # Common gain preserves balance across stems, unlike per-file normalization.
-    peak = separated.abs().max().item()
+    def run_inference(chunk_data, chunk_sr):
+        wf = torch.from_numpy(chunk_data.T.copy())
+        ref = wf.mean(0)
+        m, s = ref.mean(), ref.std()
+        if s.item() < 1e-6:
+            return {k: np.zeros_like(chunk_data, dtype=np.float32) for k in model.sources}
+        norm = (wf - m) / s
+        with torch.inference_mode(), contextlib.redirect_stdout(sys.stderr):
+            sep = apply_model(
+                model, norm[None], device=device, shifts=2 if quality == "careful" else 1, split=True,
+                overlap=0.5 if quality == "careful" else 0.25, progress=False, num_workers=0,
+            )[0].cpu() * s + m
+        return {k: sep[idx].numpy().T for idx, k in enumerate(model.sources)}
+
+    if duration > 20.0:
+        try:
+            from slicing_engine import apply_dynamic_slicing
+            stems_map = apply_dynamic_slicing(data, sample_rate, run_inference)
+        except Exception as e:
+            sys.stderr.write(f"Aviso Slicing: {e}, fallback a paso único\n")
+            stems_map = run_inference(data, sample_rate)
+    else:
+        stems_map = run_inference(data, sample_rate)
+
+    all_peaks = [float(np.abs(audio).max()) for audio in stems_map.values()]
+    peak = max(all_peaks) if all_peaks else 1e-9
     gain = min(1.0, 0.99 / max(peak, 1e-9))
     input_ac = data.astype("float64") - data.mean(axis=0)
     input_rms = float(np.sqrt(np.mean(input_ac ** 2)))
     output.mkdir(parents=True, exist_ok=True)
     sources, omitted = [], []
-    for kind, samples in zip(model.sources, separated):
-        audio = samples.numpy().T * gain
+    for kind in model.sources:
+        if kind not in stems_map:
+            continue
+        audio = stems_map[kind] * gain
         ac = audio.astype("float64") - audio.mean(axis=0)
         rms = float(np.sqrt(np.mean(ac ** 2)))
         # Energy is only a silence gate, never a probability of instrument presence.

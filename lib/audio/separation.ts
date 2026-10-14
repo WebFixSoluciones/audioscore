@@ -13,6 +13,7 @@ export const stemKindSchema = z.enum([
   "vocals",
   "other",
   "percussion",
+  "sound_fx",
   "unknown",
 ]);
 export type StemKind = z.infer<typeof stemKindSchema>;
@@ -55,7 +56,7 @@ const manifestSchema = z.object({
       }),
     )
     .min(1)
-    .max(16),
+    .max(64),
 });
 export { manifestSchema as separationManifestSchema };
 

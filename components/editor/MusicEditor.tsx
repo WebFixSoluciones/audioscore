@@ -27,6 +27,7 @@ import {
   FileAudio,
   Workflow,
   SlidersHorizontal,
+  Timer,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { IatpeWorkflowViewer } from "@/components/audio/IatpeWorkflowViewer";
@@ -85,7 +86,8 @@ import { writeMidi } from "@/lib/music/midi-writer";
 import { writeMusicXML } from "@/lib/music/musicxml";
 import { writeMXL } from "@/lib/music/mxl";
 import { restoreExcludedNotes } from "@/lib/music/restore-candidates";
-import { withTempoMap } from "@/lib/music/tempo-map";
+import { withTempoMap, computeBarsAndBeats, getCurrentBarAndBeat } from "@/lib/music/tempo-map";
+import { LookaheadMetronome } from "@/lib/audio/metronome";
 import { validateAudioFile } from "@/lib/audio/audio-validation";
 import {
   acousticFeatures,
@@ -133,6 +135,44 @@ export function MusicEditor({
 }) {
   const state = useEditor(),
     doc = state.document;
+  const metronomeRef = useRef<LookaheadMetronome | null>(null);
+
+  const bars = computeBarsAndBeats(
+    doc.tempoMap,
+    doc.durationSeconds,
+    doc.timeSignature,
+  );
+  const currentBarAndBeat = getCurrentBarAndBeat(state.currentTime, bars);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!metronomeRef.current) {
+      metronomeRef.current = new LookaheadMetronome();
+    }
+    metronomeRef.current.updateBars(bars);
+  }, [bars]);
+
+  useEffect(() => {
+    if (!metronomeRef.current) return;
+    if (state.playing && state.metronomeEnabled) {
+      metronomeRef.current.start(state.currentTime);
+    } else {
+      metronomeRef.current.stop();
+    }
+  }, [state.playing, state.metronomeEnabled]);
+
+  useEffect(() => {
+    if (!metronomeRef.current) return;
+    metronomeRef.current.seek(state.currentTime);
+  }, [state.currentTime]);
+
+  useEffect(() => {
+    return () => {
+      metronomeRef.current?.destroy();
+      metronomeRef.current = null;
+    };
+  }, []);
+
   const [url, setUrl] = useState<string>(),
     [file, setFile] = useState<File>(),
     [fileName, setFileName] = useState("");
@@ -1061,13 +1101,30 @@ export function MusicEditor({
               >
                 <Repeat2 size={14} />
               </button>
+
+              <button
+                className={`daw-transport-btn ${state.metronomeEnabled ? "selected text-amber-400 border-amber-500/50" : ""}`}
+                aria-label={state.metronomeEnabled ? "Desactivar metrónomo" : "Activar metrónomo"}
+                title={`Metrónomo [${state.metronomeEnabled ? "ACTIVADO" : "DESACTIVADO"}]`}
+                onClick={() => state.setMetronomeEnabled(!state.metronomeEnabled)}
+              >
+                <Timer size={14} />
+              </button>
             </div>
 
             {/* Reloj Digital LCD */}
-            <div className="daw-lcd-display" title="Tiempo actual / Duración total">
+            <div className="daw-lcd-display" title="Tiempo actual / Duración total | Compás : Tiempo">
               <span className="daw-lcd-time">{clock(state.currentTime)}</span>
               <span className="daw-lcd-sep">/</span>
               <span className="daw-lcd-total">{clock(doc.durationSeconds)}</span>
+              <span className="daw-lcd-sep" style={{ opacity: 0.35 }}>|</span>
+              <span
+                className="daw-lcd-time"
+                style={{ color: "#fbbf24", fontWeight: 700, letterSpacing: "0.03em" }}
+                title={`Compás ${currentBarAndBeat.barNumber}, Tiempo ${currentBarAndBeat.beatNumber}`}
+              >
+                C{currentBarAndBeat.barNumber}:{currentBarAndBeat.beatNumber}
+              </span>
             </div>
 
             {/* Parámetros Musicales: BPM, Compás, Tonalidad, Modo */}

@@ -129,7 +129,7 @@ function noteXml(
       return pitches
         .map(
           (p, i) =>
-            `<note color="${e!.confidence < 0.7 && !e!.isHumanReviewed ? "#EA9A49" : "#222222"}">${i ? "<chord/>" : ""}${pitchXml(p, key)}<duration>${piece.ticks}</duration>${stop ? '<tie type="stop"/>' : ""}${start ? '<tie type="start"/>' : ""}<voice>${voice}</voice>${type}<staff>${staff}</staff>${stop || start || e!.articulation !== "normal" ? `<notations>${stop ? '<tied type="stop"/>' : ""}${start ? '<tied type="start"/>' : ""}${e!.articulation !== "normal" ? `<articulations><${e!.articulation}/></articulations>` : ""}</notations>` : ""}</note>`,
+            `<note color="${e!.confidence < 0.7 && !e!.isHumanReviewed ? "#EA9A49" : "#222222"}">${i ? "<chord/>" : ""}${pitchXml(p, key)}<duration>${piece.ticks}</duration>${stop ? '<tie type="stop"/>' : ""}${start ? '<tie type="start"/>' : ""}<voice>${voice}</voice>${type}<staff>${staff}</staff>${e!.notehead ? `<notehead>${e!.notehead === "x" ? "cross" : e!.notehead}</notehead>` : ""}${e!.lyric && !i && !index ? `<lyric><text>${escapeXml(e!.lyric)}</text></lyric>` : ""}${stop || start || e!.articulation !== "normal" ? `<notations>${stop ? '<tied type="stop"/>' : ""}${start ? '<tied type="start"/>' : ""}${e!.articulation !== "normal" ? `<articulations><${e!.articulation}/></articulations>` : ""}</notations>` : ""}</note>`,
         )
         .join("");
     })

@@ -33,6 +33,42 @@ describe("tiempo y notación", () => {
     expect(beatsToMeasure(4, [4, 4])).toEqual({ measure: 2, beat: 1 });
     expect(beatsToMeasure(3, [6, 8])).toEqual({ measure: 2, beat: 1 });
   });
+  it("calcula compases y beats dinámicos a partir del mapa de tempo con tempo variable", async () => {
+    const { computeBarsAndBeats, getCurrentBarAndBeat } = await import(
+      "@/lib/music/tempo-map"
+    );
+    const dynamicMap = [
+      { startSeconds: 0, bpm: 120, confidence: 1 },
+      { startSeconds: 4, bpm: 60, confidence: 1 },
+    ];
+    const bars = computeBarsAndBeats(dynamicMap, 12, [4, 4]);
+    expect(bars.length).toBeGreaterThanOrEqual(4);
+    expect(bars[0].barNumber).toBe(1);
+    expect(bars[0].startSeconds).toBeCloseTo(0, 2);
+    expect(bars[0].endSeconds).toBeCloseTo(2, 2);
+    expect(bars[0].beats).toHaveLength(4);
+    expect(bars[0].beats[0].isDownbeat).toBe(true);
+    expect(bars[0].beats[1].isDownbeat).toBe(false);
+
+    expect(bars[1].barNumber).toBe(2);
+    expect(bars[1].startSeconds).toBeCloseTo(2, 2);
+    expect(bars[1].endSeconds).toBeCloseTo(4, 2);
+
+    expect(bars[2].barNumber).toBe(3);
+    expect(bars[2].startSeconds).toBeCloseTo(4, 2);
+    expect(bars[2].endSeconds).toBeCloseTo(8, 2);
+
+    const at0 = getCurrentBarAndBeat(0.1, bars);
+    expect(at0.barNumber).toBe(1);
+    expect(at0.beatNumber).toBe(1);
+
+    const at2p5 = getCurrentBarAndBeat(2.6, bars);
+    expect(at2p5.barNumber).toBe(2);
+    expect(at2p5.beatNumber).toBe(2);
+
+    const at5 = getCurrentBarAndBeat(5.5, bars);
+    expect(at5.barNumber).toBe(3);
+  });
   it("cuantiza una copia y mantiene el original", () => {
     const d = fixture();
     d.events[0].startTick = 13;
@@ -106,5 +142,16 @@ describe("tiempo y notación", () => {
   it("marca baja confianza y evita exportar fuentes ausentes", () => {
     expect(reviewWarnings(fixture())).toHaveLength(1);
     expect(() => writeMidi(fixture(), "missing")).toThrow();
+  });
+  it("renderiza letra de canción y cabezas de nota tipo cross (X) para Sound FX", () => {
+    const doc = fixture();
+    doc.events[0].lyric = "Cantar";
+    doc.events[1].notehead = "cross";
+    doc.events[1].lyric = "Explosión FX";
+    const xml = writeMusicXML(doc);
+    expect(validateMusicXML(xml)).toBe(true);
+    expect(xml).toContain("<lyric><text>Cantar</text></lyric>");
+    expect(xml).toContain("<notehead>cross</notehead>");
+    expect(xml).toContain("<lyric><text>Explosión FX</text></lyric>");
   });
 });

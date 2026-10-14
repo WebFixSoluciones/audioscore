@@ -134,8 +134,28 @@ def separate_bs_roformer(
         model.load_state_dict(state_dict)
         model.to(device)
 
-        final_stems = overlap_add_separate(data, sample_rate, model, device, quality)
-        stems_data = {stem_name: final_stems[idx] for idx, stem_name in enumerate(stems_names)}
+        if duration > 20.0:
+            try:
+                from slicing_engine import apply_dynamic_slicing
+
+                def roformer_separator_fn(chunk_audio: np.ndarray) -> dict:
+                    out = overlap_add_separate(chunk_audio, sample_rate, model, device, quality)
+                    return {name: out[idx] for idx, name in enumerate(stems_names)}
+
+                stems_data = apply_dynamic_slicing(
+                    data=data,
+                    sr=sample_rate,
+                    separator_fn=roformer_separator_fn,
+                    stem_names=stems_names,
+                )
+            except Exception as e:
+                import sys
+                print(f"[BS-RoFormer] Dynamic slicing fallback to full overlap-add: {e}", file=sys.stderr)
+                final_stems = overlap_add_separate(data, sample_rate, model, device, quality)
+                stems_data = {stem_name: final_stems[idx] for idx, stem_name in enumerate(stems_names)}
+        else:
+            final_stems = overlap_add_separate(data, sample_rate, model, device, quality)
+            stems_data = {stem_name: final_stems[idx] for idx, stem_name in enumerate(stems_names)}
 
         sources = []
         input_ac = data.astype("float64") - data.mean(axis=0)

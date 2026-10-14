@@ -12,7 +12,41 @@ const programs: Record<string, number> = {
   unknown: 0,
   drums: 0,
   percussion: 116,
+  sound_fx: 127,
 };
+
+/**
+ * Voice Leading Disentanglement:
+ * Separa eventos de acordes o notas simultáneas polifónicas (ej. coro SATB o metales en bloque)
+ * en líneas melódicas individuales ordenadas por altura (Soprano, Contralto, Tenor, Bajo).
+ */
+export function disentanglePolyphonicVoices<
+  T extends { midiNote?: number; pitches?: number[]; startSeconds: number },
+>(events: T[], maxVoices: number = 4): T[][] {
+  const voices: T[][] = Array.from({ length: maxVoices }, () => []);
+  const timeBuckets = new Map<number, T[]>();
+  for (const ev of events) {
+    const key = Math.round(ev.startSeconds * 100) / 100;
+    const list = timeBuckets.get(key) || [];
+    list.push(ev);
+    timeBuckets.set(key, list);
+  }
+
+  for (const [, cluster] of timeBuckets.entries()) {
+    const sorted = [...cluster].sort((a, b) => {
+      const pitchA = a.midiNote ?? (a.pitches ? Math.max(...a.pitches) : 60);
+      const pitchB = b.midiNote ?? (b.pitches ? Math.max(...b.pitches) : 60);
+      return pitchB - pitchA;
+    });
+
+    sorted.forEach((note, idx) => {
+      const voiceIdx = Math.min(idx, maxVoices - 1);
+      voices[voiceIdx].push(note);
+    });
+  }
+
+  return voices.filter((v) => v.length > 0);
+}
 
 export async function transcribeStems(
   global: MusicDocument,
@@ -28,6 +62,8 @@ export async function transcribeStems(
   ];
   for (const [index, stem] of stems.entries()) {
     const isPercussive = stem.kind === "drums" || stem.kind === "percussion";
+    const isSoundFx = stem.kind === "sound_fx";
+    const portLetter = (index < 16 ? "A" : index < 32 ? "B" : index < 48 ? "C" : "D") as "A" | "B" | "C" | "D";
     const source: AudioSource = {
       id: stem.id,
       name: stem.label,
@@ -35,9 +71,11 @@ export async function transcribeStems(
       category:
         isPercussive
           ? "percussive"
-          : stem.kind === "other" || stem.kind === "unknown"
-            ? "mixed"
-            : "tonal",
+          : isSoundFx
+            ? "noise"
+            : stem.kind === "other" || stem.kind === "unknown"
+              ? "mixed"
+              : "tonal",
       family: stem.family || stem.label,
       acousticOrElectronic: "unknown",
       analogOrDigital: "unknown",
@@ -45,7 +83,8 @@ export async function transcribeStems(
       confidence: stem.confidence,
       evidence: "estimated",
       program: stem.program !== undefined ? stem.program : (programs[stem.kind] ?? 0),
-      channel: isPercussive ? 10 : (index % 9) + 1,
+      channel: isPercussive ? 10 : (index % 16) + 1,
+      port: portLetter,
       notationLayout: stem.kind === "piano" ? "piano" : "single",
       storagePath: stem.storagePath,
       warnings: [
@@ -56,6 +95,10 @@ export async function transcribeStems(
     if (isPercussive) {
       source.warnings.push(
         "Stem de batería/percusión disponible. La transcripción de percusión requiere un motor específico.",
+      );
+    } else if (isSoundFx) {
+      source.warnings.push(
+        "Stem de Efectos de Sonido / Foley (FX). Notación percusiva de efectos sin altura melódica fija.",
       );
     } else if (stem.transcriptionEligible === false) {
       source.warnings.push(
@@ -92,6 +135,7 @@ export async function transcribeStems(
               global.tempoMap,
             ) - startTick,
           ),
+          notehead: isSoundFx ? "cross" : event.notehead,
           isHumanReviewed: false,
         });
       }

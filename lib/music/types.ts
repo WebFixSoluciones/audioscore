@@ -56,7 +56,8 @@ export const sourceSchema = z.object({
   program: z.number().int().min(0).max(127).default(0),
   notationLayout: z.enum(["single", "piano"]).optional(),
   notationSplitPitch: z.number().int().min(0).max(127).optional(),
-  channel: z.number().int().min(1).max(16).default(1),
+  channel: z.number().int().min(1).max(64).default(1),
+  port: z.enum(["A", "B", "C", "D"]).optional(),
   warnings: z.array(z.string().max(500)).max(100),
   storagePath: z.string().optional(),
 });
@@ -82,6 +83,10 @@ export const eventSchema = z
     pitchBend: z.number().int().min(-8192).max(8191).optional(),
     confidence: confidenceSchema,
     isHumanReviewed: z.boolean(),
+    lyric: z.string().max(200).optional(),
+    notehead: z
+      .enum(["normal", "cross", "diamond", "triangle", "x", "slash"])
+      .optional(),
     metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .superRefine((e, ctx) => {

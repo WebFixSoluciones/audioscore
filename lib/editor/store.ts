@@ -18,12 +18,14 @@ type EditorStore = {
   mode: "audio" | "midi" | "compare" | "stems";
   region?: [number, number];
   loop: boolean;
+  metronomeEnabled: boolean;
   load: (doc: MusicDocument) => void;
   edit: (update: (doc: MusicDocument) => MusicDocument) => void;
   select: (id?: string) => void;
   selectSource: (id?: string) => void;
   seek: (time: number) => void;
   setPlaying: (v: boolean) => void;
+  setMetronomeEnabled: (v: boolean) => void;
   setMode: (mode: EditorStore["mode"]) => void;
   setRegion: (region?: [number, number]) => void;
   setLoop: (v: boolean) => void;
@@ -62,6 +64,7 @@ export const useEditor = create<EditorStore>((set, get) => ({
   playing: false,
   mode: "audio",
   loop: false,
+  metronomeEnabled: false,
   load: (doc) =>
     set({
       document: doc,
@@ -97,6 +100,7 @@ export const useEditor = create<EditorStore>((set, get) => ({
   selectSource: (sourceId) => set({ sourceId }),
   seek: (currentTime) => set({ currentTime }),
   setPlaying: (playing) => set({ playing }),
+  setMetronomeEnabled: (metronomeEnabled) => set({ metronomeEnabled }),
   setMode: (mode) => set({ mode, playing: false }),
   setRegion: (region) => set({ region }),
   setLoop: (loop) => set({ loop }),
