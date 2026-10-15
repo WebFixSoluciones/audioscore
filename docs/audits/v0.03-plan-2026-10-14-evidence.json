@@ -1,0 +1,343 @@
+{
+  "date": "2026-10-14",
+  "head": "15883d58ece91ce39469a5d2588d994f3651dee7",
+  "scope": "Plan compliance review. Deterministic probes of actual code; no song performance or trained-model accuracy benchmark.",
+  "svg": {
+    "sha256": "09206c879b3e94f3f16800c17fd4434c5cfba1dd230555ede4c666ce35d16905",
+    "nodes": [
+      {
+        "id": "In",
+        "label": "Audio Subido: Pista de Estudio o En Vivo (Banda Sinfónica / Salsa / Bomba)"
+      },
+      {
+        "id": "Ready",
+        "label": "Listo: Estudio Profesional con Partitura de Director, Partichelas y Metrónomo"
+      },
+      {
+        "id": "S1",
+        "label": "S1"
+      },
+      {
+        "id": "S2",
+        "label": "Análisis Espectral: RMS, Centroide, Rango Dinámico y Transitorios"
+      },
+      {
+        "id": "S3",
+        "label": "YAMNet: Clasificación de 521 Clases Instrumentales"
+      },
+      {
+        "id": "S4",
+        "label": "CLAP Slicing Engine: Mapeo temporal de actividad (IAD) por instrumento"
+      },
+      {
+        "id": "S5",
+        "label": "Google SPICE: Análisis de Monofonía vs Armonías de Coros"
+      },
+      {
+        "id": "S6",
+        "label": "Google AST / AudioSet: Detección de Sound FX y Ambientes"
+      },
+      {
+        "id": "R1",
+        "label": "Beat Tracking HMM: Detección de Downbeats (Compases) y Beats reales"
+      },
+      {
+        "id": "R2",
+        "label": "Generación del Dynamic Tempo Map: BPM variable para música en vivo"
+      },
+      {
+        "id": "D1",
+        "label": "¿Es instrumento solista aislado?"
+      },
+      {
+        "id": "D2",
+        "label": "Plan Solo: Canal Directo sin Separación"
+      },
+      {
+        "id": "D3",
+        "label": "Plan Jerárquico Sinfónico Multi-Puerto (64 Canales) con Slicing"
+      },
+      {
+        "id": "T1",
+        "label": "Slicing: Recortar SOLO los segmentos activos de cada familia (con margen Hann)"
+      },
+      {
+        "id": "T2",
+        "label": "Separación Troncal Paralela (Demucs 6s / BS-RoFormer / Modelos Ligeros)"
+      },
+      {
+        "id": "T3",
+        "label": "Sub-separación Jerárquica Nivel 2: Conservación de Energía SciPy SOS"
+      },
+      {
+        "id": "T4",
+        "label": "Reensamblaje de Stems completos sobre matriz temporal"
+      },
+      {
+        "id": "V_Stem",
+        "label": "vocals.wav (Voz Líder + Coros)"
+      },
+      {
+        "id": "FX_Stem",
+        "label": "sound_fx.wav (Efectos / Foley)"
+      },
+      {
+        "id": "Inst_Stems",
+        "label": "instrument_stems.wav (Maderas, Metales, Cuerdas, Percusión)"
+      },
+      {
+        "id": "MXML",
+        "label": "Compilador MusicXML 4.0: Full Score + 40 Partichelas Individuales"
+      },
+      {
+        "id": "WX",
+        "label": "WhisperX (Wav2Vec2): Letra y sílabas al milisegundo"
+      },
+      {
+        "id": "CP",
+        "label": "CREPE / SPICE / Omnizart: Tono de Voz Líder y Coros"
+      },
+      {
+        "id": "FX_Note",
+        "label": "Desactivar tono melódico -> Cabezas de nota 'X' + Etiqueta Texto"
+      },
+      {
+        "id": "MT3_BP",
+        "label": "Google MT3 + Voice Leading: Desglose a 30-40 Pentagramas Individuales"
+      },
+      {
+        "id": "Metronome",
+        "label": "Metrónomo Web Audio Lookahead (Cero jitter, sigue el tempo variable)"
+      },
+      {
+        "id": "Grid",
+        "label": "Línea de Tiempo con Grid Visual por Compases (Bar 1, Bar 2...)"
+      },
+      {
+        "id": "Score",
+        "label": "Partitura Interactiva Verovio (SVG) con Letra y Cabezas 'X'"
+      },
+      {
+        "id": "Mixer",
+        "label": "\"Consola DAW: 30-40 Pistas con Faders, Solo [S"
+      }
+    ],
+    "edges": [
+      {
+        "from": "In",
+        "to": "S1"
+      },
+      {
+        "from": "S3",
+        "to": "R1"
+      },
+      {
+        "from": "S4",
+        "to": "R1"
+      },
+      {
+        "from": "S5",
+        "to": "R1"
+      },
+      {
+        "from": "S6",
+        "to": "R1"
+      },
+      {
+        "from": "D3",
+        "to": "T1"
+      },
+      {
+        "from": "T4",
+        "to": "V_Stem"
+      },
+      {
+        "from": "T4",
+        "to": "FX_Stem"
+      },
+      {
+        "from": "T4",
+        "to": "Inst_Stems"
+      },
+      {
+        "from": "V_Stem",
+        "to": "WX"
+      },
+      {
+        "from": "V_Stem",
+        "to": "CP"
+      },
+      {
+        "from": "FX_Stem",
+        "to": "FX_Note"
+      },
+      {
+        "from": "Inst_Stems",
+        "to": "MT3_BP"
+      },
+      {
+        "from": "WX",
+        "to": "MXML"
+      },
+      {
+        "from": "CP",
+        "to": "MXML"
+      },
+      {
+        "from": "FX_Note",
+        "to": "MXML"
+      },
+      {
+        "from": "MT3_BP",
+        "to": "MXML"
+      },
+      {
+        "from": "R2",
+        "to": "Metronome"
+      },
+      {
+        "from": "R2",
+        "to": "Grid"
+      },
+      {
+        "from": "MXML",
+        "to": "Score"
+      },
+      {
+        "from": "T4",
+        "to": "Mixer"
+      },
+      {
+        "from": "D2",
+        "to": "MT3_BP"
+      },
+      {
+        "from": "Metronome",
+        "to": "Ready"
+      },
+      {
+        "from": "Grid",
+        "to": "Ready"
+      },
+      {
+        "from": "Score",
+        "to": "Ready"
+      },
+      {
+        "from": "Mixer",
+        "to": "Ready"
+      },
+      {
+        "from": "S1",
+        "to": "S2"
+      },
+      {
+        "from": "S2",
+        "to": "S3"
+      },
+      {
+        "from": "S2",
+        "to": "S4"
+      },
+      {
+        "from": "S2",
+        "to": "S5"
+      },
+      {
+        "from": "S2",
+        "to": "S6"
+      },
+      {
+        "from": "R1",
+        "to": "R2"
+      },
+      {
+        "from": "R2",
+        "to": "D1"
+      },
+      {
+        "from": "D1",
+        "to": "D2"
+      },
+      {
+        "from": "D1",
+        "to": "D3"
+      },
+      {
+        "from": "T1",
+        "to": "T2"
+      },
+      {
+        "from": "T2",
+        "to": "T3"
+      },
+      {
+        "from": "T3",
+        "to": "T4"
+      }
+    ]
+  },
+  "controlledPythonProbe": {
+    "purpose": "Controlled reconstruction test, not model accuracy or speed benchmark",
+    "harmonicSubseparation": [
+      {
+        "fixture": "400 Hz square, 2 s stereo, PCM16 source",
+        "inputAmplitude": 0.1,
+        "sources": [
+          "demucs-strings"
+        ],
+        "maxAbsoluteReconstructionError": 3.0517578125e-05,
+        "rmsReconstructionError": 3.0516147579996205e-05,
+        "samplesAboveClaimedError": 0
+      },
+      {
+        "fixture": "400 Hz square, 2 s stereo, PCM16 source",
+        "inputAmplitude": 0.98,
+        "sources": [
+          "demucs-strings"
+        ],
+        "maxAbsoluteReconstructionError": 0.188018798828125,
+        "rmsReconstructionError": 0.043648328866849787,
+        "samplesAboveClaimedError": 21908
+      }
+    ]
+  },
+  "controlledTypeScriptProbe": {
+    "fxNotation": {
+      "unpitched": false,
+      "pitched": true,
+      "crosshead": true,
+      "lyric": true,
+      "noteheadBeforeStaff": false,
+      "notationsBeforeLyric": false,
+      "localXmlValidatorAcceptsOrder": true
+    },
+    "midiChannelValidation": {
+      "internalSchemaAccepts64": true,
+      "exportedChannel64": true,
+      "localXmlValidatorAccepts64": true
+    },
+    "barOrigin": {
+      "firstBarStart": 0,
+      "acceptsDownbeatOrigin": false,
+      "observation": "Function API has tempoMap, duration and one timeSignature only; detected downbeats/score origin are not inputs"
+    }
+  },
+  "sourceSha256": {
+    "services/separator/hierarchical_subseparator.py": "cdf7eac64d4fbcdb6776d4e918091c96cd22f712f2e6cedea952e298a294d515",
+    "lib/music/musicxml.ts": "7934b3ba6eecdfc777f8396bbd9485e8be6f32fb35a44b87382d5965ddf87c65",
+    "lib/music/types.ts": "92b4f686547a597ffdfa203fd32363d93d9621405bb7146087ee9e4e81939fb8",
+    "lib/music/notation-validation.ts": "c111bf74ecdc0bff6d6d0cd73de42734ac15ec49b9b3fc7f5dca84ed5804eb47",
+    "lib/music/tempo-map.ts": "8bcb5c80a070e24a6df2af1a325a03f4280afc7fbb0c5d7fa9f3c1715e7deea5",
+    "services/local/server.ts": "1f6b2528daf97d55c80c04af434fdcec9db9ee70c4a21ce963980997f7540d58",
+    "components/audio/StemPlayback.tsx": "be8acd047da8120bdcaf14118e4a42c84704c6abc693ff6e36dfb5d14d20352d",
+    "services/separator/slicing_engine.py": "cd230005186594d9db7299d91513485a0b1ea5a3b66d848d158aa61d53c4ab0e",
+    "services/separator/bs_roformer_engine.py": "c2d2668b9dc5ccf17e65e8c01c9a27af49887ca91d070cc748d5c358a6298cbd"
+  },
+  "reportSha256": "316d1ad4da16cfd1f0c1f903a4afcffe5fb88700e672f1d93936c93259a688d1",
+  "priorChecks": {
+    "source": "v0.03-2026-10-14-evidence.json",
+    "reusedBecauseSameHead": true,
+    "rerunInThisReview": false
+  }
+}

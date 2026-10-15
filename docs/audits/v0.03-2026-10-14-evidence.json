@@ -1,0 +1,203 @@
+{
+  "date": "2026-10-14",
+  "requestedTag": "v0.03",
+  "tagCommit": "f5276115af4fadfbbe48737e7ec5fb149c3ee174",
+  "checkedHead": "15883d5",
+  "checks": {
+    "typecheck": "passed",
+    "vitest": {
+      "files": 6,
+      "passed": 49
+    },
+    "targetedLint": {
+      "errors": 4,
+      "warnings": 12
+    }
+  },
+  "python": {
+    "quietPassage": {
+      "intervals": [
+        [
+          0.0,
+          5.8
+        ]
+      ],
+      "inputTailRms": 0.003535533556714654,
+      "outputTailRms": 0.0,
+      "maxErrorFirst50ms": 0.4970409870147705
+    },
+    "continuousMusicInferenceSeconds": [
+      24.0
+    ],
+    "roformerSlicingCall": "apply_dynamic_slicing() got an unexpected keyword argument 'separator_fn'",
+    "correctedOverlapAdd": [
+      {
+        "seconds": 2,
+        "maxReconstructionError": 0.0
+      },
+      {
+        "seconds": 8,
+        "maxReconstructionError": 0.0
+      },
+      {
+        "seconds": 9,
+        "maxReconstructionError": 0.0
+      },
+      {
+        "seconds": 12,
+        "maxReconstructionError": 0.0
+      },
+      {
+        "seconds": 16,
+        "maxReconstructionError": 0.0
+      },
+      {
+        "seconds": 30,
+        "maxReconstructionError": 0.0
+      }
+    ],
+    "ensembleFileOverwrite": {
+      "claimedSource": {
+        "id": "bs_roformer-vocals",
+        "kind": "vocals",
+        "file": "vocals.wav"
+      },
+      "expectedRoformerValue": 0.1,
+      "actualFileValue": 0.20000000298023224
+    },
+    "unsupportedHierarchicalTargets": []
+  },
+  "typescript": {
+    "midi": {
+      "sources": [
+        {
+          "id": "source-0",
+          "channel": 1,
+          "port": "A"
+        },
+        {
+          "id": "source-1",
+          "channel": 2,
+          "port": "A"
+        },
+        {
+          "id": "source-2",
+          "channel": 3,
+          "port": "A"
+        },
+        {
+          "id": "source-3",
+          "channel": 4,
+          "port": "A"
+        },
+        {
+          "id": "source-4",
+          "channel": 5,
+          "port": "A"
+        },
+        {
+          "id": "source-5",
+          "channel": 6,
+          "port": "A"
+        },
+        {
+          "id": "source-6",
+          "channel": 7,
+          "port": "A"
+        },
+        {
+          "id": "source-7",
+          "channel": 8,
+          "port": "A"
+        },
+        {
+          "id": "source-8",
+          "channel": 9,
+          "port": "A"
+        },
+        {
+          "id": "source-9",
+          "channel": 10,
+          "port": "A"
+        },
+        {
+          "id": "source-10",
+          "channel": 11,
+          "port": "A"
+        },
+        {
+          "id": "source-11",
+          "channel": 12,
+          "port": "A"
+        },
+        {
+          "id": "source-12",
+          "channel": 13,
+          "port": "A"
+        },
+        {
+          "id": "source-13",
+          "channel": 14,
+          "port": "A"
+        },
+        {
+          "id": "source-14",
+          "channel": 15,
+          "port": "A"
+        },
+        {
+          "id": "source-15",
+          "channel": 16,
+          "port": "A"
+        },
+        {
+          "id": "source-16",
+          "channel": 1,
+          "port": "B"
+        }
+      ],
+      "portEvents": [],
+      "channels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        0
+      ]
+    },
+    "metronome": {
+      "clicksScheduled": [
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "expectedClicksAtHalfSecond": 1
+    }
+  },
+  "sourceSha256": {
+    "services/separator/slicing_engine.py": "cd230005186594d9db7299d91513485a0b1ea5a3b66d848d158aa61d53c4ab0e",
+    "services/separator/bs_roformer_engine.py": "c2d2668b9dc5ccf17e65e8c01c9a27af49887ca91d070cc748d5c358a6298cbd",
+    "services/separator/hierarchical_subseparator.py": "cdf7eac64d4fbcdb6776d4e918091c96cd22f712f2e6cedea952e298a294d515",
+    "lib/audio/transcription/stems.ts": "d7b3b5943d69e806cc4218abd8bb7beec8557a4b9d649278d0547af62942b4f9",
+    "lib/audio/metronome.ts": "6fece30f1677d6d4585dd8cee2e41cc2b410c8ea6cf6b82b214b4a64e5ce1ac7",
+    "components/editor/MusicEditor.tsx": "72241be07cdbde0a2e2fd227b87617c0e41cce8b0e38096f7ce73bfb6fa83de6",
+    "lib/music/midi-writer.ts": "c596637570918cf7f6f2b295afb2b83546877274e7658ea30c4b78414c7864bc",
+    "lib/audio/iatpe/engine.ts": "3762ec030894f259995973242fe3b21bd6367a4e05388904adf4752e4974da53",
+    "services/local/server.ts": "1f6b2528daf97d55c80c04af434fdcec9db9ee70c4a21ce963980997f7540d58"
+  },
+  "limits": "Controlled models and audio clock; no pretrained quality benchmark; production code unchanged"
+}
