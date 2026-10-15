@@ -99,3 +99,78 @@ export const iatpeAnalysisResultSchema = z.object({
   timingsMs: iatpeTimingsSchema,
 });
 export type IatpeAnalysisResult = z.infer<typeof iatpeAnalysisResultSchema>;
+
+export const MidiPortSchema = z.enum(["A", "B", "C", "D"]);
+export type MidiPort = z.infer<typeof MidiPortSchema>;
+
+export const ActivityRegionSchema = z.object({
+  sourceId: z.string(),
+  instrument: z.string(),
+  startSeconds: z.number().min(0),
+  endSeconds: z.number().min(0),
+  windowLabel: z.enum(["intro", "early_body", "mid_core", "climax", "outro"]),
+  method: z.enum(["spectral_band", "yamnet_temporal", "clap_zero_shot", "rms_hysteresis"]),
+  confidence: z.number().min(0).max(1),
+  uncertainPresence: z.boolean().default(false),
+  evidence: z.object({
+    rmsDb: z.number(),
+    spectralCentroidHz: z.number(),
+    harmonicRatio: z.number(),
+    transientDensity: z.number(),
+  }),
+});
+export type ActivityRegion = z.infer<typeof ActivityRegionSchema>;
+
+export const AudioAssetMetadataSchema = z.object({
+  id: z.string(),
+  kind: z.string(),
+  label: z.string(),
+  file: z.string(),
+  engine: z.enum(["demucs", "bs_roformer", "mel_band_roformer", "iatpe_ensemble", "bypass_direct"]),
+  checkpoint: z.string(),
+  sampleRate: z.number().int().positive(),
+  durationSeconds: z.number().positive(),
+  sha256: z.string().min(32),
+  gain: z.number().positive(),
+  rms: z.number().min(0),
+  confidence: z.number().min(0).max(1),
+  transcriptionEligible: z.boolean(),
+  level: z.number().int().min(1).max(3),
+  parentStem: z.string().optional(),
+  parentPreservedFile: z.string().optional(),
+  parentSha256: z.string().optional(),
+  sourceEngineSubdir: z.string().optional(),
+  reconstructionMaxAbsError: z.number().min(0).optional(),
+  reconstructionVerified: z.boolean().optional(),
+});
+export type AudioAssetMetadata = z.infer<typeof AudioAssetMetadataSchema>;
+
+export const StageTelemetrySchema = z.object({
+  loadMs: z.number().min(0),
+  preanalysisMs: z.number().min(0).default(0),
+  inferenceMs: z.number().min(0),
+  subseparationMs: z.number().min(0).default(0),
+  amtMs: z.number().min(0).default(0),
+  ioMs: z.number().min(0),
+  totalWallMs: z.number().min(0),
+  timeToFirstAudibleStemMs: z.number().min(0),
+  peakMemoryMb: z.number().min(0),
+  effectiveInferredSeconds: z.number().min(0),
+  coverageRatio: z.number().min(0).max(1),
+  cacheHit: z.boolean().default(false),
+  coalescedInFlight: z.boolean().default(false),
+  notesPerChannel: z.record(z.string(), z.number().int().min(0)).default({}),
+});
+export type StageTelemetry = z.infer<typeof StageTelemetrySchema>;
+
+export const DistributedPreanalysisResultSchema = z.object({
+  totalDurationSeconds: z.number().positive(),
+  sampledWindowsCount: z.number().int().min(1),
+  isConfirmedSoloInstrument: z.boolean(),
+  soloBypassReason: z.string(),
+  detectedInstruments: z.array(z.string()),
+  uncertainInstruments: z.array(z.string()),
+  activityRegions: z.array(ActivityRegionSchema),
+  channelCount: z.number().int().min(1).max(64),
+});
+export type DistributedPreanalysisResult = z.infer<typeof DistributedPreanalysisResultSchema>;

@@ -1,9 +1,12 @@
 import "server-only";
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { join, resolve, dirname } from "node:path";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import path from "node:path";
 import { z } from "zod";
 import { ApiError } from "@/lib/utils/errors";
+import type { AudioAssetMetadata, StageTelemetry } from "./iatpe/types";
 
 export const stemKindSchema = z.enum([
   "piano",
@@ -166,4 +169,192 @@ export async function separateLocalAudio(
       localPath: join(output, source.file),
     })),
   };
+}
+
+export interface SeparationJobOptions {
+  inputPath: string;
+  outputDir: string;
+  model: "htdemucs" | "htdemucs_6s" | "bs_roformer" | "mel_band_roformer" | "iatpe_ensemble";
+  quality?: "balanced" | "careful";
+  device?: "cpu" | "cuda";
+  hierarchicalPlan?: Record<string, unknown>;
+  signal?: AbortSignal;
+  onStemReady?: (stem: AudioAssetMetadata) => void;
+}
+
+export interface SeparationJobResult {
+  model: string;
+  engine: string;
+  durationSeconds: number;
+  gain: number;
+  sources: AudioAssetMetadata[];
+  warnings: string[];
+  telemetry: StageTelemetry;
+}
+
+const separationResultCache = new Map<string, SeparationJobResult>();
+const inFlightSeparationJobs = new Map<string, Promise<SeparationJobResult>>();
+
+export async function computeFileSha256(filePath: string): Promise<string> {
+  const buf = await readFile(filePath);
+  return createHash("sha256").update(buf).digest("hex");
+}
+
+export function buildSeparationCacheKey(
+  audioSha256: string,
+  model: string,
+  quality: string,
+  plan?: Record<string, unknown>
+): string {
+  const payload = JSON.stringify({ audioSha256, model, quality, plan: plan ?? null });
+  return createHash("sha256").update(payload).digest("hex");
+}
+
+export async function runAudioSeparation(options: SeparationJobOptions): Promise<SeparationJobResult> {
+  if (process.env.VERCEL === "1" && !process.env.SEPARATION_PROVIDER_URL) {
+    throw new Error("La separación se ejecuta en el worker de audio, fuera de Vercel");
+  }
+
+if (options.signal?.aborted) {
+    throw new Error("Trabajo de separación cancelado antes de iniciar");
+  }
+
+const quality = options.quality ?? "balanced";
+  const device = options.device ?? "cpu";
+  const audioSha256 = await computeFileSha256(options.inputPath);
+  const cacheKey = buildSeparationCacheKey(audioSha256, options.model, quality, options.hierarchicalPlan);
+
+// 1. Warm Cache Hit (Delivery 4)
+  const cached = separationResultCache.get(cacheKey);
+  if (cached) {
+    for (const stem of cached.sources) {
+      options.onStemReady?.(stem);
+    }
+    return {
+      ...cached,
+      telemetry: {
+        ...cached.telemetry,
+        cacheHit: true,
+        coalescedInFlight: false,
+      },
+    };
+  }
+
+// 2. In-Flight Job Coalescing (Delivery 4)
+  const existingInFlight = inFlightSeparationJobs.get(cacheKey);
+  if (existingInFlight) {
+    const sharedResult = await existingInFlight;
+    return {
+      ...sharedResult,
+      telemetry: {
+        ...sharedResult.telemetry,
+        coalescedInFlight: true,
+      },
+    };
+  }
+
+const jobPromise = executePythonSeparationProcess({
+    ...options,
+    quality,
+    device,
+  }).then((res) => {
+    separationResultCache.set(cacheKey, res);
+    inFlightSeparationJobs.delete(cacheKey);
+    return res;
+  }).catch((err) => {
+    inFlightSeparationJobs.delete(cacheKey);
+    throw err;
+  });
+
+inFlightSeparationJobs.set(cacheKey, jobPromise);
+  return jobPromise;
+}
+
+async function executePythonSeparationProcess(
+  options: Required<Pick<SeparationJobOptions, "inputPath" | "outputDir" | "model" | "quality" | "device">> &
+    Pick<SeparationJobOptions, "hierarchicalPlan" | "signal" | "onStemReady">
+): Promise<SeparationJobResult> {
+  return new Promise<SeparationJobResult>((resolve, reject) => {
+    const scriptPath = path.resolve(process.cwd(), "services/separator/separate.py");
+    const args = [
+      scriptPath,
+      "--input",
+      options.inputPath,
+      "--output",
+      options.outputDir,
+      "--model",
+      options.model === "htdemucs" ? "htdemucs" : "htdemucs_6s",
+      "--device",
+      options.device,
+      "--quality",
+      options.quality,
+    ];
+    if (options.hierarchicalPlan) {
+      args.push("--plan", JSON.stringify(options.hierarchicalPlan));
+    }
+
+const pyCmd = process.env.PYTHON_PATH || (process.platform === "win32" ? "python" : "python3");
+    const child: ChildProcess = spawn(pyCmd, args, {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+let stdoutBuffer = "";
+    let stderrBuffer = "";
+    let settled = false;
+
+const cleanupAndAbort = () => {
+      if (settled) return;
+      settled = true;
+      child.kill("SIGKILL");
+      reject(new Error("Separación cancelada por el usuario; proceso Python y recursos liberados."));
+    };
+
+if (options.signal) {
+      options.signal.addEventListener("abort", cleanupAndAbort, { once: true });
+    }
+
+child.stdout?.on("data", (chunk: Buffer) => {
+      stdoutBuffer += chunk.toString("utf-8");
+    });
+
+child.stderr?.on("data", (chunk: Buffer) => {
+      const text = chunk.toString("utf-8");
+      stderrBuffer += text;
+      for (const line of text.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("{")) continue;
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (parsed.event === "stem_ready" && parsed.stem && options.onStemReady) {
+            options.onStemReady(parsed.stem as AudioAssetMetadata);
+          }
+        } catch {
+          // Non-JSON diagnostic line on stderr
+        }
+      }
+    });
+
+    child.on("error", (err: Error) => {
+      if (settled) return;
+      settled = true;
+      options.signal?.removeEventListener("abort", cleanupAndAbort);
+      reject(err);
+    });
+
+    child.on("close", (code: number | null) => {
+      if (settled) return;
+      settled = true;
+      options.signal?.removeEventListener("abort", cleanupAndAbort);
+      if (code !== 0) {
+        reject(new Error(`Error en worker de separación (código ${code}): ${stderrBuffer.trim()}`));
+        return;
+      }
+      try {
+        const parsed = JSON.parse(stdoutBuffer.trim()) as SeparationJobResult;
+        resolve(parsed);
+      } catch (err) {
+        reject(new Error(`Salida JSON inválida del separador: ${(err as Error).message}`));
+      }
+    });
+  });
 }

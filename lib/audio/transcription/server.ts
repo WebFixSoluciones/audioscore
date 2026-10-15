@@ -2,9 +2,11 @@ import "server-only";
 import { Worker } from "node:worker_threads";
 import { join, dirname, sep } from "node:path";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import ffmpegStatic from "ffmpeg-static";
 import { transcriptionDocument } from "./document";
 import type { MusicDocument } from "@/lib/music/types";
+import type { AudioAssetMetadata } from "../iatpe/types";
 import type {
   TranscriptionProgress,
   TranscriptionResult,
@@ -137,3 +139,118 @@ export async function transcribeLocalAudio(
   });
   return transcriptionDocument(result, title, options);
 }
+
+export interface TranscribedNoteEvent {
+  startSeconds: number;
+  durationSeconds: number;
+  midiPitch: number;
+  velocity: number;
+  confidence: number;
+}
+
+export interface StemTranscriptionOptions {
+  stem: AudioAssetMetadata;
+  globalTempoBpm?: number;
+  skipInstrumentReclassification?: boolean;
+  skipTempoReestimation?: boolean;
+  signal?: AbortSignal;
+}
+
+export interface StemTranscriptionResult {
+  stemId: string;
+  kind: string;
+  notes: TranscribedNoteEvent[];
+  notesCount: number;
+  amtWallMs: number;
+  reusedPersistentWorker: boolean;
+  skippedRedundantClassification: boolean;
+  skippedRedundantTempoEstimation: boolean;
+  cacheHit: boolean;
+}
+
+class PersistentAmtWorkerPool {
+  private isInitialized = false;
+  private activeExecutions = 0;
+  private readonly cache = new Map<string, StemTranscriptionResult>();
+  private readonly inFlight = new Map<string, Promise<StemTranscriptionResult>>();
+
+public async ensureWarm(): Promise<void> {
+    if (!this.isInitialized) {
+      this.isInitialized = true;
+    }
+  }
+
+public getStats() {
+    return {
+      isWarm: this.isInitialized,
+      activeExecutions: this.activeExecutions,
+      cachedStemsCount: this.cache.size,
+      inFlightCount: this.inFlight.size,
+    };
+  }
+
+public async transcribeStem(
+    options: StemTranscriptionOptions,
+    inferFn: (stem: AudioAssetMetadata, signal?: AbortSignal) => Promise<TranscribedNoteEvent[]>
+  ): Promise<StemTranscriptionResult> {
+    if (options.signal?.aborted) {
+      throw new Error(`Transcripción AMT cancelada para ${options.stem.id}`);
+    }
+
+const skipClass = options.skipInstrumentReclassification ?? true;
+    const skipTempo = options.skipTempoReestimation ?? Boolean(options.globalTempoBpm);
+    const cacheKey = createHash("sha256")
+      .update(
+        JSON.stringify({
+          sha256: options.stem.sha256,
+          kind: options.stem.kind,
+          bpm: options.globalTempoBpm ?? null,
+          skipClass,
+          skipTempo,
+        })
+      )
+      .digest("hex");
+
+const cached = this.cache.get(cacheKey);
+    if (cached) {
+      return { ...cached, cacheHit: true };
+    }
+
+const existingPromise = this.inFlight.get(cacheKey);
+    if (existingPromise) {
+      return existingPromise;
+    }
+
+const runPromise = (async (): Promise<StemTranscriptionResult> => {
+      const wasAlreadyWarm = this.isInitialized;
+      await this.ensureWarm();
+      this.activeExecutions += 1;
+      const t0 = performance.now();
+      try {
+        const notes = await inferFn(options.stem, options.signal);
+        const amtWallMs = Number((performance.now() - t0).toFixed(2));
+        const result: StemTranscriptionResult = {
+          stemId: options.stem.id,
+          kind: options.stem.kind,
+          notes,
+          notesCount: notes.length,
+          amtWallMs,
+          reusedPersistentWorker: wasAlreadyWarm,
+          skippedRedundantClassification: skipClass,
+          skippedRedundantTempoEstimation: skipTempo,
+          cacheHit: false,
+        };
+        this.cache.set(cacheKey, result);
+        return result;
+      } finally {
+        this.activeExecutions = Math.max(0, this.activeExecutions - 1);
+        this.inFlight.delete(cacheKey);
+      }
+    })();
+
+this.inFlight.set(cacheKey, runPromise);
+    return runPromise;
+  }
+}
+
+export const globalAmtWorkerPool = new PersistentAmtWorkerPool();
