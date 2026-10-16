@@ -173,3 +173,176 @@ export async function transcribeStems(
       : undefined,
   });
 }
+
+export interface PolyphonicNoteInput {
+  id: string;
+  startSeconds: number;
+  durationSeconds: number;
+  midiPitch: number;
+  velocity: number;
+  confidence: number;
+  lyricText?: string;
+}
+
+export interface TrackedVoiceNote extends PolyphonicNoteInput {
+  voiceIndex: number; // 1 = top/lead voice, 2 = second voice, etc.
+  isUnison: boolean;
+  voiceCrossingDetected: boolean;
+  needsHumanReview: boolean;
+}
+
+export interface DisentangledVoiceStream {
+  voiceIndex: number;
+  roleLabel: string;
+  tessituraRangeMidi: [number, number];
+  notes: TrackedVoiceNote[];
+  unisonCount: number;
+  voiceCrossingCount: number;
+  needsHumanReview: boolean;
+}
+
+const SATB_LABELS = ["Soprano (Voz 1)", "Alto (Voz 2)", "Tenor (Voz 3)", "Bajo (Voz 4)"];
+
+export function disentanglePolyphonicVoicesWithTracking(
+  events: PolyphonicNoteInput[],
+  maxVoices: number = 4,
+  roleLabels: string[] = SATB_LABELS,
+  onsetBucketToleranceSec: number = 0.045
+): DisentangledVoiceStream[] {
+  if (events.length === 0) return [];
+
+const sorted = [...events].sort(
+    (a, b) => a.startSeconds - b.startSeconds || b.midiPitch - a.midiPitch
+  );
+
+// Group simultaneous notes into temporal buckets
+  const buckets: PolyphonicNoteInput[][] = [];
+  for (const ev of sorted) {
+    const lastBucket = buckets[buckets.length - 1];
+    if (
+      !lastBucket ||
+      Math.abs(ev.startSeconds - lastBucket[0].startSeconds) > onsetBucketToleranceSec
+    ) {
+      buckets.push([ev]);
+    } else {
+      lastBucket.push(ev);
+    }
+  }
+
+const numVoices = Math.max(1, Math.min(8, maxVoices));
+  const streams: TrackedVoiceNote[][] = Array.from({ length: numVoices }, () => []);
+  // Last known MIDI pitch for each voice stream to maintain melodic continuity
+  const lastPitchPerVoice: Array<number | null> = Array.from({ length: numVoices }, () => null);
+
+for (const bucket of buckets) {
+    // Sort notes in bucket high-to-low initially
+    const chord = [...bucket].sort((a, b) => b.midiPitch - a.midiPitch).slice(0, numVoices);
+
+// Check for unisons (two simultaneous notes with identical MIDI pitch or <= 1 semitone in section)
+    const pitchCounts = new Map<number, number>();
+    for (const n of chord) {
+      pitchCounts.set(n.midiPitch, (pitchCounts.get(n.midiPitch) ?? 0) + 1);
+    }
+
+if (chord.length === 1 && lastPitchPerVoice.some((p) => p !== null)) {
+      // Assign single note to the voice whose previous pitch is closest
+      const note = chord[0];
+      let bestVoice = 0;
+      let bestDist = Infinity;
+      for (let v = 0; v < numVoices; v++) {
+        const prev = lastPitchPerVoice[v];
+        if (prev !== null) {
+          const dist = Math.abs(note.midiPitch - prev);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestVoice = v;
+          }
+        }
+      }
+      lastPitchPerVoice[bestVoice] = note.midiPitch;
+      streams[bestVoice].push({
+        ...note,
+        voiceIndex: bestVoice + 1,
+        isUnison: false,
+        voiceCrossingDetected: false,
+        needsHumanReview: bestDist > 14,
+      });
+      continue;
+    }
+
+// Continuity-aware assignment for polyphonic chords
+    const usedVoices = new Set<number>();
+    const assignedForBucket: Array<{ voiceIdx: number; note: PolyphonicNoteInput }> = [];
+
+for (let i = 0; i < chord.length; i++) {
+      const note = chord[i];
+      let chosenVoice = Math.min(i, numVoices - 1);
+      while (usedVoices.has(chosenVoice) && chosenVoice + 1 < numVoices) {
+        chosenVoice += 1;
+      }
+
+// Check if an adjacent free voice has a much closer melodic continuation
+      let minCost = Infinity;
+      for (let v = 0; v < numVoices; v++) {
+        if (usedVoices.has(v)) continue;
+        const prev = lastPitchPerVoice[v];
+        const pitchDiff = prev !== null ? Math.abs(note.midiPitch - prev) : Math.abs(v - i) * 4;
+        const orderPenalty = Math.abs(v - i) * 3.5;
+        const cost = pitchDiff + orderPenalty;
+        if (cost < minCost) {
+          minCost = cost;
+          chosenVoice = v;
+        }
+      }
+
+usedVoices.add(chosenVoice);
+      assignedForBucket.push({ voiceIdx: chosenVoice, note });
+    }
+
+// Detect voice crossings: when a lower voiceIdx (higher nominal part) has a LOWER pitch than a higher voiceIdx
+    let crossingInChord = false;
+    for (let a = 0; a < assignedForBucket.length; a++) {
+      for (let b = a + 1; b < assignedForBucket.length; b++) {
+        const first = assignedForBucket[a];
+        const second = assignedForBucket[b];
+        if (
+          (first.voiceIdx < second.voiceIdx && first.note.midiPitch < second.note.midiPitch) ||
+          (first.voiceIdx > second.voiceIdx && first.note.midiPitch > second.note.midiPitch)
+        ) {
+          crossingInChord = true;
+        }
+      }
+    }
+
+for (const { voiceIdx, note } of assignedForBucket) {
+      const isUnison = (pitchCounts.get(note.midiPitch) ?? 0) > 1;
+      lastPitchPerVoice[voiceIdx] = note.midiPitch;
+      streams[voiceIdx].push({
+        ...note,
+        voiceIndex: voiceIdx + 1,
+        isUnison,
+        voiceCrossingDetected: crossingInChord,
+        needsHumanReview: crossingInChord || isUnison || note.confidence < 0.55,
+      });
+    }
+  }
+
+return streams
+    .map((notes, idx) => {
+      const pitches = notes.map((n) => n.midiPitch);
+      const minPitch = pitches.length > 0 ? Math.min(...pitches) : 60;
+      const maxPitch = pitches.length > 0 ? Math.max(...pitches) : 72;
+      const unisonCount = notes.filter((n) => n.isUnison).length;
+      const voiceCrossingCount = notes.filter((n) => n.voiceCrossingDetected).length;
+      return {
+        voiceIndex: idx + 1,
+        roleLabel: roleLabels[idx] ?? `Atril / Voz ${idx + 1}`,
+        tessituraRangeMidi: [minPitch, maxPitch] as [number, number],
+        notes,
+        unisonCount,
+        voiceCrossingCount,
+        needsHumanReview: unisonCount > 0 || voiceCrossingCount > 0 || notes.some((n) => n.needsHumanReview),
+      };
+    })
+    .filter((s) => s.notes.length > 0);
+}

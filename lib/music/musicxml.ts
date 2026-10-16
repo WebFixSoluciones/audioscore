@@ -136,11 +136,14 @@ function noteXml(
     .join("");
 }
 export function writeMusicXML(
-  input: MusicDocument,
+  input: MusicDocument | ScoreDocumentDefinition,
   sourceId?: string,
   options: { readable?: boolean } = {},
 ): string {
-  const doc = validateDocument(input);
+  if ("parts" in input && Array.isArray((input as ScoreDocumentDefinition).parts)) {
+    return writeMusicXMLFromScoreDefinition(input as ScoreDocumentDefinition);
+  }
+  const doc = validateDocument(input as MusicDocument);
   const sources = doc.sources.filter((s) => !sourceId || s.id === sourceId);
   if (!sources.length) throw new Error("No hay instrumentos para la partitura");
   const measureTicks = (doc.timeSignature[0] * PPQ * 4) / doc.timeSignature[1];
@@ -255,4 +258,307 @@ export function writeMusicXML(
   const xml = `<?xml version="1.0" encoding="UTF-8"?><score-partwise version="4.0"><work><work-title>${escapeXml(doc.title)}</work-title></work><identification><creator type="composer">AudioScore AI · ${doc.provenance}</creator></identification><part-list>${partList}</part-list>${parts}</score-partwise>`;
   validateMusicXML(xml);
   return xml;
+}
+
+export type MidiPortLetter = "A" | "B" | "C" | "D";
+
+export interface InstrumentTransposition {
+  diatonic: number;
+  chromatic: number;
+  octaveChange?: number;
+}
+
+export interface ScoreNoteEvent {
+  startDivisions: number;
+  durationDivisions: number;
+  voice?: number;
+  type: "whole" | "half" | "quarter" | "eighth" | "16th";
+  staff?: number;
+  unpitched?: boolean;
+  step?: "C" | "D" | "E" | "F" | "G" | "A" | "B";
+  alter?: number;
+  octave?: number;
+  displayStep?: "C" | "D" | "E" | "F" | "G" | "A" | "B";
+  displayOctave?: number;
+  notehead?: "normal" | "cross" | "diamond" | "triangle" | "slash";
+  articulation?: "staccato" | "accent" | "tenuto";
+  lyricText?: string;
+  syllabic?: "single" | "begin" | "middle" | "end";
+}
+
+export interface ScorePartDefinition {
+  id: string;
+  name: string;
+  abbreviation?: string;
+  family: "woodwinds" | "brass" | "strings" | "percussion" | "choir" | "vocals" | "fx";
+  globalIndex: number; // 1..64
+  midiPort?: MidiPortLetter;
+  midiChannel?: number; // 1..16
+  midiProgram?: number; // 1..128
+  isPercussion?: boolean;
+  transposition?: InstrumentTransposition;
+  clef?: { sign: "G" | "F" | "C" | "percussion"; line: number };
+  notes: ScoreNoteEvent[];
+}
+
+export interface ScoreDocumentDefinition {
+  title: string;
+  divisions: number;
+  numerator: number;
+  denominator: number;
+  fifths?: number;
+  bpm?: number;
+  parts: ScorePartDefinition[];
+}
+
+export const ORCHESTRAL_TRANSPOSITIONS: Record<string, InstrumentTransposition> = {
+  piccolo: { diatonic: 0, chromatic: 0, octaveChange: 1 },
+  clarinet_eb: { diatonic: 2, chromatic: 3 },
+  clarinet_bb: { diatonic: -1, chromatic: -2 },
+  bass_clarinet_bb: { diatonic: -1, chromatic: -2, octaveChange: -1 },
+  soprano_sax_bb: { diatonic: -1, chromatic: -2 },
+  alto_sax_eb: { diatonic: -5, chromatic: -9 },
+  tenor_sax_bb: { diatonic: -1, chromatic: -2, octaveChange: -1 },
+  baritone_sax_eb: { diatonic: -5, chromatic: -9, octaveChange: -1 },
+  french_horn_f: { diatonic: -4, chromatic: -7 },
+  trumpet_bb: { diatonic: -1, chromatic: -2 },
+  contrabass: { diatonic: 0, chromatic: 0, octaveChange: -1 },
+};
+
+const PORT_NUMBER_MAP: Record<MidiPortLetter, number> = { A: 1, B: 2, C: 3, D: 4 };
+
+export function resolveMidiPortAndChannel(
+  part: Pick<ScorePartDefinition, "family" | "globalIndex" | "midiPort" | "midiChannel" | "isPercussion">
+): { portLetter: MidiPortLetter; portNumber: number; midiChannel: number } {
+  // Assign Port by Orchestral Family (Pillar 2) unless explicitly provided
+  let portLetter: MidiPortLetter = part.midiPort ?? "A";
+  if (!part.midiPort) {
+    if (part.family === "woodwinds") portLetter = "A";
+    else if (part.family === "brass") portLetter = "B";
+    else if (part.family === "strings") portLetter = "C";
+    else portLetter = "D"; // percussion, choir, vocals, fx
+  }
+  const portNumber = PORT_NUMBER_MAP[portLetter];
+
+if (part.isPercussion || part.family === "percussion" || part.family === "fx") {
+    return { portLetter, portNumber, midiChannel: 10 };
+  }
+
+if (part.midiChannel !== undefined) {
+    if (!Number.isInteger(part.midiChannel) || part.midiChannel < 1 || part.midiChannel > 16) {
+      throw new Error(`Canal MIDI inválido (${part.midiChannel}): debe estar entre 1 y 16 dentro de cada puerto.`);
+    }
+    const safeCh = part.midiChannel === 10 ? 11 : part.midiChannel;
+    return { portLetter, portNumber, midiChannel: safeCh };
+  }
+
+// Map globalIndex (1..64) into the 15 melodic channels (1..9, 11..16) of the target port
+  const melodicChannels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16];
+  const slot = Math.max(0, (part.globalIndex - 1)) % melodicChannels.length;
+  return { portLetter, portNumber, midiChannel: melodicChannels[slot] };
+}
+
+export function writeMusicXMLFromScoreDefinition(doc: ScoreDocumentDefinition): string {
+  const lines: string[] = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">',
+    '<score-partwise version="4.0">',
+    "  <work>",
+    `    <work-title>${escapeXml(doc.title)}</work-title>`,
+    "  </work>",
+    "  <part-list>",
+  ];
+
+for (const part of doc.parts) {
+    const { portLetter, portNumber, midiChannel } = resolveMidiPortAndChannel(part);
+    const instId = `${part.id}-I1`;
+    const program = part.midiProgram ?? (part.isPercussion ? 1 : 1);
+
+lines.push(`    <score-part id="${escapeXml(part.id)}">`);
+    lines.push(`      <part-name>${escapeXml(part.name)}</part-name>`);
+    if (part.abbreviation) {
+      lines.push(`      <part-abbreviation>${escapeXml(part.abbreviation)}</part-abbreviation>`);
+    }
+    lines.push(`      <score-instrument id="${escapeXml(instId)}">`);
+    lines.push(`        <instrument-name>${escapeXml(part.name)}</instrument-name>`);
+    lines.push("      </score-instrument>");
+    lines.push(`      <midi-device id="${escapeXml(instId)}" port="${portNumber}">Port ${portLetter}</midi-device>`);
+    lines.push(`      <midi-instrument id="${escapeXml(instId)}">`);
+    lines.push(`        <midi-channel>${midiChannel}</midi-channel>`);
+    lines.push(`        <midi-program>${Math.min(128, Math.max(1, program))}</midi-program>`);
+    lines.push("      </midi-instrument>");
+    lines.push("    </score-part>");
+  }
+
+lines.push("  </part-list>");
+
+for (const part of doc.parts) {
+    lines.push(`  <part id="${escapeXml(part.id)}">`);
+    lines.push('    <measure number="1">');
+    lines.push("      <attributes>");
+    lines.push(`        <divisions>${doc.divisions}</divisions>`);
+    lines.push("        <key>");
+    lines.push(`          <fifths>${doc.fifths ?? 0}</fifths>`);
+    lines.push("        </key>");
+    lines.push("        <time>");
+    lines.push(`          <beats>${doc.numerator}</beats>`);
+    lines.push(`          <beat-type>${doc.denominator}</beat-type>`);
+    lines.push("        </time>");
+    const clef = part.clef ?? (part.isPercussion ? { sign: "percussion", line: 2 } : { sign: "G", line: 2 });
+    lines.push("        <clef>");
+    lines.push(`          <sign>${clef.sign}</sign>`);
+    lines.push(`          <line>${clef.line}</line>`);
+    lines.push("        </clef>");
+    if (part.transposition) {
+      lines.push("        <transpose>");
+      lines.push(`          <diatonic>${part.transposition.diatonic}</diatonic>`);
+      lines.push(`          <chromatic>${part.transposition.chromatic}</chromatic>`);
+      if (part.transposition.octaveChange !== undefined && part.transposition.octaveChange !== 0) {
+        lines.push(`          <octave-change>${part.transposition.octaveChange}</octave-change>`);
+      }
+      lines.push("        </transpose>");
+    }
+    lines.push("      </attributes>");
+
+for (const note of part.notes) {
+      lines.push("      <note>");
+      const isUnpitched = Boolean(note.unpitched || part.isPercussion || part.family === "percussion" || part.family === "fx");
+      if (isUnpitched) {
+        lines.push("        <unpitched>");
+        lines.push(`          <display-step>${note.displayStep ?? note.step ?? "E"}</display-step>`);
+        lines.push(`          <display-octave>${note.displayOctave ?? note.octave ?? 4}</display-octave>`);
+        lines.push("        </unpitched>");
+      } else {
+        lines.push("        <pitch>");
+        lines.push(`          <step>${note.step ?? "C"}</step>`);
+        if (note.alter !== undefined && note.alter !== 0) {
+          lines.push(`          <alter>${note.alter}</alter>`);
+        }
+        lines.push(`          <octave>${note.octave ?? 4}</octave>`);
+        lines.push("        </pitch>");
+      }
+
+lines.push(`        <duration>${Math.max(1, Math.round(note.durationDivisions))}</duration>`);
+      lines.push(`        <voice>${note.voice ?? 1}</voice>`);
+      lines.push(`        <type>${note.type}</type>`);
+
+// XSD Order: <notehead> MUST appear BEFORE <staff>
+      if (note.notehead) {
+        lines.push(`        <notehead>${note.notehead}</notehead>`);
+      }
+      if (note.staff !== undefined) {
+        lines.push(`        <staff>${note.staff}</staff>`);
+      }
+
+// XSD Order: <notations> MUST appear BEFORE <lyric>
+      if (note.articulation) {
+        lines.push("        <notations>");
+        lines.push("          <articulations>");
+        lines.push(`            <${note.articulation}/>`);
+        lines.push("          </articulations>");
+        lines.push("        </notations>");
+      }
+
+// XSD Order: <lyric> is a direct child of <note> and comes AFTER <notations>
+      if (note.lyricText) {
+        lines.push('        <lyric number="1">');
+        lines.push(`          <syllabic>${note.syllabic ?? "single"}</syllabic>`);
+        lines.push(`          <text>${escapeXml(note.lyricText)}</text>`);
+        lines.push("        </lyric>");
+      }
+
+lines.push("      </note>");
+    }
+
+lines.push("    </measure>");
+    lines.push("  </part>");
+  }
+
+lines.push("</score-partwise>");
+  return lines.join("\n");
+}
+
+const CANONICAL_NOTE_CHILD_RANK: Record<string, number> = {
+  grace: 1,
+  cue: 2,
+  chord: 3,
+  pitch: 4,
+  unpitched: 4,
+  rest: 4,
+  duration: 5,
+  tie: 6,
+  instrument: 7,
+  footnote: 8,
+  level: 9,
+  voice: 10,
+  type: 11,
+  dot: 12,
+  accidental: 13,
+  "time-modification": 14,
+  stem: 15,
+  notehead: 16,
+  "notehead-text": 17,
+  staff: 18,
+  beam: 19,
+  notations: 20,
+  lyric: 21,
+  play: 22,
+};
+
+export function validateMusicXMLContract(xmlContent: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  // 1. Validate MIDI channels are strictly 1..16 and ports are 1..4
+  const channelMatches = [...xmlContent.matchAll(/<midi-channel>(\s*\d+\s*)<\/midi-channel>/g)];
+  for (const m of channelMatches) {
+    const ch = Number(m[1].trim());
+    if (!Number.isInteger(ch) || ch < 1 || ch > 16) {
+      errors.push(`midi-channel fuera de rango estándar (1..16): ${ch}`);
+    }
+  }
+
+const portMatches = [...xmlContent.matchAll(/<midi-device[^>]*port="([^"]+)"/g)];
+  for (const m of portMatches) {
+    const port = Number(m[1].trim());
+    if (!Number.isInteger(port) || port < 1 || port > 4) {
+      errors.push(`midi-device port fuera de rango (1..4): ${m[1]}`);
+    }
+  }
+
+// 2. Validate <note> child element ordering and <unpitched> inner tags
+  const noteBlocks = [...xmlContent.matchAll(/<note>([\s\S]*?)<\/note>/g)];
+  noteBlocks.forEach((nb, idx) => {
+    const body = nb[1];
+    if (body.includes("<unpitched>") && body.includes("<pitch>")) {
+      errors.push(`Nota #${idx + 1} contiene simultáneamente <pitch> y <unpitched>.`);
+    }
+    const unpitchedBlock = body.match(/<unpitched>([\s\S]*?)<\/unpitched>/);
+    if (unpitchedBlock && (unpitchedBlock[1].includes("<notehead>") || unpitchedBlock[1].includes("<lyric"))) {
+      errors.push(`Nota #${idx + 1} anida ilegalmente <notehead> o <lyric> dentro de <unpitched>.`);
+    }
+
+// Check top-level child order inside <note>
+    const stripped = body
+      .replace(/<pitch>[\s\S]*?<\/pitch>/g, "<pitch/>")
+      .replace(/<unpitched>[\s\S]*?<\/unpitched>/g, "<unpitched/>")
+      .replace(/<notations>[\s\S]*?<\/notations>/g, "<notations/>")
+      .replace(/<lyric[^>]*>[\s\S]*?<\/lyric>/g, "<lyric/>");
+
+const tags = [...stripped.matchAll(/<([a-zA-Z0-9-]+)(?:\s[^>]*)?\/?>/g)]
+      .map((t) => t[1])
+      .filter((t) => t in CANONICAL_NOTE_CHILD_RANK);
+
+let prevRank = -1;
+    let prevTag = "";
+    for (const tag of tags) {
+      const rank = CANONICAL_NOTE_CHILD_RANK[tag];
+      if (rank < prevRank) {
+        errors.push(`Orden XSD inválido en Nota #${idx + 1}: <${tag}> aparece después de <${prevTag}>.`);
+      }
+      prevRank = rank;
+      prevTag = tag;
+    }
+  });
+
+return { valid: errors.length === 0, errors };
 }

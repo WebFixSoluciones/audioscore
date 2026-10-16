@@ -1,0 +1,612 @@
+{
+  "date": "2026-10-15",
+  "head": "3c489e0feae8d4dfaf14fd796fc838bf85ca310f",
+  "gitRemoteMainVerifiedSameCommit": true,
+  "scope": "Code audit and controlled reproduction; no production modifications, no authenticated E2E or full-song benchmark.",
+  "inventory": {
+    "date": "2026-10-15",
+    "head": "3c489e0feae8d4dfaf14fd796fc838bf85ca310f",
+    "packageVersion": "0.5.0",
+    "installedNodePackageVersions": {
+      "@google-cloud/firestore": "9.3.1",
+      "@google-cloud/storage": "8.2.0",
+      "@google-cloud/tasks": "7.2.1",
+      "@google/genai": "2.27.0",
+      "@spotify/basic-pitch": "1.0.1",
+      "@tensorflow/tfjs": "4.22.0",
+      "@tensorflow/tfjs-backend-wasm": "4.22.0",
+      "@tonejs/midi": "2.0.28",
+      "@vercel/oidc": "4.0.0",
+      "clsx": "2.1.1",
+      "date-fns": "4.4.0",
+      "fast-xml-parser": "5.11.2",
+      "fflate": "0.8.3",
+      "ffmpeg-static": "5.3.0",
+      "file-saver": "2.0.5",
+      "firebase": "12.19.0",
+      "firebase-admin": "14.5.0",
+      "fluent-ffmpeg": "2.1.3",
+      "google-auth-library": "11.1.0",
+      "lucide-react": "1.52.0",
+      "meyda": "5.6.3",
+      "midi-writer-js": "3.2.1",
+      "music-metadata": "12.0.0",
+      "nanoid": "6.0.2",
+      "next": "16.3.8",
+      "opensheetmusicdisplay": "2.2.0",
+      "pdfkit": "0.20.2",
+      "react": "19.3.0",
+      "react-dom": "19.3.0",
+      "server-only": "0.0.1",
+      "svg-to-pdfkit": "0.1.8",
+      "tailwind-merge": "3.7.0",
+      "tone": "15.1.22",
+      "verovio": "6.3.0",
+      "vexflow": "5.0.0",
+      "wavesurfer.js": "8.0.1",
+      "zod": "4.6.5",
+      "zustand": "5.0.15"
+    },
+    "localJobsAggregateOnly": {
+      "statuses": {
+        "completed": 18,
+        "failed": 8,
+        "cancelled": 1
+      },
+      "saved": 0,
+      "resultsWithTelemetry": 0,
+      "files": 246,
+      "bytes": 3543731022
+    },
+    "sourceSha256": {
+      "services/local/server.ts": "1f6b2528daf97d55c80c04af434fdcec9db9ee70c4a21ce963980997f7540d58",
+      "services/local/python.ts": "ecc70e6faee2feec334ae5e5003d499a71848b4f8818b2e1b063855638b8a754",
+      "scripts/start-local.mjs": "e1a37e37c7f255e4c1d186eb370f8ebd94b7519e91785200f1dbd628a22577cf",
+      "lib/audio/iatpe/engine.ts": "186a3ac600dbe4cd49f55406cedd0b305e5130b2fe8ae230b9ee024c2377f0e9",
+      "lib/audio/iatpe/types.ts": "902cbf4868bef535cdd0009b6cb963203faec56905b4f1111875db46c398b91f",
+      "lib/audio/iatpe/channel-dispatcher.ts": "b4f03da834a00c0c74c41b849bf2c87a656de3bf2631248eea83d63df402eb29",
+      "lib/audio/separation.ts": "6c57a164f71653b1900f59bd6ec029b782eb8c699a209b3293f645013d064773",
+      "lib/audio/transcription/server.ts": "469dabffbf45e63a236d22a90c3258bedd0b83931315f19c7f2d25d50943139e",
+      "workers/transcribe-audio.ts": "472bdd923a85ed29e3ddfa14f5a034d13f584b7bc2bd826b42dd5e30b86dbd69",
+      "lib/audio/transcription/stems.ts": "d7b3b5943d69e806cc4218abd8bb7beec8557a4b9d649278d0547af62942b4f9",
+      "services/separator/slicing_engine.py": "eb14da56b6c4e0e5d0e05497c602e33a2d3caad46f2611a50544cf43807bd340",
+      "services/separator/separate.py": "adeec08a5afb3b712422450d575d752cee570793c484cd18e2f6a44de84fb65b",
+      "services/separator/bs_roformer_engine.py": "6d6b6f4a74b76a16c44354fadb233010f2f8003d0e66b45dda30fefaa149b40a",
+      "services/separator/hierarchical_subseparator.py": "7fe8b74b1dac118e330a74e15168dfbed46168039be54ca84aac5fb53b60c2ab",
+      "services/separator/local_engine.py": "81f65ca01864be810d916e85817106e345310606ea0bf7692e1735f8e7ddf492",
+      "lib/music/musicxml.ts": "7934b3ba6eecdfc777f8396bbd9485e8be6f32fb35a44b87382d5965ddf87c65",
+      "lib/music/midi-writer.ts": "c596637570918cf7f6f2b295afb2b83546877274e7658ea30c4b78414c7864bc",
+      "lib/audio/metronome.ts": "6fece30f1677d6d4585dd8cee2e41cc2b410c8ea6cf6b82b214b4a64e5ce1ac7",
+      "firestore.rules": "c24e472725a2e8d31e426068dbb2f855b40a16a1cc51db2a6e95589b54010f1f",
+      "storage.rules": "90c64651cd6977522ff529c848cc10e2b5bb71318a8575ad25eca9351b5cca22",
+      "package.json": "049d79e497bd536e47b43fa8f4a499e7872f7141a2aef91d9d456db24947c46f",
+      "package-lock.json": "82072b2d3f0acbfcf3da60c46181d0469e50b653a064aab04bf22ea3d3ed0ad3"
+    }
+  },
+  "checks": {
+    "typecheckNode26": "passed",
+    "typecheckNode22": "passed",
+    "vitestNode26": {
+      "files": 24,
+      "tests": 107,
+      "passed": 107,
+      "failed": 0,
+      "success": true,
+      "testFiles": [
+        "tests/audioset.test.ts",
+        "tests/deployment.test.ts",
+        "tests/editor-source.test.ts",
+        "tests/federation-storage.test.ts",
+        "tests/ffmpeg.test.ts",
+        "tests/iatpe.test.ts",
+        "tests/local-audio-client.test.ts",
+        "tests/local-audio.test.ts",
+        "tests/local-auth-proxy.test.ts",
+        "tests/local-project-policy.test.ts",
+        "tests/local-quality.test.ts",
+        "tests/local-sign-in-ui.test.ts",
+        "tests/local-studio-ui.test.ts",
+        "tests/music.test.ts",
+        "tests/rate-limit.test.ts",
+        "tests/rendering.test.ts",
+        "tests/reservations.test.ts",
+        "tests/score-refinement.test.ts",
+        "tests/security.test.ts",
+        "tests/separation.test.ts",
+        "tests/stems.test.ts",
+        "tests/storage-identity.test.ts",
+        "tests/transcription.test.ts",
+        "tests/validation.test.ts"
+      ]
+    },
+    "vitestNode22": {
+      "files": 24,
+      "tests": 107,
+      "passed": 107,
+      "failed": 0,
+      "success": true,
+      "testFiles": [
+        "tests/audioset.test.ts",
+        "tests/deployment.test.ts",
+        "tests/editor-source.test.ts",
+        "tests/federation-storage.test.ts",
+        "tests/ffmpeg.test.ts",
+        "tests/iatpe.test.ts",
+        "tests/local-audio-client.test.ts",
+        "tests/local-audio.test.ts",
+        "tests/local-auth-proxy.test.ts",
+        "tests/local-project-policy.test.ts",
+        "tests/local-quality.test.ts",
+        "tests/local-sign-in-ui.test.ts",
+        "tests/local-studio-ui.test.ts",
+        "tests/music.test.ts",
+        "tests/rate-limit.test.ts",
+        "tests/rendering.test.ts",
+        "tests/reservations.test.ts",
+        "tests/score-refinement.test.ts",
+        "tests/security.test.ts",
+        "tests/separation.test.ts",
+        "tests/stems.test.ts",
+        "tests/storage-identity.test.ts",
+        "tests/transcription.test.ts",
+        "tests/validation.test.ts"
+      ]
+    },
+    "diagnosticTests": {
+      "files": 1,
+      "tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "success": true,
+      "testFiles": [
+        ".tmp/system-audit-2026-10-15.test.ts"
+      ]
+    },
+    "diagnosticInterpretation": "Diagnostics assert observed defects. Passing them reproduces the observations; it does not certify release acceptance.",
+    "nextProductionBuildNode22": "passed, exit 0; compiled, typechecked, generated static pages and traces",
+    "pythonUnittest": {
+      "passed": 2
+    },
+    "pythonDependencyCompatibility": {
+      "packages": 73,
+      "compatible": true,
+      "tool": "uv pip check"
+    },
+    "lint": {
+      "files": 178,
+      "errors": 6,
+      "warnings": 22,
+      "errorLocations": [
+        {
+          "file": "components/audio/IatpeWorkflowViewer.tsx",
+          "line": 72,
+          "rule": "react-hooks/set-state-in-effect"
+        },
+        {
+          "file": "lib/audio/iatpe/google-classifier.ts",
+          "line": 13,
+          "rule": "@typescript-eslint/no-explicit-any"
+        },
+        {
+          "file": "lib/audio/iatpe/google-classifier.ts",
+          "line": 29,
+          "rule": "@typescript-eslint/no-explicit-any"
+        },
+        {
+          "file": "lib/audio/iatpe/google-classifier.ts",
+          "line": 117,
+          "rule": "prefer-const"
+        },
+        {
+          "file": "lib/audio/local/client.ts",
+          "line": 21,
+          "rule": "@typescript-eslint/no-explicit-any"
+        },
+        {
+          "file": "services/local/server.ts",
+          "line": 153,
+          "rule": "@typescript-eslint/no-explicit-any"
+        }
+      ]
+    },
+    "npmProductionAudit": {
+      "metadata": {
+        "vulnerabilities": {
+          "info": 0,
+          "low": 0,
+          "moderate": 6,
+          "high": 4,
+          "critical": 0,
+          "total": 10
+        },
+        "dependencies": {
+          "prod": 459,
+          "dev": 521,
+          "optional": 187,
+          "peer": 40,
+          "peerOptional": 0,
+          "total": 1063
+        }
+      },
+      "affectedPackages": [
+        {
+          "name": "@firebase/firestore",
+          "severity": "high",
+          "direct": false
+        },
+        {
+          "name": "@firebase/firestore-compat",
+          "severity": "high",
+          "direct": false
+        },
+        {
+          "name": "@grpc/grpc-js",
+          "severity": "high",
+          "direct": false
+        },
+        {
+          "name": "@spotify/basic-pitch",
+          "severity": "moderate",
+          "direct": true
+        },
+        {
+          "name": "@tensorflow/tfjs",
+          "severity": "moderate",
+          "direct": true
+        },
+        {
+          "name": "argparse",
+          "severity": "moderate",
+          "direct": false
+        },
+        {
+          "name": "firebase",
+          "severity": "high",
+          "direct": true
+        },
+        {
+          "name": "gaxios",
+          "severity": "moderate",
+          "direct": false
+        },
+        {
+          "name": "sprintf-js",
+          "severity": "moderate",
+          "direct": false
+        },
+        {
+          "name": "uuid",
+          "severity": "moderate",
+          "direct": false
+        }
+      ],
+      "primaryAdvisories": {
+        "https://github.com/advisories/GHSA-m9gg-hp2v-232j": {
+          "package": "@grpc/grpc-js",
+          "title": "@grpc/grpc-js: In certain configurations, getAuthContext can return unauthorized certificates as though they were authorized",
+          "severity": "high",
+          "range": "<1.13.6"
+        },
+        "https://github.com/advisories/GHSA-f596-whhp-79r4": {
+          "package": "@grpc/grpc-js",
+          "title": "@grpc/grpc-js: The server transmits some error messages thrown by method handlers to the client in status messages",
+          "severity": "low",
+          "range": "<1.13.6"
+        },
+        "https://github.com/advisories/GHSA-hp3w-g68c-fv3c": {
+          "package": "sprintf-js",
+          "title": "sprintf-js vulnerable to denial of service through unbounded precision specifiers",
+          "severity": "moderate",
+          "range": "<=1.1.3"
+        },
+        "https://github.com/advisories/GHSA-w5hq-g745-h8pq": {
+          "package": "uuid",
+          "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+          "severity": "moderate",
+          "range": "<11.1.1"
+        }
+      }
+    }
+  },
+  "pythonProbes": {
+    "scope": "Controlled probes of production functions; no trained-model accuracy or song benchmark.",
+    "slicingIdentity": {
+      "maxAbsoluteError": 0.0,
+      "tailRms": 7.071067375363782e-05,
+      "inputTailRms": 7.071067375363782e-05,
+      "telemetry": {
+        "mode": "sliced",
+        "totalDurationSeconds": 24.0,
+        "effectiveInferredSeconds": 6.55,
+        "coverageRatio": 0.2729,
+        "intervalsCount": 1,
+        "intervals": [
+          [
+            0.0,
+            6.55
+          ]
+        ],
+        "slicingWallMs": 40.71
+      }
+    },
+    "subseparationPlannerContract": {
+      "plan": {
+        "parentStem": "other",
+        "targetInstruments": [
+          "strings"
+        ]
+      },
+      "returnedSources": []
+    },
+    "directSubseparationReconstruction": {
+      "maxAbsoluteError": 0.0,
+      "preservedParent": true,
+      "verified": [
+        true
+      ]
+    },
+    "subseparationFailureAtomicity": {
+      "error": "Fallo de reconstrucción post-IO en other: max_abs_error=0.118041992 > 6.1e-05",
+      "originalParentChangedAfterError": true,
+      "preservedParentExists": true
+    },
+    "untrainedArchitectureAccepted": true,
+    "checkpointValidation": {
+      "strict": false,
+      "markedLoadedDespiteMissingKeys": true
+    },
+    "roformerManifest": {
+      "model": "bs_roformer_v2",
+      "engine": "bs_roformer",
+      "checkpoint": "bs_roformer_untrained_arch",
+      "sampleRate": 44100,
+      "durationSeconds": 0.1,
+      "gain": 1.0,
+      "inputSha256": "5e1f414d319b54bf73c64ac9b8be24c1965cdab58979386016c259dc1e7da866",
+      "sources": [
+        {
+          "id": "bs-roformer-drums",
+          "kind": "drums",
+          "label": "Batería / Percusión",
+          "file": "drums.wav",
+          "confidence": 0.5,
+          "rms": 0.01767762709728288,
+          "gain": 1.0,
+          "sampleRate": 44100,
+          "durationSeconds": 0.1,
+          "sha256": "feaa879fbe9dd7786863afed10409c6db11d7b3f38d611be6f84f4e4c06aaa30",
+          "engine": "bs_roformer",
+          "checkpoint": "bs_roformer_untrained_arch",
+          "parentInputSha256": "5e1f414d319b54bf73c64ac9b8be24c1965cdab58979386016c259dc1e7da866",
+          "transcriptionEligible": true,
+          "level": 1
+        },
+        {
+          "id": "bs-roformer-bass",
+          "kind": "bass",
+          "label": "Bajo",
+          "file": "bass.wav",
+          "confidence": 0.5,
+          "rms": 0.01767762709728288,
+          "gain": 1.0,
+          "sampleRate": 44100,
+          "durationSeconds": 0.1,
+          "sha256": "feaa879fbe9dd7786863afed10409c6db11d7b3f38d611be6f84f4e4c06aaa30",
+          "engine": "bs_roformer",
+          "checkpoint": "bs_roformer_untrained_arch",
+          "parentInputSha256": "5e1f414d319b54bf73c64ac9b8be24c1965cdab58979386016c259dc1e7da866",
+          "transcriptionEligible": true,
+          "level": 1
+        },
+        {
+          "id": "bs-roformer-other",
+          "kind": "other",
+          "label": "Otros Instrumentos",
+          "file": "other.wav",
+          "confidence": 0.5,
+          "rms": 0.01767762709728288,
+          "gain": 1.0,
+          "sampleRate": 44100,
+          "durationSeconds": 0.1,
+          "sha256": "feaa879fbe9dd7786863afed10409c6db11d7b3f38d611be6f84f4e4c06aaa30",
+          "engine": "bs_roformer",
+          "checkpoint": "bs_roformer_untrained_arch",
+          "parentInputSha256": "5e1f414d319b54bf73c64ac9b8be24c1965cdab58979386016c259dc1e7da866",
+          "transcriptionEligible": true,
+          "level": 1
+        },
+        {
+          "id": "bs-roformer-vocals",
+          "kind": "vocals",
+          "label": "Voz Líder",
+          "file": "vocals.wav",
+          "confidence": 0.5,
+          "rms": 0.01767762709728288,
+          "gain": 1.0,
+          "sampleRate": 44100,
+          "durationSeconds": 0.1,
+          "sha256": "feaa879fbe9dd7786863afed10409c6db11d7b3f38d611be6f84f4e4c06aaa30",
+          "engine": "bs_roformer",
+          "checkpoint": "bs_roformer_untrained_arch",
+          "parentInputSha256": "5e1f414d319b54bf73c64ac9b8be24c1965cdab58979386016c259dc1e7da866",
+          "transcriptionEligible": true,
+          "level": 1
+        }
+      ],
+      "warnings": [
+        "BS-RoFormer v2 activo: Separación por atención espectro-temporal.",
+        "Advertencia: BS_ROFORMER_CHECKPOINT no configurado; arquitectura inicializada sin pesos entrenados."
+      ],
+      "telemetry": {
+        "loadMs": 168.17,
+        "inferenceMs": 245.47,
+        "ioMs": 175.15,
+        "subseparationMs": 0.0,
+        "totalWallMs": 613.19,
+        "timeToFirstAudibleStemMs": 458.39,
+        "peakMemoryMb": 0.0,
+        "effectiveInferredSeconds": 0.1,
+        "coverageRatio": 1.0
+      }
+    },
+    "ensemble": {
+      "isolatedDirectoriesExist": true,
+      "rootVocalsSample": 0.10000000149011612,
+      "expectedVocalsSample": 0.1,
+      "sumOfSelectedStemsSample": 0.6500000134110451,
+      "eachEngineInputMixtureSample": 0.5,
+      "maxMixtureConsistencyError": 0.15000001341104507
+    },
+    "runtime": {
+      "python": "3.11.16",
+      "packages": {
+        "torch": "2.6.0+cpu",
+        "torchaudio": "2.6.0+cpu",
+        "numpy": "1.26.4",
+        "scipy": "1.17.1",
+        "demucs": "4.0.1",
+        "soundfile": "0.13.1",
+        "librosa": "0.11.0",
+        "beat-this": "1.1.0",
+        "music21": "9.9.1",
+        "bs-roformer": "1.2.4"
+      },
+      "cudaAvailable": false,
+      "hipVersion": null,
+      "defaultTorchThreads": 4
+    }
+  },
+  "typescriptProbes": {
+    "manifestContract": {
+      "returnedModel": "bs_roformer_v2",
+      "rejected": true,
+      "issues": [
+        {
+          "path": [
+            "model"
+          ],
+          "code": "invalid_value"
+        }
+      ],
+      "pythonHasTelemetry": true,
+      "telemetryRetainedBySchema": false,
+      "sha256RetainedBySchema": false
+    },
+    "distributedHelper": {
+      "rangesFor300Seconds": [
+        {
+          "label": "intro",
+          "startSeconds": 21,
+          "endSeconds": 27
+        },
+        {
+          "label": "early_body",
+          "startSeconds": 81,
+          "endSeconds": 87
+        },
+        {
+          "label": "mid_core",
+          "startSeconds": 153,
+          "endSeconds": 159
+        },
+        {
+          "label": "climax",
+          "startSeconds": 219,
+          "endSeconds": 225
+        },
+        {
+          "label": "outro",
+          "startSeconds": 267,
+          "endSeconds": 273
+        }
+      ],
+      "acceptsThreeIdenticalIntroWindowsAsRepresentative": true
+    },
+    "amtPool": {
+      "callbacksInvoked": 1,
+      "firstWorkerReuseClaim": false,
+      "secondCacheHit": true,
+      "requestedSecondStem": "owner-b-stem",
+      "returnedSecondStem": "owner-a-stem",
+      "stats": {
+        "isWarm": true,
+        "activeExecutions": 0,
+        "cachedStemsCount": 1,
+        "inFlightCount": 0
+      }
+    },
+    "separationWrapper": {
+      "requestedEngine": "bs_roformer",
+      "spawnedScript": "E:\\CLOUD WEBFIX\\WEBFIX\\SISTEMAS\\kdusound\\services\\separator\\separate.py",
+      "spawnedModel": "htdemucs_6s",
+      "firstStemEventsDelivered": 0,
+      "secondDifferentDirectoryCacheHit": true,
+      "processStarts": 1
+    },
+    "midi": {
+      "ports": [
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "A",
+        "B"
+      ],
+      "exportedPortEvents": 0
+    },
+    "fx": {
+      "unpitched": false,
+      "pitched": true,
+      "localValidation": true
+    },
+    "metronome": {
+      "scheduled": [
+        0.5,
+        0.5,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "expectedClicksAtHalfSecond": 1
+    }
+  },
+  "firebase": {
+    "project": "audioscore-ca277",
+    "firestore": {
+      "edition": "STANDARD",
+      "location": "nam5",
+      "type": "FIRESTORE_NATIVE",
+      "freeTier": true,
+      "concurrencyMode": "PESSIMISTIC",
+      "pitr": "POINT_IN_TIME_RECOVERY_DISABLED",
+      "deleteProtection": "DELETE_PROTECTION_DISABLED"
+    },
+    "billingEnabled": false,
+    "webAppRegistered": true,
+    "storageRulesActive": false,
+    "storageObservation": "Firebase returned no active Storage rules; local storage.rules denies all.",
+    "firestoreSyntaxValidation": "OK: No errors detected.",
+    "localServices": {
+      "3000": "connection refused/unreachable",
+      "8765": "connection refused/unreachable"
+    }
+  },
+  "reproductionSources": {
+    "system-audit-2026-10-15.py": "import contextlib\nimport hashlib\nimport importlib.metadata as md\nimport json\nimport os\nfrom pathlib import Path\nimport sys\nimport tempfile\nfrom types import SimpleNamespace\n\nimport numpy as np\nimport soundfile as sf\nimport torch\n\nroot = Path(__file__).resolve().parents[1]\nsys.path.insert(0, str(root / 'services/separator'))\nimport slicing_engine as slicing\nimport hierarchical_subseparator as sub\nimport bs_roformer_engine as roformer\nimport separate as demucs\n\nresult = {'scope': 'Controlled probes of production functions; no trained-model accuracy or song benchmark.'}\nsr = 8000\nt = np.arange(sr * 24) / sr\nsignal = (np.sin(2 * np.pi * 440 * t) * np.where(t < 5, 0.5, 0.0001)).astype(np.float32)\nstereo = np.column_stack((signal, -signal))\nstems, telemetry = slicing.apply_dynamic_slicing(stereo, sr, lambda audio, rate: {'other': audio.copy()}, return_telemetry=True)\nresult['slicingIdentity'] = {\n    'maxAbsoluteError': float(np.max(np.abs(stems['other'] - stereo))),\n    'tailRms': float(np.sqrt(np.mean(stems['other'][sr*10:]**2))),\n    'inputTailRms': float(np.sqrt(np.mean(stereo[sr*10:]**2))),\n    'telemetry': telemetry,\n}\nwith tempfile.TemporaryDirectory(prefix='system-audit-', dir=root / '.tmp') as directory:\n    directory = Path(directory)\n    q = 0.98 * np.sign(np.sin(2 * np.pi * 400 * np.arange(sr * 2) / sr))\n    original_signal = np.column_stack((q, q))\n    old_key_dir = directory / 'plan-contract'\n    old_key_dir.mkdir()\n    parent = old_key_dir / 'other.wav'\n    sf.write(parent, original_signal, sr, subtype='PCM_16')\n    result['subseparationPlannerContract'] = {\n        'plan': {'parentStem':'other', 'targetInstruments':['strings']},\n        'returnedSources': sub.apply_hierarchical_subseparation(old_key_dir, [{'parentStem':'other', 'targetInstruments':['strings']}]),\n    }\n    direct_dir = directory / 'direct'\n    direct_dir.mkdir()\n    parent = direct_dir / 'other.wav'\n    sf.write(parent, original_signal, sr, subtype='PCM_16')\n    original, _ = sf.read(parent, always_2d=True)\n    direct = sub.sub_separate_harmonic(parent, direct_dir, ['strings'])\n    reconstructed, _ = sf.read(parent, always_2d=True)\n    for source in direct:\n        y, _ = sf.read(direct_dir / source['file'], always_2d=True)\n        reconstructed += y\n    result['directSubseparationReconstruction'] = {\n        'maxAbsoluteError': float(np.max(np.abs(reconstructed-original))),\n        'preservedParent': (direct_dir/'other-parent.wav').exists(),\n        'verified': [s['reconstructionVerified'] for s in direct],\n    }\n    failing_dir = directory / 'rollback'\n    failing_dir.mkdir()\n    parent = failing_dir / 'other.wav'\n    sf.write(parent, np.full((sr, 2), .99), sr, subtype='PCM_16')\n    p, _ = sf.read(parent, always_2d=True)\n    before = hashlib.sha256(parent.read_bytes()).hexdigest()\n    try:\n        sub._write_and_verify_subseparation(parent, p, sr, failing_dir, 'other', 'audit', [\n            {'slug':'controlled', 'kind':'other', 'label':'controlled', 'file':'controlled.wav', 'confidence':0,\n             'audio':np.full_like(p, -.9)},\n        ])\n        failure = None\n    except RuntimeError as e:\n        failure = str(e)\n    result['subseparationFailureAtomicity'] = {\n        'error': failure,\n        'originalParentChangedAfterError': before != hashlib.sha256(parent.read_bytes()).hexdigest(),\n        'preservedParentExists': (failing_dir/'other-parent.wav').exists(),\n    }\n\n    class FakeArchitecture:\n        def __init__(self, **kwargs): self.kwargs = kwargs\n        def eval(self): return self\n        def load_state_dict(self, state, strict=True):\n            self.strict = strict\n            return SimpleNamespace(missing_keys=['all_model_parameters'], unexpected_keys=['unrelated'])\n\n    saved_module = sys.modules.get('bs_roformer')\n    sys.modules['bs_roformer'] = SimpleNamespace(BSRoformer=FakeArchitecture)\n    saved_checkpoint = os.environ.pop('BS_ROFORMER_CHECKPOINT', None)\n    original_torch_load = torch.load\n    try:\n        roformer.get_roformer_model.cache_clear()\n        empty_model = roformer.get_roformer_model()\n        result['untrainedArchitectureAccepted'] = empty_model._loaded_checkpoint is None\n        cp = directory / 'controlled-checkpoint.pt'\n        cp.write_bytes(b'controlled checkpoint')\n        torch.load = lambda *args, **kwargs: {'state_dict':{'unrelated':torch.ones(1)}}\n        roformer.get_roformer_model.cache_clear()\n        incompatible_model = roformer.get_roformer_model(checkpoint_path=str(cp))\n        result['checkpointValidation'] = {'strict':incompatible_model.strict, 'markedLoadedDespiteMissingKeys':bool(incompatible_model._loaded_checkpoint)}\n    finally:\n        torch.load = original_torch_load\n        if saved_checkpoint is not None: os.environ['BS_ROFORMER_CHECKPOINT'] = saved_checkpoint\n        if saved_module is None: sys.modules.pop('bs_roformer', None)\n        else: sys.modules['bs_roformer'] = saved_module\n        roformer.get_roformer_model.cache_clear()\n\n    class ControlledFourStems:\n        _loaded_checkpoint = None\n        def to(self, device): return self\n        def __call__(self, x): return torch.stack([x*.25 for _ in range(4)], dim=1)\n\n    input_path = directory/'input.wav'\n    x = .1*np.sin(2*np.pi*440*np.arange(4410)/44100)\n    sf.write(input_path, np.column_stack((x,x)), 44100, subtype='PCM_16')\n    loader = roformer.get_roformer_model\n    roformer.get_roformer_model = lambda *args, **kwargs: ControlledFourStems()\n    try:\n        manifest = roformer.separate_bs_roformer(input_path, directory/'manifest')\n        result['roformerManifest'] = manifest\n        (root/'.tmp/system-audit-2026-10-15-roformer-manifest.json').write_text(json.dumps(manifest), encoding='utf-8')\n    finally:\n        roformer.get_roformer_model = loader\n\n    actual_roformer = roformer.separate_bs_roformer\n    actual_demucs = demucs.separate\n    def controlled_engine(weights, prefix):\n        def execute(path, output, *args, **kwargs):\n            output = Path(output); output.mkdir(parents=True, exist_ok=True)\n            sources = []\n            for name, fraction in weights.items():\n                filename = name+'.wav'\n                sf.write(output/filename, np.full((sr,2), .5*fraction), sr, subtype='FLOAT')\n                sources.append({'id':prefix+'-'+name,'kind':name,'file':filename})\n            return {'sources':sources,'durationSeconds':1,'gain':1,'telemetry':{}}\n        return execute\n    try:\n        roformer.separate_bs_roformer = controlled_engine({'vocals':.2,'drums':.2,'bass':.2,'other':.4}, 'roformer')\n        demucs.separate = controlled_engine({'vocals':.1,'drums':.1,'bass':.1,'other':.3,'piano':.2,'guitar':.2}, 'demucs')\n        ens_dir = directory/'ensemble'\n        ens = roformer.separate_ensemble(input_path, ens_dir)\n        summed = np.zeros((sr,2))\n        for s in ens['sources']:\n            data, _ = sf.read(ens_dir/s['file'], always_2d=True)\n            summed += data\n        result['ensemble'] = {\n            'isolatedDirectoriesExist': (ens_dir/'roformer/vocals.wav').exists() and (ens_dir/'demucs/vocals.wav').exists(),\n            'rootVocalsSample': float(sf.read(ens_dir/'vocals.wav')[0][0,0]),\n            'expectedVocalsSample': .1,\n            'sumOfSelectedStemsSample': float(summed[0,0]),\n            'eachEngineInputMixtureSample': .5,\n            'maxMixtureConsistencyError': float(np.max(np.abs(summed-.5))),\n        }\n    finally:\n        roformer.separate_bs_roformer = actual_roformer\n        demucs.separate = actual_demucs\n\nresult['runtime'] = {\n    'python': sys.version.split()[0],\n    'packages':{p:md.version(p) for p in ['torch','torchaudio','numpy','scipy','demucs','soundfile','librosa','beat-this','music21','bs-roformer']},\n    'cudaAvailable':torch.cuda.is_available(),\n    'hipVersion':torch.version.hip,\n    'defaultTorchThreads':torch.get_num_threads(),\n}\n(root/'.tmp/system-audit-2026-10-15-python.json').write_text(json.dumps(result, indent=2), encoding='utf-8')\nprint(json.dumps({k:v for k,v in result.items() if k!='roformerManifest'}, indent=2))\n",
+    "system-audit-2026-10-15.test.ts": "import { describe, expect, it, vi } from 'vitest';\nimport { EventEmitter } from 'node:events';\nimport { mkdir, readFile, writeFile } from 'node:fs/promises';\nimport { join } from 'node:path';\nconst state = vi.hoisted(() => ({ spawn: vi.fn(), args: [] as string[] }));\nvi.mock('node:child_process', () => ({ spawn: state.spawn }));\nimport { separationManifestSchema, runAudioSeparation } from '../lib/audio/separation';\nimport { globalAmtWorkerPool } from '../lib/audio/transcription/server';\nimport { evaluateDistributedPreanalysis, buildDistributedWindowRanges } from '../lib/audio/iatpe/engine';\nimport { fixture } from '../tests/fixtures';\nimport { transcribeStems } from '../lib/audio/transcription/stems';\nimport { writeMidi } from '../lib/music/midi-writer';\nimport { parseMidi } from 'midi-file';\nimport { writeMusicXML } from '../lib/music/musicxml';\nimport { validateMusicXML } from '../lib/music/notation-validation';\nimport { LookaheadMetronome } from '../lib/audio/metronome';\nimport { computeBarsAndBeats } from '../lib/music/tempo-map';\nimport type { AudioAssetMetadata } from '../lib/audio/iatpe/types';\nconst evidence: Record<string, unknown> = {};\n\ndescribe('Audit diagnostics: asserts observed behavior, not release acceptance', () => {\n  it('reproduces the Python/TypeScript manifest mismatch and dropped metadata', async () => {\n    const raw = JSON.parse(await readFile('.tmp/system-audit-2026-10-15-roformer-manifest.json', 'utf8'));\n    const parsed = separationManifestSchema.safeParse(raw);\n    expect(parsed.success).toBe(false);\n    const canonical = separationManifestSchema.parse({ ...raw, model: 'bs_roformer' });\n    evidence.manifestContract = {\n      returnedModel: raw.model,\n      rejected: !parsed.success,\n      issues: parsed.success ? [] : parsed.error.issues.map(x => ({ path:x.path, code:x.code })),\n      pythonHasTelemetry: !!raw.telemetry,\n      telemetryRetainedBySchema: 'telemetry' in canonical,\n      sha256RetainedBySchema: 'sha256' in canonical.sources[0],\n    };\n  });\n\n  it('shows that repeated samples can be considered representative by the new helper', () => {\n    const repeated = Array.from({ length:3 }, () => ({\n      label:'intro' as const, startSeconds:0, endSeconds:6, rmsDb:-15,\n      spectralCentroidHz:1000, harmonicRatio:.8, transientDensity:.1, scores:{piano:.9},\n    }));\n    const result = evaluateDistributedPreanalysis(300, repeated);\n    expect(result.isConfirmedSoloInstrument).toBe(true);\n    evidence.distributedHelper = {\n      rangesFor300Seconds: buildDistributedWindowRanges(300),\n      acceptsThreeIdenticalIntroWindowsAsRepresentative: result.isConfirmedSoloInstrument,\n    };\n  });\n\n  it('checks that the AMT pool caches callback results without owning a worker', async () => {\n    const stem: AudioAssetMetadata = {\n      id:'owner-a-stem', kind:'piano',label:'Piano',file:'a.wav',engine:'demucs',\n      checkpoint:'model-a',sampleRate:44100,durationSeconds:1,sha256:'a'.repeat(64),\n      gain:1,rms:.1,confidence:0,transcriptionEligible:true,level:1,\n    };\n    let calls = 0;\n    const infer = async () => { calls++; return [{startSeconds:0,durationSeconds:.2,midiPitch:60,velocity:90,confidence:1}]; };\n    const first = await globalAmtWorkerPool.transcribeStem({stem,globalTempoBpm:120}, infer);\n    const second = await globalAmtWorkerPool.transcribeStem({\n      stem:{...stem,id:'owner-b-stem',file:'b.wav',checkpoint:'model-b'},globalTempoBpm:120,\n    }, infer);\n    expect(calls).toBe(1);\n    expect(second.stemId).toBe('owner-a-stem');\n    evidence.amtPool = {\n      callbacksInvoked:calls, firstWorkerReuseClaim:first.reusedPersistentWorker,\n      secondCacheHit:second.cacheHit, requestedSecondStem:'owner-b-stem',\n      returnedSecondStem:second.stemId, stats:globalAmtWorkerPool.getStats(),\n    };\n  });\n\n  it('captures engine downgrade, split stderr loss and output-directory cache reuse in the new wrapper', async () => {\n    vi.stubEnv('VERCEL', '');\n    const dir = join(process.cwd(), '.tmp/system-audit-wrapper-2026-10-15');\n    await mkdir(dir, {recursive:true});\n    const input = join(dir, 'input.bin');\n    await writeFile(input, 'isolated controlled audio identity for wrapper audit');\n    const stem: AudioAssetMetadata = {\n      id:'drums',kind:'drums',label:'Drums',file:'drums.wav',engine:'demucs',checkpoint:'htdemucs_6s',\n      sampleRate:44100,durationSeconds:1,sha256:'b'.repeat(64),gain:1,rms:.1,confidence:0,\n      transcriptionEligible:false,level:1,\n    };\n    state.spawn.mockImplementation((_cmd:string,args:string[]) => {\n      state.args = args;\n      const child = Object.assign(new EventEmitter(), {\n        stdout:new EventEmitter(), stderr:new EventEmitter(), kill:vi.fn(),\n      });\n      setTimeout(() => {\n        const event = JSON.stringify({event:'stem_ready',stem})+'\\n';\n        const cut = Math.floor(event.length/2);\n        child.stderr.emit('data',Buffer.from(event.slice(0,cut)));\n        child.stderr.emit('data',Buffer.from(event.slice(cut)));\n        child.stdout.emit('data',Buffer.from(JSON.stringify({\n          model:'htdemucs_6s',engine:'demucs',sources:[stem],durationSeconds:1,gain:1,warnings:[],telemetry:{},\n        })));\n        child.emit('close',0);\n      },0);\n      return child;\n    });\n    const ready = vi.fn();\n    const options = { inputPath:input,outputDir:join(dir,'job-a'),model:'bs_roformer' as const,onStemReady:ready };\n    await runAudioSeparation(options);\n    const firstEvents = ready.mock.calls.length;\n    const cached = await runAudioSeparation({...options,outputDir:join(dir,'job-b')});\n    expect(state.spawn).toHaveBeenCalledTimes(1);\n    expect(firstEvents).toBe(0);\n    evidence.separationWrapper = {\n      requestedEngine:options.model, spawnedScript:state.args[0],\n      spawnedModel:state.args[state.args.indexOf('--model')+1],\n      firstStemEventsDelivered:firstEvents,\n      secondDifferentDirectoryCacheHit:cached.telemetry.cacheHit,\n      processStarts:state.spawn.mock.calls.length,\n    };\n    vi.unstubAllEnvs();\n  });\n\n  it('rechecks MIDI ports, FX XML and metronome scheduling', async () => {\n    const global = {...fixture(),provenance:'transcription' as const};\n    const stems = Array.from({length:17},(_,i)=>({\n      id:'source-'+i,kind:'piano' as const,label:'Piano '+i,confidence:0,program:i,\n      storagePath:'piano-'+i+'.wav',localPath:'piano-'+i+'.wav',\n    }));\n    const merged = await transcribeStems(global,stems,async()=>global);\n    const midi = parseMidi(writeMidi(merged));\n    evidence.midi = {\n      ports:merged.sources.map(s=>s.port),\n      exportedPortEvents:midi.tracks.flat().filter(e=>e.type==='portPrefix').length,\n    };\n    const fx = fixture();\n    fx.sources[0].category = 'noise';\n    fx.events = [{...fx.events[0],type:'drum',notehead:'cross',lyric:'Efecto',articulation:'accent'}];\n    const xml = writeMusicXML(fx);\n    evidence.fx = {unpitched:xml.includes('<unpitched>'),pitched:xml.includes('<pitch>'),localValidation:validateMusicXML(xml)};\n    const scheduled:number[] = [];\n    const ctx:any = {\n      currentTime:0,state:'running',destination:{},\n      createGain:()=>({gain:{setValueAtTime(){},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}}),\n      createOscillator:()=>({frequency:{setValueAtTime(){}},connect(){},start(t:number){scheduled.push(t)},stop(){}}),\n    };\n    vi.stubGlobal('window',{AudioContext:function(){},setInterval:()=>1,clearInterval(){}});\n    try {\n      const metro = new LookaheadMetronome(ctx);\n      metro.updateBars(computeBarsAndBeats([{startSeconds:0,bpm:120,confidence:1}],2,[4,4]));\n      ctx.currentTime=.38; metro.start(.38);\n      for (const t of [.38,.40,.42,.44,.46]) {ctx.currentTime=t;metro.seek(t);(metro as any).scheduleLoop();}\n      metro.destroy();\n      evidence.metronome = {scheduled,expectedClicksAtHalfSecond:1};\n      expect(scheduled.length).toBe(5);\n    } finally {vi.unstubAllGlobals();}\n    await writeFile('.tmp/system-audit-2026-10-15-typescript.json',JSON.stringify(evidence,null,2));\n  });\n});\n",
+    "system-audit-2026-10-15.config.mts": "import { defineConfig } from 'vitest/config';\nimport base from '../vitest.config.mts';\nexport default defineConfig({\n  ...base,\n  test: { ...base.test, include: ['.tmp/system-audit-2026-10-15.test.ts'] },\n});\n"
+  },
+  "reproductionInstructions": "Restore reproductionSources into the workspace .tmp/ directory with their original filenames. Run the Python probe with the existing separator venv, then the Vitest diagnostics using the supplied config. Model and subprocess boundaries are controlled by these diagnostics.",
+  "reportSha256": "78d15c7878dfc2d9b2cf1a00e2516d3af71122ebd0a17cba9b4e4035860c739c"
+}
